@@ -48,7 +48,7 @@ u_const = 20;
 sd = 2;
 % preparing first test data
 hidden_state = 15:u_const:100;  % x0 = 15
-test_data = round(sd*randn(1,5) + hidden_state);
+test_data = round(sd*randn(1,5) + hidden_state)
 
 % backward propagation from xout to xin
 msg = [test_data(end) sd^2];

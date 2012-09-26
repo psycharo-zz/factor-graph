@@ -309,7 +309,7 @@ classdef factor_node < handle
        
    end % methods
    
-   methods (Abstract = true)
-       msg = factor_fun(FN, in_msg, from_id, to_id)
-   end
+  methods (Abstract = true)
+      msg = factor_fun(FN, in_msg, from_id, to_id)
+  end
 end 
