@@ -17,9 +17,10 @@ classdef factornode < matlab.System
 
     methods
         % destructor
-        function delete(this)
-            mexfactorgraph('delete', this.type_name, this.cpp_handle);
-        end
+        % TODO: destructor?
+%         function delete(this)
+%             mexfactorgraph('delete', this.type_name, this.cpp_handle);
+%         end
         
         % get id
         function id = get_id(this)
@@ -27,8 +28,8 @@ classdef factornode < matlab.System
         end
         
         % receive a message
-        function receive(this, from, message)
-            mexfactorgraph('receive', this.type_name, this.cpp_handle, from, message);
+        function receive(this, message)
+            mexfactorgraph('receive', this.type_name, this.cpp_handle, message);
         end
     end
     

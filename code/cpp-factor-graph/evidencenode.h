@@ -15,7 +15,12 @@ private:
 
 protected:
 
-    Message function(int to, const MessageBox &msgs)
+    /**
+     * @brief function overriden
+     * @param msgs
+     * @return
+     */
+    GaussianMessage function(int, const MessageBox &msgs)
     {
         return msgs.begin()->second;
     }
@@ -23,22 +28,23 @@ protected:
 
 public:
     EvidenceNode(int id):
-        FactorNode(id, "Evidence"),
+        FactorNode(id),
         m_dest(NULL)
     {}
 
-    void receive(int from, const Message &msg)
+    /**
+     * @brief receive overriden
+     * @param msg
+     */
+    void receive(const GaussianMessage &msg)
     {
-//        cout <<  from << " " << m_type << "(" << id() << ") " << msg.mean << endl;
-        addInMessage(from, msg);
+        addInMessage(msg);
     }
 
 
-    void receive(const Message &msg)
+    void setInitital(const GaussianMessage &msg)
     {
-//        cout << "x " << "Evidence(" << id() << ") " << msg.mean << endl;
-
-        m_dest->receive(id(), msg);
+        m_dest->receive(GaussianMessage(id(), m_dest->id(), msg.mean(), msg.variance(), msg.size()));
     }
 
     void setDest(FactorNode *node)
@@ -47,7 +53,7 @@ public:
     }
 
 
-    Message evidence()
+    GaussianMessage evidence()
     {
         return inMessage(m_dest->id());
     }

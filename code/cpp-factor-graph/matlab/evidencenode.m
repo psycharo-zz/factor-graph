@@ -7,8 +7,8 @@ classdef evidencenode < factornode
            this = this@factornode(id, 'evidencenode');
        end
       
-       function receive(this, message)
-           mexfactorgraph('receive', this.type_name, this.cpp_handle, message);
+       function setInitial(this, message)
+           mexfactorgraph('setInitial', this.type_name, this.cpp_handle, message);
        end
 
        function setDest(this, node)

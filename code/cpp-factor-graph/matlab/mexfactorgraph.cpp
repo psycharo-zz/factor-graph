@@ -1,14 +1,9 @@
 #include "mex.h"
 
 
-#include <iostream>
-#include <cmath>
 #include <string>
 #include <stdint.h>
 #include <cstring>
-
-// DEBUG
-#include <typeinfo>
 
 #include "../factorgraph.h"
 
@@ -27,24 +22,15 @@ mxArray *ptrToArray(void *ptr)
 
 
 /**
- * convert an interger to matlab representation
+ * convert C array to mxArray
+ * @param M - number of rows
+ * @param N - number of cols
  */
-mxArray *intToArray(int value)
+mxArray *arrayToArray(const double *src, size_t M, size_t N)
 {
-    mxArray *out = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
-    *((int*)mxGetData(out)) = value;
-    return out;
-
-}
-
-/**
- * convert a message to matlab representation
- */
-mxArray *messageToArray(const Message &msg)
-{
-    mxArray *out = mxCreateDoubleMatrix(1, 2, mxREAL);
-    memcpy(mxGetPr(out), &msg, sizeof(msg));
-    return out;
+    mxArray *result = mxCreateDoubleMatrix(M, N, mxREAL);
+    memcpy(mxGetPr(result), src, sizeof(double) * M * N);
+    return result;
 }
 
 
@@ -65,6 +51,115 @@ FactorNode *arrayToNode(const mxArray *arr)
 }
 
 
+Message::Type messageType(const mxArray *msg)
+{
+    return mxGetField(msg, 0, "type") ? (Message::Type) mxGetPr(mxGetField(msg, 0, "type"))[0] : Message::UNKNOWN;
+}
+
+
+
+GaussianMessage createGaussianMessage(const mxArray *msg)
+{
+    // TODO: make it safer
+    int from = mxGetField(msg, 0, "from") ? mxGetPr(mxGetField(msg, 0, "from"))[0] : Message::UNDEFINED_ID;
+    int to = mxGetField(msg, 0, "to") ? mxGetPr(mxGetField(msg, 0, "to"))[0] : Message::UNDEFINED_ID;
+
+    // assuming the type is gaussian
+    mxArray *meanArr = mxGetField(msg, 0, "mean");
+    mxArray *varArr = mxGetField(msg, 0, "var");
+
+    return GaussianMessage(from, to, mxGetPr(meanArr), mxGetPr(varArr), mxGetN(meanArr));
+}
+
+
+/**
+ * convert message to the matlab structure
+ */
+mxArray *messageToStruct(const GaussianMessage &msg)
+{
+    static const char *FIELDS[] = {"from", "to", "type", "mean", "var"};
+
+    mxArray *result = mxCreateStructMatrix(1, 1, 5, FIELDS);
+
+    mxSetField(result, 0, "from", mxCreateDoubleScalar(msg.from()));
+    mxSetField(result, 0, "to", mxCreateDoubleScalar(msg.to()));
+    mxSetField(result, 0, "type", mxCreateDoubleScalar(msg.type()));
+    mxSetField(result, 0, "mean", arrayToArray(msg.mean(), 1, msg.size()));
+    mxSetField(result, 0, "var", arrayToArray(msg.variance(), msg.size(), msg.size()));
+
+    return result;
+}
+
+
+void createNode(const string &type_name, mxArray *plhs[], const mxArray *prhs[])
+{
+    int id = arrayToInt(prhs[2]);
+
+    FactorNode *result = NULL;
+    if (type_name == "evidencenode")
+        result = new EvidenceNode(id);
+    else if (type_name == "addnode")
+        result = new AddNode(id);
+    else if (type_name == "equalitynode")
+        result = new EqualityNode(id);
+
+//    else if (type_name == "multiplicationnode")
+//        result = new MultiplicationNode(id);
+
+    // saving the pointer
+    plhs[0] = ptrToArray(result);
+}
+
+
+void processEvidenceNode(FactorNode *node, const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    EvidenceNode *evdNode = static_cast<EvidenceNode*>(node);
+
+    if (function_name == "setInitial")
+    {
+        // constructing gaussian message
+        const int MESSAGE_IDX = 3;
+        GaussianMessage msg = createGaussianMessage(prhs[MESSAGE_IDX]);
+        evdNode->setInitital(msg);
+    }
+    else if (function_name == "setDest")
+    {
+        const int DEST_NODE_IDX = 3;
+        evdNode->setDest(arrayToNode(prhs[DEST_NODE_IDX]));
+    }
+    else if (function_name == "evidence")
+    {
+        GaussianMessage msg = evdNode->evidence();
+        plhs[0] = messageToStruct(msg);
+    }
+}
+
+
+void processAddNode(FactorNode *node, const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    AddNode *addNode = static_cast<AddNode*>(node);
+
+    if (function_name == "setConnections")
+        addNode->setConnections(arrayToNode(prhs[3]), arrayToNode(prhs[4]), arrayToNode(prhs[5]));
+}
+
+
+void processEqualityNode(FactorNode *node, const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    EqualityNode *eqNode = static_cast<EqualityNode*>(node);
+    // TODO: check for # of arguments
+    if (function_name == "setConnections")
+        eqNode->setConnections(arrayToNode(prhs[3]), arrayToNode(prhs[4]), arrayToNode(prhs[5]));
+}
+
+
+// TODO:
+void processCustomNode(FactorNode *node, const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+}
+
+
+
 
 
 
@@ -74,70 +169,40 @@ FactorNode *arrayToNode(const mxArray *arr)
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     /* Check for proper number of arguments */
+    static const size_t FUNCTION_IDX = 0;
+    static const size_t TYPE_IDX = 1;
+    static const size_t NODE_IDX = 2;
 
-    string function_name(mxArrayToString(prhs[0]));
-    string type_name(mxArrayToString(prhs[1]));
-    
-    if (function_name == "create") 
-    {
-        int id = arrayToInt(prhs[2]);
-       
-        FactorNode *result = NULL;
-        if (type_name == "evidencenode")
-            result = new EvidenceNode(id);
-        else if (type_name == "addnode")
-            result = new AddNode(id);
-        else if (type_name == "equalitynode")
-            result = new EqualityNode(id);
-       
-        plhs[0] = ptrToArray(result);
-    } 
+
+    string function_name(mxArrayToString(prhs[FUNCTION_IDX]));
+    string type_name(mxArrayToString(prhs[TYPE_IDX]));
+
+
+    if (function_name == "create")
+        createNode(type_name, plhs, prhs);
     else
-    {    
-        FactorNode *node = arrayToNode(prhs[2]);
-        
-        
-        if (function_name == "receive" && type_name == "evidencenode" && nrhs == 4) 
-        {
-            EvidenceNode *evidence = static_cast<EvidenceNode*>(node);
-            double *msg = mxGetPr(prhs[3]);
-            evidence->receive(Message(msg[0], msg[1]));
-        }
-        else if (function_name == "setDest" && type_name == "evidencenode")
-        {
-            EvidenceNode *evidence = static_cast<EvidenceNode*>(node);
-            evidence->setDest(arrayToNode(prhs[3]));
-        }
-        else if (function_name == "evidence" && type_name == "evidencenode")
-        {
-            EvidenceNode *evidence = static_cast<EvidenceNode*>(node);
-            Message msg = evidence->evidence();
-            plhs[0] = messageToArray(msg);            
-        }
-        
-        else if (function_name == "setConnections" && type_name == "addnode")
-        {
-            AddNode *addNode = static_cast<AddNode*>(node);
-            addNode->setConnections(arrayToNode(prhs[3]), arrayToNode(prhs[4]), arrayToNode(prhs[5]));
-        }        
-        
-        else if (function_name == "setConnections" && type_name == "equalitynode")
-        {
-            EqualityNode *eqNode = static_cast<EqualityNode*>(node);
-            eqNode->setConnections(arrayToNode(prhs[3]), arrayToNode(prhs[4]), arrayToNode(prhs[5]));
-        }        
-        
-        else if (function_name == "delete")
+    {
+        FactorNode *node = arrayToNode(prhs[NODE_IDX]);
+
+        if (function_name == "delete")
             delete node;
         else if (function_name == "get_id")
-            plhs[0] = intToArray(node->id());
+            plhs[0] = mxCreateDoubleScalar(node->id());
         else if (function_name == "receive")
         {
-            int from = arrayToInt(prhs[3]);
-            double *msg = mxGetPr(prhs[3]);
-            node->receive(from, Message(msg[0], msg[1]));
+            // TODO: multiple message types
+            int MESSAGE_IDX = 3;
+            node->receive(createGaussianMessage(prhs[MESSAGE_IDX]));
         }
-       
-    }
+        else if (type_name == "evidencenode")
+            processEvidenceNode(node, function_name, nlhs, plhs, nrhs, prhs);
+        else if (type_name == "addnode")
+            processAddNode(node, function_name, nlhs, plhs, nrhs, prhs);
+        else if (type_name == "equalitynode")
+            processEqualityNode(node, function_name, nlhs, plhs, nrhs, prhs);
+
+    } // function_name == create
+
+
 }
 

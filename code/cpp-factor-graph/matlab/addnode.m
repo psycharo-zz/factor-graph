@@ -11,8 +11,6 @@ classdef addnode < factornode
            mexfactorgraph('setConnections', this.type_name, this.cpp_handle, summand1.cpp_handle, summand2.cpp_handle, result.cpp_handle);
        end
     end
-    
-    
         
     
 end
