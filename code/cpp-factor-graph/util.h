@@ -7,21 +7,37 @@
  */
 
 
-#include <gsl/gsl_cblas.h>
-
-#include <cassert>
 #include <algorithm>
 #include <vector>
 
 
 extern "C" {
+
+    // TODO: vary namings depending on the platform
+
     // LU decomoposition of a general matrix
-    void dgetrf_(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
+    void dgetrf(size_t * M, size_t *N, double* A, size_t * lda, size_t* IPIV, size_t* INFO);
 
     // generate inverse of a matrix given its LU decomposition
-    void dgetri_(int* N, double* A, int* lda, int* IPIV, double* WORK, int* lwork, int* INFO);
+    void dgetri(size_t* N, double* A, size_t* lda, size_t* IPIV, double* WORK, size_t* lwork, size_t* INFO);
 
+
+    void dgemm(const char *transa, const char *transb,
+               size_t *N, size_t *M, size_t *K, // TODO: check the order here
+                double *alpha,
+                const double *B, size_t *ldb,
+                const double *A, size_t *lda,
+                double *beta,
+                double *C, size_t *ldc);
+
+    void dgemv(const char *trans, size_t *N, size_t *M,
+                double *alpha,
+                const double *A, size_t *lda,
+                const double *X, size_t *incx,
+                double *beta,
+                void *y, size_t *incy);
 }
+
 
 
 
@@ -35,15 +51,22 @@ extern "C" {
  * @param B - input KxN matrix
  * @param out - output matrix MxN
  */
-inline void matrix_mult(size_t M, size_t N, size_t K, const double *A, const double *B, double *out, bool transA = false, bool transB = false)
+inline void matrix_mult(size_t M, size_t N, size_t K, const double *A, const double *B, double *C, bool transA = false, bool transB = false)
 {
-    cblas_dgemm(CblasColMajor,
-                transA ? CblasTrans : CblasNoTrans,
-                transB ? CblasTrans : CblasNoTrans,
-                M, N, K,
-                1.0, A, M,
-                B, K, 1.0,
-                out, M);
+    char TN = 'N';
+    char TT = 'T';
+    double alpha = 1.0;
+    double beta = 0.0;
+
+    // TODO: check if this is working for *nix
+    dgemm(transA ? &TT : &TN,
+           transB ? &TT : &TN,
+           &N, &M, &K,
+           &alpha,
+           B, &K,
+           A, &M,
+           &beta,
+           C, &M);
 }
 
 
@@ -57,12 +80,19 @@ inline void matrix_mult(size_t M, size_t N, size_t K, const double *A, const dou
  */
 inline void matrix_vector_mult(size_t M, size_t N, const double *A, const double *X, double *out, bool transA = false)
 {
-    cblas_dgemv(CblasColMajor,
-                transA ? CblasTrans : CblasNoTrans,
-                M, N,
-                1.0, A, M,
-                X, 1,
-                0, out, 1);
+    char TN = 'N';
+    char TT = 'T';
+    double alpha = 1.0;
+    double beta = 0.0;
+    size_t inc = 1;
+
+    dgemv(transA ? &TT : &TN,
+           &N, &M,
+           &alpha,
+           A, &M,
+           X, &inc,
+           &beta,
+           out, &inc);
 }
 
 
@@ -72,14 +102,14 @@ inline void matrix_vector_mult(size_t M, size_t N, const double *A, const double
  * @param A
  * @param N
  */
-inline void matrix_inverse(double* A, int N)
+inline void matrix_inverse(double* A, size_t N)
 {
-    int *IPIV = new int[N+1];
-    int LWORK = N*N;
+    size_t *IPIV = new size_t[N+1];
+    size_t LWORK = N*N;
     double *WORK = new double[LWORK];
-    int INFO;
-    dgetrf_(&N,&N,A,&N,IPIV,&INFO);
-    dgetri_(&N,A,&N,IPIV,WORK,&LWORK,&INFO);
+    size_t INFO;
+    dgetrf(&N,&N,A,&N,IPIV,&INFO);
+    dgetri(&N,A,&N,IPIV,WORK,&LWORK,&INFO);
     delete [] IPIV;
     delete [] WORK;
 }

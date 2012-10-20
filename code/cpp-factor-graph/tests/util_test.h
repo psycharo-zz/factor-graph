@@ -4,8 +4,7 @@
 
 #include <gtest/gtest.h>
 
-
-#include "message.h"
+#include "../message.h"
 
 #include <random>
 #include <chrono>
@@ -15,7 +14,6 @@
 #include <set>
 using namespace std;
 
-static const double PRECISION = 1e-9;
 
 // just for debug
 GaussianMessage makeGaussian(double mean, double variance)
@@ -30,13 +28,12 @@ GaussianMessage makeGaussian(const vector<double> &mean, const vector<double> &v
 }
 
 
-
-
 class MultivariateGaussianTest : public ::testing::Test {
 protected:
 
     GaussianMessage MESSAGE1;
     GaussianMessage MESSAGE2;
+
 
     MultivariateGaussianTest():
         MESSAGE1(makeGaussian({6.294473727863579,8.115838741512384,-7.460263674129878,8.267517122780387},
@@ -52,7 +49,6 @@ protected:
     {}
 
 };
-
 
 
 

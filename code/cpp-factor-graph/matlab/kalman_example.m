@@ -17,37 +17,39 @@ function [ ] = kalman_example()
     e.setConnections(xin, a, b);
     a.setConnections(e, n, y);
     u.setDest(b);
-    
-    sd = 10.0;
-    sd2 = sd*sd;
-    u_const = 1.0;
-    
-    % currently the messages are represented as structs
-    % with fields 'from', 'to' (can be skipped), 
-    % 'type' stands for type, currently only gaussians are supported
-    % for gaussians only:
-    % 'mean' - 1xN vector
-    % 'var' - NxN matrix
-    msg = struct('mean',1+randn()*sd, 'var', sd2, 'type', 1);
-    
-    xout.setInitial(msg);
-    n.setInitial(struct('mean',0, 'var',sd2, 'type', 1));
-    u.setInitial(struct('mean',u_const, 'var',0, 'type', 1));
-         
-    
-    N_ITERATIONS = 200;
-    samples = [];
-    
-    result = zeros(N_ITERATIONS, 2);    
-    
-    for i = 1:N_ITERATIONS
-         xin.setInitial(msg);
+     
+     sd = 10.0;
+     sd2 = sd*sd;
+     u_const = 1.0;
+     
+     % currently the messages are represented as structs
+     % with fields 'from', 'to' (can be skipped), 
+     % 'type' stands for type, currently only gaussians are supported
+     % for gaussians only:
+     % 'mean' - 1xN vector
+     % 'var' - NxN matrix
+     msg = struct('mean',1+randn()*sd, 'var', sd2, 'type', 1);
+     
+     xout.setInitial(msg);
+     n.setInitial(struct('mean',0, 'var',sd2, 'type', 1));
+     u.setInitial(struct('mean',u_const, 'var',0, 'type', 1));
+          
+     
+     N_ITERATIONS = 200;
+     samples = [];
+     
+     result = zeros(N_ITERATIONS, 2);    
+     
+     for i = 1:N_ITERATIONS
+          xin.setInitial(msg);
          samples(i,:) = i+randn()*sd;
          y.setInitial(struct('mean', samples(i), 'var',0, 'type', 1));
          msg = xout.evidence();
          result(i,:) = [msg.mean, msg.var];
-    end
-    
+     end
+
+     msg
+
     subplot(2,1,1)
     plot(1:N_ITERATIONS,result(:,1));
     title('xout')

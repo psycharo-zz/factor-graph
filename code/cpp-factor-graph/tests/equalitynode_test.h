@@ -3,8 +3,8 @@
 
 
 #include <gtest/gtest.h>
-#include "equalitynode.h"
-#include "evidencenode.h"
+#include "../equalitynode.h"
+#include "../evidencenode.h"
 #include "util_test.h"
 
 

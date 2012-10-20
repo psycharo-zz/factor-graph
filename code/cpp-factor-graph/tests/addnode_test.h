@@ -2,8 +2,8 @@
 #define ADDNODE_TEST_H
 
 #include <gtest/gtest.h>
-#include "addnode.h"
-#include "evidencenode.h"
+#include "../addnode.h"
+#include "../evidencenode.h"
 #include "util_test.h"
 
 

@@ -168,11 +168,16 @@ void processCustomNode(FactorNode *node, const string &function_name, int nlhs, 
  */
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+    if (nrhs < 2)
+    {
+        mexErrMsgTxt("Not enough arguments");
+        return;
+    }
+
     /* Check for proper number of arguments */
     static const size_t FUNCTION_IDX = 0;
     static const size_t TYPE_IDX = 1;
     static const size_t NODE_IDX = 2;
-
 
     string function_name(mxArrayToString(prhs[FUNCTION_IDX]));
     string type_name(mxArrayToString(prhs[TYPE_IDX]));
@@ -180,7 +185,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     if (function_name == "create")
         createNode(type_name, plhs, prhs);
-    else
+    else if (nrhs >= 3)
     {
         FactorNode *node = arrayToNode(prhs[NODE_IDX]);
 
@@ -200,8 +205,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             processAddNode(node, function_name, nlhs, plhs, nrhs, prhs);
         else if (type_name == "equalitynode")
             processEqualityNode(node, function_name, nlhs, plhs, nrhs, prhs);
+        else mexErrMsgTxt("Unknown node type or function name");
 
-    } // function_name == create
+    }
+    else
+        mexErrMsgTxt("Not enough arguments");
 
 
 }

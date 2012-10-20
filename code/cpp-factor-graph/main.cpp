@@ -1,10 +1,12 @@
 #include <gtest/gtest.h>
 
 #include "tests/kalmanfilter_test.h"
-#include "tests/evidencenode_test.h"
 #include "tests/equalitynode_test.h"
+#include "tests/evidencenode_test.h"
 #include "tests/addnode_test.h"
 
+
+#include "util.h"
 
 int main(int argc, char *argv[])
 {

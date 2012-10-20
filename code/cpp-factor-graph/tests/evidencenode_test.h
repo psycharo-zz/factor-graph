@@ -2,7 +2,7 @@
 #define EVIDENCENODE_TEST_H
 
 #include <gtest/gtest.h>
-#include "evidencenode.h"
+#include "../evidencenode.h"
 #include "util_test.h"
 
 /**

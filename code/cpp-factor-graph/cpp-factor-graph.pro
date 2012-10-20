@@ -9,7 +9,7 @@ SOURCES += main.cpp \
     addnode.cpp
 
 
-QMAKE_CXXFLAGS += -std=c++0x
+#QMAKE_CXXFLAGS += -std=c++0x
 
 
 HEADERS += \
@@ -30,6 +30,12 @@ HEADERS += \
 
 unix {
     LIBS += -llapack -lgsl -lgslcblas -L/usr/src/gtest -lgtest -lpthread
+}
+
+
+windows {
+    INCLUDEPATH += ./libs/gtest-1.6.0/include ./libs/clapack-3.2.1-CMAKE/INCLUDE
+    LIBS += -L./libs/gtest-1.6.0 -lgtest.lib
 }
 
 # TODO: windows

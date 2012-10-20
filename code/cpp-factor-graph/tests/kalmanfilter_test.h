@@ -3,7 +3,7 @@
 
 #include "util_test.h"
 
-#include <factorgraph.h>
+#include "../factorgraph.h"
 
 
 
@@ -47,7 +47,7 @@ TEST(KalmanFilter, Scalar) {
                                  {0}));
 
 
-    const int N_ITERATIONS = 1000;
+    const int N_ITERATIONS = 2000;
 
     for (int i = 1; i <= N_ITERATIONS; i++)
     {
@@ -61,8 +61,10 @@ TEST(KalmanFilter, Scalar) {
     }
 
 
-    ASSERT_NEAR(msg.mean()[0], 1000, 2);
+    ASSERT_NEAR(msg.mean()[0], N_ITERATIONS, 2);
     ASSERT_NEAR(msg.variance()[0], 0.1, 0.1);
+
+
 }
 
 
