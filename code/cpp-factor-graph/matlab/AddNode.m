@@ -1,10 +1,10 @@
-classdef addnode < factornode
+classdef AddNode < FactorNode
     %ADDNODE Summary of this class goes here
     %   Detailed explanation goes here
     
     methods
-       function this = addnode(id)
-           this = this@factornode(id, 'addnode');
+       function this = AddNode()
+           this = this@FactorNode('addnode');
        end
        
        function setConnections(this, summand1, summand2, result)

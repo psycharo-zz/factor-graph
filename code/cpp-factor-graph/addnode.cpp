@@ -1,7 +1,6 @@
 #include "addnode.h"
 
-AddNode::AddNode(int id):
-    FactorNode(id),
+AddNode::AddNode():
     m_summand1(NULL),
     m_summand2(NULL),
     m_result(NULL)
@@ -42,6 +41,37 @@ GaussianMessage AddNode::function(int to, const MessageBox &msgs)
     }
 
     return result;
+}
+
+
+
+
+void AddNode::addIncoming(FactorNode *node)
+{
+    if (m_summand1 == NULL)
+    {
+        m_summand1 = node;
+        m_nodes.push_back(m_summand1);
+    }
+    else if (m_summand2 == NULL)
+    {
+        m_summand2 = node;
+        m_nodes.push_back(m_summand2);
+    }
+    else
+        // TODO: decent exceptions
+        throw "AddNode: only two summands are supported";
+}
+
+void AddNode::addOutgoing(FactorNode *node)
+{
+    if (m_result == NULL)
+    {
+        m_result = node;
+        m_nodes.push_back(m_result);
+    }
+    else
+        throw "AddNode: only one result is possible";
 }
 
 

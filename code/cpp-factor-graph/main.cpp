@@ -6,8 +6,6 @@
 #include "tests/addnode_test.h"
 
 
-#include "util.h"
-
 int main(int argc, char *argv[])
 {
     testing::InitGoogleTest(&argc, argv);

@@ -5,18 +5,19 @@
 #include "../addnode.h"
 #include "../evidencenode.h"
 #include "util_test.h"
+#include "../network.h"
 
 
 TEST(Scalar, AddForward) {
-    AddNode node(1);
-    EvidenceNode a(2);
-    EvidenceNode b(3);
-    EvidenceNode c(4);
+    AddNode node;
+    EvidenceNode a;
+    EvidenceNode b;
+    EvidenceNode c;
 
-    node.setConnections(&a, &b, &c);
-    a.setDest(&node);
-    b.setDest(&node);
-    c.setDest(&node);
+    Network nwk;
+    nwk.addEdge(&a, &node);
+    nwk.addEdge(&b, &node);
+    nwk.addEdge(&node, &c);
 
     a.setInitital(makeGaussian(10, 5));
     b.setInitital(makeGaussian(20, 4));
@@ -32,10 +33,10 @@ TEST(Scalar, AddForward) {
 
 
 TEST(Scalar, AddBackward) {
-    AddNode node(1);
-    EvidenceNode a(2);
-    EvidenceNode b(3);
-    EvidenceNode c(4);
+    AddNode node;
+    EvidenceNode a;
+    EvidenceNode b;
+    EvidenceNode c;
 
     node.setConnections(&a, &b, &c);
     a.setDest(&node);
@@ -55,8 +56,8 @@ TEST(Scalar, AddBackward) {
 
 
 // TODO:
-TEST_F(MultivariateGaussianTest, DISABLED_AddFirst) {
-}
+//TEST_F(MultivariateGaussianTest, DISABLED_AddFirst) {
+//}
 
 
 

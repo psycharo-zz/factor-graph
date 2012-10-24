@@ -1,111 +1,32 @@
 #include "mex.h"
 
 
-#include <string>
-#include <stdint.h>
-#include <cstring>
 
 #include "../factorgraph.h"
+
+#include "customnode.h"
+#include "convert.h"
+
 
 using namespace std;
 
 
-/**
- * convert a pointer to matlab representation
- */
-mxArray *ptrToArray(void *ptr)
-{
-    mxArray *result = mxCreateNumericMatrix(1, 1, mxUINT64_CLASS, mxREAL);
-    *((uint64_t *)mxGetData(result)) = reinterpret_cast<uint64_t>(ptr);
-    return result;
-}
-
-
-/**
- * convert C array to mxArray
- * @param M - number of rows
- * @param N - number of cols
- */
-mxArray *arrayToArray(const double *src, size_t M, size_t N)
-{
-    mxArray *result = mxCreateDoubleMatrix(M, N, mxREAL);
-    memcpy(mxGetPr(result), src, sizeof(double) * M * N);
-    return result;
-}
-
-
-
-/**
- * get int from array. note that matlab ALWAYS passes ints as doubles
- */
-int arrayToInt(const mxArray *arr)
-{
-    return (int)(*mxGetPr(arr));
-}
-
-
-FactorNode *arrayToNode(const mxArray *arr)
-{
-    // TODO: this is ugly
-    return *((FactorNode **)mxGetData(arr));
-}
-
-
-Message::Type messageType(const mxArray *msg)
-{
-    return mxGetField(msg, 0, "type") ? (Message::Type) mxGetPr(mxGetField(msg, 0, "type"))[0] : Message::UNKNOWN;
-}
-
-
-
-GaussianMessage createGaussianMessage(const mxArray *msg)
-{
-    // TODO: make it safer
-    int from = mxGetField(msg, 0, "from") ? mxGetPr(mxGetField(msg, 0, "from"))[0] : Message::UNDEFINED_ID;
-    int to = mxGetField(msg, 0, "to") ? mxGetPr(mxGetField(msg, 0, "to"))[0] : Message::UNDEFINED_ID;
-
-    // assuming the type is gaussian
-    mxArray *meanArr = mxGetField(msg, 0, "mean");
-    mxArray *varArr = mxGetField(msg, 0, "var");
-
-    return GaussianMessage(from, to, mxGetPr(meanArr), mxGetPr(varArr), mxGetN(meanArr));
-}
-
-
-/**
- * convert message to the matlab structure
- */
-mxArray *messageToStruct(const GaussianMessage &msg)
-{
-    static const char *FIELDS[] = {"from", "to", "type", "mean", "var"};
-
-    mxArray *result = mxCreateStructMatrix(1, 1, 5, FIELDS);
-
-    mxSetField(result, 0, "from", mxCreateDoubleScalar(msg.from()));
-    mxSetField(result, 0, "to", mxCreateDoubleScalar(msg.to()));
-    mxSetField(result, 0, "type", mxCreateDoubleScalar(msg.type()));
-    mxSetField(result, 0, "mean", arrayToArray(msg.mean(), 1, msg.size()));
-    mxSetField(result, 0, "var", arrayToArray(msg.variance(), msg.size(), msg.size()));
-
-    return result;
-}
 
 
 void createNode(const string &type_name, mxArray *plhs[], const mxArray *prhs[])
 {
-    int id = arrayToInt(prhs[2]);
-
     FactorNode *result = NULL;
     if (type_name == "evidencenode")
-        result = new EvidenceNode(id);
+        result = new EvidenceNode;
     else if (type_name == "addnode")
-        result = new AddNode(id);
+        result = new AddNode;
     else if (type_name == "equalitynode")
-        result = new EqualityNode(id);
+        result = new EqualityNode;
+    else if (type_name == "customnode")
+        result = new CustomNode;
 
 //    else if (type_name == "multiplicationnode")
 //        result = new MultiplicationNode(id);
-
     // saving the pointer
     plhs[0] = ptrToArray(result);
 }
@@ -156,11 +77,10 @@ void processEqualityNode(FactorNode *node, const string &function_name, int nlhs
 // TODO:
 void processCustomNode(FactorNode *node, const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+    CustomNode *custNode = static_cast<CustomNode*>(node);
+    if (function_name == "setFunction")
+        custNode->setFunction(mxArrayToString(prhs[3]));
 }
-
-
-
-
 
 
 /**
@@ -205,6 +125,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             processAddNode(node, function_name, nlhs, plhs, nrhs, prhs);
         else if (type_name == "equalitynode")
             processEqualityNode(node, function_name, nlhs, plhs, nrhs, prhs);
+        else if (type_name == "customnode")
+            processCustomNode(node, function_name, nlhs, plhs, nrhs, prhs);
         else mexErrMsgTxt("Unknown node type or function name");
 
     }

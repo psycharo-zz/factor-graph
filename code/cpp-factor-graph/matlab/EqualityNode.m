@@ -1,7 +1,7 @@
-classdef equalitynode < factornode
+classdef EqualityNode < FactorNode
     methods
-       function this = equalitynode(id)
-           this = this@factornode(id, 'equalitynode');
+       function this = EqualityNode()
+           this = this@FactorNode('equalitynode');
        end
        
        function setConnections(this, a, b, c)

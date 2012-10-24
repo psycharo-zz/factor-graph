@@ -19,10 +19,6 @@ protected:
     GaussianMessage function(int to, const MessageBox &msgs);
 
 public:
-    EqualityNode(int id):
-        FactorNode(id)
-    {}
-
     // setup connections
     // TODO: actually arbitrary number of connections works for this node type
     void setConnections(FactorNode *a, FactorNode *b, FactorNode *c);

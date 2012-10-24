@@ -4,8 +4,6 @@
 
 
 #include "factornode.h"
-#include "util.h"
-
 
 
 class AddNode : public FactorNode
@@ -19,7 +17,11 @@ protected:
     GaussianMessage function(int to, const MessageBox &msgs);
 
 public:
-    AddNode(int id);
+    AddNode();
+
+    void addIncoming(FactorNode *node);
+
+    void addOutgoing(FactorNode *node);
 
     void setConnections(FactorNode *summand1, FactorNode *summand2, FactorNode *result);
 };

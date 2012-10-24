@@ -7,4 +7,5 @@
 #include "addnode.h"
 #include "multiplicationnode.h"
 
+
 #endif // FACTORGRAPH_H

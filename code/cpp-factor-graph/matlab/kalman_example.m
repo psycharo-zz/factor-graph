@@ -1,13 +1,13 @@
 function [ ] = kalman_example()
 
-    xin = evidencenode(1);
-    xout = evidencenode(2);
-    n = evidencenode(3);
-    y = evidencenode(4);
-    e = equalitynode(5);
-    a = addnode(6);
-    u = evidencenode(7);
-    b = addnode(8);
+    xin = EvidenceNode;
+    xout = EvidenceNode;
+    n = EvidenceNode;
+    y = EvidenceNode;
+    e = EqualityNode;
+    a = AddNode;
+    u = EvidenceNode;
+    b = AddNode;
       
     xin.setDest(e);
     b.setConnections(e, u, xout);
@@ -35,7 +35,7 @@ function [ ] = kalman_example()
      u.setInitial(struct('mean',u_const, 'var',0, 'type', 1));
           
      
-     N_ITERATIONS = 200;
+     N_ITERATIONS = 1000;
      samples = [];
      
      result = zeros(N_ITERATIONS, 2);    

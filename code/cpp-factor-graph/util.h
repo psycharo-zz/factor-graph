@@ -11,6 +11,15 @@
 #include <vector>
 
 
+// macroses for compilation
+#ifndef MATLAB
+    #define dgetrf dgetrf_
+    #define dgetri dgetri_
+    #define dgemm dgemm_
+    #define dgemv dgemv_
+#endif
+
+
 extern "C" {
 
     // TODO: vary namings depending on the platform
@@ -37,6 +46,11 @@ extern "C" {
                 double *beta,
                 void *y, size_t *incy);
 }
+
+
+
+
+
 
 
 

@@ -4,13 +4,16 @@
 #include <gtest/gtest.h>
 #include "../evidencenode.h"
 #include "util_test.h"
+#include "../network.h"
+
+
 
 /**
  * @brief TEST basic test for scalar gaussians
  */
 TEST(Scalar, EvidenceFirst) {
-    EvidenceNode node(1);
-    EvidenceNode dest(2);
+    EvidenceNode node;
+    EvidenceNode dest;
 
     // node <---> dest
     node.setDest(&dest);

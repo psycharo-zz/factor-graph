@@ -20,10 +20,26 @@ private:
     vector<double> m_matrix;
 
 public:
-    MultiplicationNode(int _id, const double *_matrix, int _size):
-        FactorNode(_id),
+    MultiplicationNode(const double *_matrix, int _size):
         m_matrix(_matrix, _matrix + _size * _size)
-    {}
+    {
+        m_nodes.resize(2, NULL);
+    }
+
+
+    void addIncoming(FactorNode *node)
+    {
+        m_in = node;
+        m_nodes[0] = m_in;
+    }
+
+    void addOutgoing(FactorNode *node)
+    {
+        m_out = node;
+        m_nodes[1] = m_out;
+    }
+
+
 
     /**
      * @brief setConnections

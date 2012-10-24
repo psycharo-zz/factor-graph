@@ -7,22 +7,22 @@
 #include "../evidencenode.h"
 #include "util_test.h"
 
+#include "../network.h"
 
 /**
  * @brief TEST for scalar gaussian messages
  */
 TEST(Scalar, EqualityFirst) {
-    EqualityNode node(1);
+    EqualityNode node;
 
-    EvidenceNode a(2);
-    EvidenceNode b(3);
-    EvidenceNode c(4);
+    EvidenceNode a;
+    EvidenceNode b;
+    EvidenceNode c;
 
-    node.setConnections(&a, &b, &c);
-
-    a.setDest(&node);
-    b.setDest(&node);
-    c.setDest(&node);
+    Network nwk;
+    nwk.addEdge(&a, &node);
+    nwk.addEdge(&b, &node);
+    nwk.addEdge(&c, &node);
 
     a.setInitital(makeGaussian(10, 5));
     b.setInitital(makeGaussian(20, 4));
@@ -44,17 +44,17 @@ TEST(Scalar, EqualityFirst) {
  * @brief TEST a test for randomly generated multivariate gaussian messages
  */
 TEST_F(MultivariateGaussianTest, EqualityFirst) {
-    EqualityNode node(1);
+    EqualityNode node;
 
-    EvidenceNode a(2);
-    EvidenceNode b(3);
-    EvidenceNode c(4);
+    EvidenceNode a;
+    EvidenceNode b;
+    EvidenceNode c;
 
-    node.setConnections(&a, &b, &c);
+    Network nwk;
+    nwk.addEdge(&a, &node);
+    nwk.addEdge(&b, &node);
+    nwk.addEdge(&c, &node);
 
-    a.setDest(&node);
-    b.setDest(&node);
-    c.setDest(&node);
 
     a.setInitital(MESSAGE1);
     b.setInitital(MESSAGE2);

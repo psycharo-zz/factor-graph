@@ -1,4 +1,4 @@
-classdef factornode < matlab.System
+classdef FactorNode < matlab.System
    
     % the pointer to the cpp code
     properties (Hidden = true, SetAccess = private)
@@ -8,9 +8,9 @@ classdef factornode < matlab.System
     
     methods (Access = protected)
         % constructor
-        function this = factornode(id, type_name)
+        function this = FactorNode(type_name)
             this.type_name = type_name;
-            this.cpp_handle = mexfactorgraph('create', this.type_name, id);
+            this.cpp_handle = mexfactorgraph('create', this.type_name);
         end
        
     end

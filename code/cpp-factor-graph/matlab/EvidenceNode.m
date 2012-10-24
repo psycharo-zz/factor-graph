@@ -1,10 +1,10 @@
-classdef evidencenode < factornode
+classdef EvidenceNode < FactorNode
     %EVIDENCENODE Summary of this class goes here
     %   Detailed explanation goes here
    
     methods
-       function this = evidencenode(id)
-           this = this@factornode(id, 'evidencenode');
+       function this = EvidenceNode()
+           this = this@FactorNode('evidencenode');
        end
       
        function setInitial(this, message)

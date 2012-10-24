@@ -4,6 +4,7 @@
 #include "util_test.h"
 
 #include "../factorgraph.h"
+#include "../network.h"
 
 
 
@@ -13,23 +14,36 @@ TEST(KalmanFilter, Scalar) {
     normal_distribution<double> randn(0, 1);
     default_random_engine generator(chrono::system_clock::now().time_since_epoch().count());
 
-    auto xin = new EvidenceNode(1);
-    auto xout = new EvidenceNode(2);
-    auto n = new EvidenceNode(3);
-    auto y = new EvidenceNode(4);
-    auto e = new EqualityNode(5);
-    auto a = new AddNode(6);
-    auto u = new EvidenceNode(7);
-    auto b = new AddNode(8);
+    auto xin = new EvidenceNode();
+    auto xout = new EvidenceNode();
+    auto n = new EvidenceNode();
+    auto y = new EvidenceNode();
+    auto e = new EqualityNode();
+    auto a = new AddNode();
+    auto u = new EvidenceNode();
+    auto b = new AddNode();
 
-    xin->setDest(e);
-    b->setConnections(e, u, xout);
-    xout->setDest(b);
-    n->setDest(a);
-    y->setDest(a);
-    e->setConnections(xin, a, b);
-    a->setConnections(e, n, y);
-    u->setDest(b);
+
+//                    u
+//             (e)    |
+//      xin --> = --> + --> xout
+//              |    (b)
+//         n--> +(a)
+//              |
+//              y
+    Network nwk;
+    // xin --> e
+    nwk.addEdge(xin, e);
+
+    // b connections
+    nwk.addEdge(e, b);
+    nwk.addEdge(u, b);
+    nwk.addEdge(b, xout);
+
+    // a connections
+    nwk.addEdge(e, a);
+    nwk.addEdge(a, y);
+    nwk.addEdge(n, a);
 
     double sd = 10;
     double sd2 = sd*sd;
@@ -63,8 +77,6 @@ TEST(KalmanFilter, Scalar) {
 
     ASSERT_NEAR(msg.mean()[0], N_ITERATIONS, 2);
     ASSERT_NEAR(msg.variance()[0], 0.1, 0.1);
-
-
 }
 
 
@@ -73,28 +85,42 @@ TEST(KalmanFilter, Scalar) {
  * @brief TEST kalman filtering for multivariate gaussians:
  * TODO: create fixture for generated values ?
  */
-TEST(KalmanFilter, DISABLE_Vector) {
+TEST(KalmanFilter, Vector) {
 
     normal_distribution<double> randn(0, 1);
     default_random_engine generator(chrono::system_clock::now().time_since_epoch().count());
 
-    auto xin = new EvidenceNode(1);
-    auto xout = new EvidenceNode(2);
-    auto n = new EvidenceNode(3);
-    auto y = new EvidenceNode(4);
-    auto e = new EqualityNode(5);
-    auto a = new AddNode(6);
-    auto u = new EvidenceNode(7);
-    auto b = new AddNode(8);
+    auto xin = new EvidenceNode();
+    auto xout = new EvidenceNode();
+    auto n = new EvidenceNode();
+    auto y = new EvidenceNode();
+    auto e = new EqualityNode();
+    auto a = new AddNode();
+    auto u = new EvidenceNode();
+    auto b = new AddNode();
 
-    xin->setDest(e);
-    b->setConnections(e, u, xout);
-    xout->setDest(b);
-    n->setDest(a);
-    y->setDest(a);
-    e->setConnections(xin, a, b);
-    a->setConnections(e, n, y);
-    u->setDest(b);
+
+    //                    u
+    //             (e)    |
+    //      xin --> = --> + --> xout
+    //              |    (b)
+    //         n--> +(a)
+    //              |
+    //              y
+    Network nwk;
+    // xin --> e
+    nwk.addEdge(xin, e);
+
+    // b connections
+    nwk.addEdge(e, b);
+    nwk.addEdge(u, b);
+    nwk.addEdge(b, xout);
+
+    // a connections
+    nwk.addEdge(e, a);
+    nwk.addEdge(a, y);
+    nwk.addEdge(n, a);
+
 
     double sd = 10;
     double sd2 = sd*sd;

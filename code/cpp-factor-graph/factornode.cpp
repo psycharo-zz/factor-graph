@@ -1,8 +1,31 @@
 #include "factornode.h"
 
 
-#include <iostream>
 using namespace std;
+
+int FactorNode::s_idCounter = 0;
+
+
+FactorNode::FactorNode():
+    m_id(s_idCounter++)
+{
+}
+
+
+void FactorNode::addIncoming(FactorNode *node)
+{
+    m_nodes.push_back(node);
+}
+
+
+void FactorNode::addOutgoing(FactorNode *node)
+{
+    m_nodes.push_back(node);
+}
+
+
+
+
 
 //! a single update for messages
 void FactorNode::receive(const GaussianMessage &msg)

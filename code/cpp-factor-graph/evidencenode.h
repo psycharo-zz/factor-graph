@@ -27,10 +27,23 @@ protected:
 
 
 public:
-    EvidenceNode(int id):
-        FactorNode(id),
+    EvidenceNode():
         m_dest(NULL)
     {}
+
+
+    void addIncoming(FactorNode *node)
+    {
+        // TODO: do nothing or
+        m_dest = node;
+    }
+
+
+    void addOutgoing(FactorNode *node)
+    {
+        m_dest = node;
+    }
+
 
     /**
      * @brief receive overriden

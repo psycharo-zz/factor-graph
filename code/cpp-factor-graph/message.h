@@ -184,7 +184,7 @@ public:
      */
     inline size_t size2() const
     {
-        return m_size  * m_size;
+        return m_size * m_size;
     }
 
 
