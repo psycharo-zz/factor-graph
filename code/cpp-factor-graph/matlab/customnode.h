@@ -15,7 +15,7 @@ public:
      * set the name of the function
      * @param _functionName the global name of the function to call
      */
-    void setFunction(const char *name)
+    inline void setFunction(const char *name)
     {
         m_functionName = name;
     }

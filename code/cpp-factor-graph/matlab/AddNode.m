@@ -4,7 +4,7 @@ classdef AddNode < FactorNode
     
     methods
        function this = AddNode()
-           this = this@FactorNode('addnode');
+           this = this@FactorNode('AddNode');
        end
        
        function setConnections(this, summand1, summand2, result)

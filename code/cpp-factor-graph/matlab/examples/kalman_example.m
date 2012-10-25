@@ -8,16 +8,20 @@ function [ ] = kalman_example()
     a = AddNode;
     u = EvidenceNode;
     b = AddNode;
-      
-    xin.setDest(e);
-    b.setConnections(e, u, xout);
-    xout.setDest(b);
-    n.setDest(a);
-    y.setDest(a);
-    e.setConnections(xin, a, b);
-    a.setConnections(e, n, y);
-    u.setDest(b);
-     
+    
+    nwk = Network;
+   
+    nwk.addEdge(xin, e);
+
+    nwk.addEdge(e, b);
+    nwk.addEdge(u, b);
+    nwk.addEdge(b, xout);
+
+    nwk.addEdge(e, a);
+    nwk.addEdge(a, y);
+    nwk.addEdge(n, a);
+    
+
      sd = 10.0;
      sd2 = sd*sd;
      u_const = 1.0;

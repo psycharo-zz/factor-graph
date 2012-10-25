@@ -17,7 +17,7 @@ static const int NUM_MEX_MSG_FIELDS = 5;
 /**
  * convert a pointer to matlab representation
  */
-inline mxArray *ptrToArray(void *ptr)
+inline mxArray *pointerToArray(void *ptr)
 {
     mxArray *result = mxCreateNumericMatrix(1, 1, mxUINT64_CLASS, mxREAL);
     *((uint64_t *)mxGetData(result)) = reinterpret_cast<uint64_t>(ptr);
@@ -51,8 +51,10 @@ inline int arrayToInt(const mxArray *arr)
 inline FactorNode *arrayToNode(const mxArray *arr)
 {
     // TODO: this is ugly
-    return *((FactorNode **)mxGetData(arr));
+    return *(static_cast<FactorNode**>(mxGetData(arr)));
 }
+
+
 
 
 inline Message::Type messageType(const mxArray *msg)

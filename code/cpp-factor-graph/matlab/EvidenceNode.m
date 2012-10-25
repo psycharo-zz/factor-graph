@@ -4,7 +4,7 @@ classdef EvidenceNode < FactorNode
    
     methods
        function this = EvidenceNode()
-           this = this@FactorNode('evidencenode');
+           this = this@FactorNode('EvidenceNode');
        end
       
        function setInitial(this, message)

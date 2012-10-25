@@ -4,7 +4,7 @@ classdef CustomNode < FactorNode
     
     methods
         function this = CustomNode()
-            this = this@FactorNode('customnode');
+            this = this@FactorNode('CustomNode');            
         end
         
         function setFunction(this, functionName)

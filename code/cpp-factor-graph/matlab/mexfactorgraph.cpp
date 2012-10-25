@@ -4,6 +4,7 @@
 
 #include "../factorgraph.h"
 
+
 #include "customnode.h"
 #include "convert.h"
 
@@ -11,25 +12,47 @@
 using namespace std;
 
 
+/* Check for proper number of arguments */
+static const size_t FUNCTION_IDX = 0;
+static const size_t TYPE_IDX = 1;
+static const size_t POINTER_IDX = 2;
+
+
 
 
 void createNode(const string &type_name, mxArray *plhs[], const mxArray *prhs[])
 {
     FactorNode *result = NULL;
-    if (type_name == "evidencenode")
+    if (type_name == "EvidenceNode")
         result = new EvidenceNode;
-    else if (type_name == "addnode")
+    else if (type_name == "AddNode")
         result = new AddNode;
-    else if (type_name == "equalitynode")
+    else if (type_name == "EqualityNode")
         result = new EqualityNode;
-    else if (type_name == "customnode")
+    else if (type_name == "CustomNode")
         result = new CustomNode;
-
 //    else if (type_name == "multiplicationnode")
 //        result = new MultiplicationNode(id);
     // saving the pointer
-    plhs[0] = ptrToArray(result);
+    plhs[0] = pointerToArray(result);
 }
+
+
+
+void processNetwork(const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    if (function_name == "create")
+        plhs[0] = pointerToArray(new Network);
+    else if (function_name == "addEdge")
+    {
+        Network *network = *(static_cast<Network**>(mxGetData(prhs[POINTER_IDX])));
+        FactorNode *a = *(static_cast<FactorNode**>(mxGetData(prhs[POINTER_IDX+1])));
+        FactorNode *b = *(static_cast<FactorNode**>(mxGetData(prhs[POINTER_IDX+2])));
+        network->addEdge(a, b);
+    }
+}
+
+
 
 
 void processEvidenceNode(FactorNode *node, const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -94,38 +117,31 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         return;
     }
 
-    /* Check for proper number of arguments */
-    static const size_t FUNCTION_IDX = 0;
-    static const size_t TYPE_IDX = 1;
-    static const size_t NODE_IDX = 2;
-
     string function_name(mxArrayToString(prhs[FUNCTION_IDX]));
     string type_name(mxArrayToString(prhs[TYPE_IDX]));
 
 
-    if (function_name == "create")
+    if (type_name == "Network")
+        processNetwork(function_name, nlhs, plhs, nrhs, prhs);
+    else if (function_name == "create")
         createNode(type_name, plhs, prhs);
     else if (nrhs >= 3)
     {
-        FactorNode *node = arrayToNode(prhs[NODE_IDX]);
+        FactorNode *node = arrayToNode(prhs[POINTER_IDX]);
 
         if (function_name == "delete")
             delete node;
-        else if (function_name == "get_id")
+        else if (function_name == "id")
             plhs[0] = mxCreateDoubleScalar(node->id());
         else if (function_name == "receive")
-        {
-            // TODO: multiple message types
-            int MESSAGE_IDX = 3;
-            node->receive(createGaussianMessage(prhs[MESSAGE_IDX]));
-        }
-        else if (type_name == "evidencenode")
+            node->receive(createGaussianMessage(prhs[POINTER_IDX+1]));
+        else if (type_name == "EvidenceNode")
             processEvidenceNode(node, function_name, nlhs, plhs, nrhs, prhs);
-        else if (type_name == "addnode")
+        else if (type_name == "AddNode")
             processAddNode(node, function_name, nlhs, plhs, nrhs, prhs);
-        else if (type_name == "equalitynode")
+        else if (type_name == "EqualityNode")
             processEqualityNode(node, function_name, nlhs, plhs, nrhs, prhs);
-        else if (type_name == "customnode")
+        else if (type_name == "CustomNode")
             processCustomNode(node, function_name, nlhs, plhs, nrhs, prhs);
         else mexErrMsgTxt("Unknown node type or function name");
 
