@@ -64,7 +64,7 @@ void processEvidenceNode(FactorNode *node, const string &function_name, int nlhs
         // constructing gaussian message
         const int MESSAGE_IDX = 3;
         GaussianMessage msg = createGaussianMessage(prhs[MESSAGE_IDX]);
-        evdNode->setInitital(msg);
+        evdNode->setInitial(msg);
     }
     else if (function_name == "setDest")
     {
