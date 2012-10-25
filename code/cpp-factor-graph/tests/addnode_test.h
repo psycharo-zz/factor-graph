@@ -38,10 +38,10 @@ TEST(Scalar, AddBackward) {
     EvidenceNode b;
     EvidenceNode c;
 
-    node.setConnections(&a, &b, &c);
-    a.setDest(&node);
-    b.setDest(&node);
-    c.setDest(&node);
+    Network nwk;
+    nwk.addEdge(&a, &node);
+    nwk.addEdge(&b, &node);
+    nwk.addEdge(&node, &c);
 
     c.setInitital(makeGaussian(10, 5));
     b.setInitital(makeGaussian(20, 4));

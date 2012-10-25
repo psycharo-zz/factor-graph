@@ -20,7 +20,7 @@ TEST(Scalar, EvidenceFirst) {
     dest.setDest(&node);
 
     GaussianMessage msg = makeGaussian(2, 3);
-    node.setInitital(msg);
+    node.setInitial(msg);
 
     EXPECT_EQ(msg.mean()[0], dest.evidence().mean()[0]);
     EXPECT_EQ(msg.variance()[0], dest.evidence().variance()[0]);

@@ -55,7 +55,7 @@ public:
     }
 
 
-    void setInitital(const GaussianMessage &msg)
+    void setInitial(const GaussianMessage &msg)
     {
         m_dest->receive(GaussianMessage(id(), m_dest->id(), msg.mean(), msg.variance(), msg.size()));
     }
