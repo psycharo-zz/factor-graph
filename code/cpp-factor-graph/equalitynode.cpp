@@ -65,14 +65,6 @@ GaussianMessage EqualityNode::function(int to, const MessageBox &msgs)
 
 
 
-void EqualityNode::setConnections(FactorNode *a, FactorNode *b, FactorNode *c)
-{
-    m_nodes.clear();
-    m_nodes.push_back(a);
-    m_nodes.push_back(b);
-    m_nodes.push_back(c);
-}
-
 
 
 

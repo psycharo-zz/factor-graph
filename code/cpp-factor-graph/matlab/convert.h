@@ -10,8 +10,13 @@
 #include <stdint.h>
 #include <cstring>
 
-static const char *MEX_MSG_FIELDS[] = {"from", "to", "type", "mean", "var"};
-static const int NUM_MEX_MSG_FIELDS = 5;
+static const char *MEX_FROM = "from";
+static const char *MEX_TO = "to";
+static const char *MEX_TYPE = "type";
+static const char *MEX_MEAN = "mean";
+static const char *MEX_VAR = "var";
+static const char *MEX_MSG_FIELDS[] = {MEX_FROM, MEX_TO, MEX_TYPE, MEX_MEAN, MEX_VAR};
+static const int NUM_MEX_MSG_FIELDS = sizeof(MEX_MSG_FIELDS) / sizeof(char *);
 
 
 /**
@@ -67,12 +72,12 @@ inline Message::Type messageType(const mxArray *msg)
 inline GaussianMessage createGaussianMessage(const mxArray *msg)
 {
     // TODO: make it safer
-    int from = mxGetField(msg, 0, "from") ? mxGetPr(mxGetField(msg, 0, "from"))[0] : Message::UNDEFINED_ID;
-    int to = mxGetField(msg, 0, "to") ? mxGetPr(mxGetField(msg, 0, "to"))[0] : Message::UNDEFINED_ID;
+    int from = mxGetField(msg, 0, MEX_FROM) ? mxGetPr(mxGetField(msg, 0, MEX_FROM))[0] : Message::UNDEFINED_ID;
+    int to = mxGetField(msg, 0, MEX_TO) ? mxGetPr(mxGetField(msg, 0, MEX_TO))[0] : Message::UNDEFINED_ID;
 
     // assuming the type is gaussian
-    mxArray *meanArr = mxGetField(msg, 0, "mean");
-    mxArray *varArr = mxGetField(msg, 0, "var");
+    mxArray *meanArr = mxGetField(msg, 0, MEX_MEAN);
+    mxArray *varArr = mxGetField(msg, 0, MEX_VAR);
 
     return GaussianMessage(from, to, mxGetPr(meanArr), mxGetPr(varArr), mxGetN(meanArr));
 }

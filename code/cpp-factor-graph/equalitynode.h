@@ -6,7 +6,6 @@
 #include "util.h"
 
 
-
 class EqualityNode : public FactorNode
 {
 protected:
@@ -17,11 +16,6 @@ protected:
      * @return gaussian message (m_j, V_j)
      */
     GaussianMessage function(int to, const MessageBox &msgs);
-
-public:
-    // setup connections
-    // TODO: actually arbitrary number of connections works for this node type
-    void setConnections(FactorNode *a, FactorNode *b, FactorNode *c);
 };
 
 

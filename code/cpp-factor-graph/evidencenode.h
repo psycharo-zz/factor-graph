@@ -51,7 +51,7 @@ public:
      */
     void receive(const GaussianMessage &msg)
     {
-        addInMessage(msg);
+        addMessage(msg);
     }
 
 
@@ -66,9 +66,9 @@ public:
     }
 
 
-    GaussianMessage evidence()
+    GaussianMessage evidence() const
     {
-        return inMessage(m_dest->id());
+        return message(m_dest->id());
     }
 };
 

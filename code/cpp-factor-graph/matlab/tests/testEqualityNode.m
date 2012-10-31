@@ -45,12 +45,12 @@ function testMultivariateGaussian
     nwk.addEdge(b, node);
     nwk.addEdge(c, node);
 
-    a.setInitial(struct('type',1, 'mean',mean1, 'var',var1));
-    b.setInitial(struct('type',1, 'mean',mean2, 'var',var2));
+    a.setInitial(struct('type',1, 'mean',TESTmean1, 'var',TESTvar1));
+    b.setInitial(struct('type',1, 'mean',TESTmean2, 'var',TESTvar2));
     msg = c.evidence();
 
-    EXPECTED_VAR=var3;
-    EXPECTED_MEAN=mean3';
+    EXPECTED_VAR=TESTvar3;
+    EXPECTED_MEAN=TESTmean3';
 
     assertEqual(size(msg.mean), size(EXPECTED_MEAN));
     assertEqual(size(msg.var), size(EXPECTED_VAR));

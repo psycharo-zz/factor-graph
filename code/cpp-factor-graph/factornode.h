@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <set>
 #include <string>
 #include <cassert>
 #include <algorithm>
@@ -43,40 +44,53 @@ protected:
     //! the action that this node is actually doing
     virtual GaussianMessage function(int to, const MessageBox &msgs) = 0;
 
-    //! check if there is a message for the given id
-    inline bool hasInMessage(int node_id) const
+    //! check if the message is forward or not
+    inline bool isForward(int to_id) const
     {
-        return m_inMessages.count(node_id) != 0;
+        return m_outgoing.count(to_id) != 0;
+    }
+
+    inline bool isBackward(int to_id) const
+    {
+        return m_incoming.count(to_id) != 0;
+    }
+
+
+    //! check if there is a message for the given id
+    inline bool hasMessage(int node_id) const
+    {
+        return m_messages.count(node_id) != 0;
     }
 
     //! get the message for the specified id
-    inline GaussianMessage inMessage(int node_id) const
+    inline GaussianMessage message(int node_id) const
     {
-        return m_inMessages.at(node_id);
+        return m_messages.at(node_id);
     }
 
 
-    inline MessageBox &inMessages()
+    inline MessageBox &messages()
     {
-        return m_inMessages;
+        return m_messages;
     }
 
     //! add an incoming message
-    inline void addInMessage(const GaussianMessage &msg)
+    inline void addMessage(const GaussianMessage &msg)
     {
-        pair<MessageBox::iterator, bool> res = m_inMessages.insert(make_pair(msg.from(), msg));
+        pair<MessageBox::iterator, bool> res = m_messages.insert(make_pair(msg.from(), msg));
         if (!res.second)
             res.first->second = msg;
     }
 
     //! TODO: at most three of these??
-    vector<FactorNode*> m_nodes;
+    map<int, FactorNode*> m_nodes;
 
     //! incoming connections
-    vector<FactorNode*> m_incomingNodes;
+    set<int> m_incoming;
 
     //! outgoing connections
-    vector<FactorNode*> m_outgoingNodes;
+    set<int> m_outgoing;
+
 
 private:
     //! the unique (TODO) id
@@ -84,8 +98,7 @@ private:
 
 
     //! all incoming messages
-    MessageBox m_inMessages;
-
+    MessageBox m_messages;
 
     //! the overall
     static int s_idCounter;

@@ -3,7 +3,6 @@
 
 #include "factornode.h"
 
-
 /**
  * @brief The Network class
  */

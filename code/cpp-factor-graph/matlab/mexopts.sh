@@ -26,7 +26,7 @@
     TMW_ROOT="$MATLAB"
     MFLAGS=''
     if [ "$ENTRYPOINT" = "mexLibrary" ]; then
-        MLIBS="-L$TMW_ROOT/bin/$Arch -lmx -lmex -lmat -lmwservices -lut"
+        MLIBS="-L$TMW_ROOT/bin/$Arch -lmx -lmex -lmat -lmwservices -lut -lmwblas -lmwlapack"
     else  
         MLIBS="-L$TMW_ROOT/bin/$Arch -lmx -lmex -lmat -lmwblas -lmwlapack"
     fi

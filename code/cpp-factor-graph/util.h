@@ -12,7 +12,7 @@
 
 
 // macroses for compilation
-#ifndef MATLAB
+#if !defined (WIN32)  && !defined (_WIN32) || !defined (_WIN64)
     #define dgetrf dgetrf_
     #define dgetri dgetri_
     #define dgemm dgemm_

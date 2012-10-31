@@ -12,12 +12,14 @@
  * @brief TEST basic test for scalar gaussians
  */
 TEST(Scalar, EvidenceFirst) {
+
+    Network nwk;
     EvidenceNode node;
     EvidenceNode dest;
 
     // node <---> dest
-    node.setDest(&dest);
-    dest.setDest(&node);
+    nwk.addEdge(&node, &dest);
+    nwk.addEdge(&dest, &node);
 
     GaussianMessage msg = makeGaussian(2, 3);
     node.setInitial(msg);

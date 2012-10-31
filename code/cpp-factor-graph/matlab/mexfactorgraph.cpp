@@ -81,19 +81,18 @@ void processEvidenceNode(FactorNode *node, const string &function_name, int nlhs
 
 void processAddNode(FactorNode *node, const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-    AddNode *addNode = static_cast<AddNode*>(node);
-
-    if (function_name == "setConnections")
-        addNode->setConnections(arrayToNode(prhs[3]), arrayToNode(prhs[4]), arrayToNode(prhs[5]));
+//    AddNode *addNode = static_cast<AddNode*>(node);
+//    if (function_name == "setConnections")
+//        addNode->setConnections(arrayToNode(prhs[3]), arrayToNode(prhs[4]), arrayToNode(prhs[5]));
 }
 
 
 void processEqualityNode(FactorNode *node, const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-    EqualityNode *eqNode = static_cast<EqualityNode*>(node);
-    // TODO: check for # of arguments
-    if (function_name == "setConnections")
-        eqNode->setConnections(arrayToNode(prhs[3]), arrayToNode(prhs[4]), arrayToNode(prhs[5]));
+//    EqualityNode *eqNode = static_cast<EqualityNode*>(node);
+//    // TODO: check for # of arguments
+//    if (function_name == "setConnections")
+//        eqNode->setConnections(arrayToNode(prhs[3]), arrayToNode(prhs[4]), arrayToNode(prhs[5]));
 }
 
 

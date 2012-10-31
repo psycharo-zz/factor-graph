@@ -22,38 +22,19 @@ private:
 public:
     MultiplicationNode(const double *_matrix, int _size):
         m_matrix(_matrix, _matrix + _size * _size)
-    {
-        m_nodes.resize(2, NULL);
-    }
+    {}
 
 
     void addIncoming(FactorNode *node)
     {
-        m_in = node;
-        m_nodes[0] = m_in;
+        assert(m_incoming.size() == 0);
+        FactorNode::addIncoming(node);
     }
 
     void addOutgoing(FactorNode *node)
     {
-        m_out = node;
-        m_nodes[1] = m_out;
-    }
-
-
-
-    /**
-     * @brief setConnections
-     * @param _in before multiplication
-     * @param _out after multiplication
-     */
-    void setConnections(FactorNode *_in, FactorNode *_out)
-    {
-        m_in = _in;
-        m_out = _out;
-
-        m_nodes.clear();
-        m_nodes.push_back(m_in);
-        m_nodes.push_back(m_out);
+        assert(m_outgoing.size() == 0);
+        FactorNode::addOutgoing(node);
     }
 
 
@@ -73,17 +54,17 @@ protected:
         vector<double> tmp_variance(size2, 0.0);
         vector<double> tmp_mean(size, 0.0);
 
-        // outgoing message
-        if (to == m_out->id())
+        // forward
+        if (isForward(to))
         {
-            const GaussianMessage &msg = msgs.at(m_in->id());
+            const GaussianMessage &msg = msgs.at(*m_incoming.begin());
             matrix_mult(size, size, size, m_matrix.data(), msg.variance(), tmp_variance.data());
             matrix_mult(size, size, size, tmp_variance.data(), m_matrix.data(), result.variance(), false, true);
             matrix_vector_mult(size, size, m_matrix.data(), msg.mean(), result.mean());
         }
-        else
+        else if (isBackward(to))
         {
-            const GaussianMessage &msg = msgs.at(m_out->id());
+            const GaussianMessage &msg = msgs.at(*m_outgoing.begin());
 
             // W_y = V_y^-1
             vector<double> tmp_inverse(msg.variance(), msg.variance() + size2);
@@ -101,13 +82,11 @@ protected:
             // m_x = W^-1 (A^T W_y m_y) = V (tmp m_y)
             matrix_vector_mult(size, size, result.variance(), tmp_mean.data(), result.mean(), true);
         }
+        else
+            throw "MultiplicatioNode: unknown id";
 
         return result;
     }
-
-private:
-
-
 
 
 };

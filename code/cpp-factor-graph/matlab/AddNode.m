@@ -6,12 +6,7 @@ classdef AddNode < FactorNode
        function this = AddNode()
            this = this@FactorNode('AddNode');
        end
-       
-       function setConnections(this, summand1, summand2, result)
-           mexfactorgraph('setConnections', this.type_name, this.cpp_handle, summand1.cpp_handle, summand2.cpp_handle, result.cpp_handle);
-       end
     end
-        
     
 end
 

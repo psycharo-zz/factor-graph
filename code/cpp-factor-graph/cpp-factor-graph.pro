@@ -37,10 +37,10 @@ HEADERS += \
 
 
 # DEBUG
-INCLUDEPATH += /home/shakya/bin/matlab-2012a/extern/include
+INCLUDEPATH += /home/timur/bin/matlab-2012b/extern/include
 
 unix {
-    LIBS += -llapack -lgsl -lblas -L/usr/src/gtest -lgtest -lpthread
+    LIBS += -llapack -lblas -L/usr/src/gtest -lgtest -lpthread
 }
 
 

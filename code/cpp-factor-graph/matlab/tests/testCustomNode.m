@@ -1,13 +1,12 @@
-function test_suite = testAddNode()
-%TESTADDNODE Summary of this function goes here
+function test_suite = testCustomNode
+%TESTCUSTOMNODE Summary of this function goes here
 %   Detailed explanation goes here
 initTestSuite;
 
-
-function testForward
-
+function testAddForwardNode
     nwk = Network;
-    node = AddNode;
+    node = CustomAddNode;
+    
     a = EvidenceNode;
     b = EvidenceNode;
     c = EvidenceNode;
@@ -15,29 +14,29 @@ function testForward
     nwk.addEdge(b, node);
     nwk.addEdge(node, c);
     
-    a.setInitial(struct('type', 1,'mean',10,'var',5));
-    b.setInitial(struct('type', 1,'mean',20,'var',4));
-
     EXPECTED_MEAN_C = 30;
     EXPECTED_VAR_C = 9;
+    
+    a.setInitial(struct('type', 1,'mean',10,'var',5));
+    b.setInitial(struct('type', 1,'mean',20,'var',4));
 
     msg = c.evidence();
     assertEqual(size(msg.mean,2), 1);
     assertElementsAlmostEqual(msg.mean, EXPECTED_MEAN_C);
     assertElementsAlmostEqual(msg.var, EXPECTED_VAR_C);
-
-
-
-function testBackward
-
+    
+    
+function testAddBackwardNode
     nwk = Network;
-    node = AddNode;
+    node = CustomAddNode;
+    
     a = EvidenceNode;
     b = EvidenceNode;
     c = EvidenceNode;
     nwk.addEdge(a, node);
     nwk.addEdge(b, node);
     nwk.addEdge(node, c);
+
 
     c.setInitial(struct('type', 1,'mean',10,'var',5));
     b.setInitial(struct('type', 1,'mean',20,'var',4));
@@ -50,4 +49,6 @@ function testBackward
     assertElementsAlmostEqual(msg.var, EXPECTED_VAR_A);
 
 
+    
+    
 
