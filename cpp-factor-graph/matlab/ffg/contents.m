@@ -2,14 +2,12 @@
 % Version 1.0 (R2012b)
 %
 %
-
 % FILES:
 %
 % contents.m              : this file (needed for matlab help)
 %
 %
 % examples                : folder containing a few examples, specifically:
-
 %
 % HISTORY:
 %

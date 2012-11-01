@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../message.h"
+#include <message.h>
 
 #include <random>
 #include <chrono>

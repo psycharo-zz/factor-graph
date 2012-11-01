@@ -3,10 +3,8 @@
 
 #include "util_test.h"
 
-#include "../factorgraph.h"
-#include "../network.h"
-
-
+#include <factorgraph.h>
+#include <network.h>
 
 
 TEST(KalmanFilter, Scalar) {
