@@ -42,9 +42,7 @@ public:
      * @param data
      * @param n
      */
-    Message(Type _type, int _from, int _to):
-        m_from(_from),
-        m_to(_to),
+    Message(Type _type):
         m_type(_type)
 
     {}
@@ -56,30 +54,6 @@ public:
     }
 
 
-    //! @return the sender of the message
-    inline int from() const
-    {
-        return m_from;
-    }
-
-    //! @return the receipient of the message
-    inline int to() const
-    {
-        return m_to;
-    }
-
-    inline bool operator<(const Message &other) const
-    {
-        return m_from < other.m_from;
-    }
-
-
-protected:
-    //! the source node of the message
-    int m_from;
-
-    //! the destination node of the message
-    int m_to;
 
 private:
     //! the type of the message
@@ -111,8 +85,8 @@ public:
      * @param _precision W - precision matrix (NxN)
      * @param _size N - # of dimensions
      */
-    GaussianMessage(int from, int to, const double *_median, const double *_variance, size_t _size):
-        Message(GAUSSIAN, from, to),
+    GaussianMessage(const double *_median, const double *_variance, size_t _size):
+        Message(GAUSSIAN),
         m_size(_size)
     {
         m_mean.assign(_median, _median + _size);
@@ -126,8 +100,8 @@ public:
      * @param to
      * @param _size
      */
-    GaussianMessage(int from, int to, size_t _size):
-        Message(GAUSSIAN, from, to),
+    GaussianMessage(size_t _size):
+        Message(GAUSSIAN),
         m_size(_size)
     {
         m_mean.resize(size(), 0.0);

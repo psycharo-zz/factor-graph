@@ -19,8 +19,8 @@ TEST(Scalar, AddForward) {
     nwk.addEdge(&b, &node);
     nwk.addEdge(&node, &c);
 
-    a.setInitial(makeGaussian(10, 5));
-    b.setInitial(makeGaussian(20, 4));
+    a.propagate(makeGaussian(10, 5));
+    b.propagate(makeGaussian(20, 4));
 
     double EXPECTED_MEAN_C = 30;
     double EXPECTED_VAR_C = 9;
@@ -43,8 +43,8 @@ TEST(Scalar, AddBackward) {
     nwk.addEdge(&b, &node);
     nwk.addEdge(&node, &c);
 
-    c.setInitial(makeGaussian(10, 5));
-    b.setInitial(makeGaussian(20, 4));
+    c.propagate(makeGaussian(10, 5));
+    b.propagate(makeGaussian(20, 4));
 
     double EXPECTED_MEAN_A = -10;
     double EXPECTED_VAR_A = 9;

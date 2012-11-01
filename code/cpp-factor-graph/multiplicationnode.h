@@ -44,11 +44,12 @@ protected:
     GaussianMessage function(int to, const MessageBox &msgs)
     {
         assert(!msgs.empty());
+        assert(m_nodes.count(to));
 
         size_t size = msgs.begin()->second.size();
         size_t size2 = size * size;
 
-        GaussianMessage result(id(), to, size);
+        GaussianMessage result(size);
 
 
         vector<double> tmp_variance(size2, 0.0);
@@ -62,7 +63,7 @@ protected:
             matrix_mult(size, size, size, tmp_variance.data(), m_matrix.data(), result.variance(), false, true);
             matrix_vector_mult(size, size, m_matrix.data(), msg.mean(), result.mean());
         }
-        else if (isBackward(to))
+        else
         {
             const GaussianMessage &msg = msgs.at(*m_outgoing.begin());
 
@@ -82,8 +83,7 @@ protected:
             // m_x = W^-1 (A^T W_y m_y) = V (tmp m_y)
             matrix_vector_mult(size, size, result.variance(), tmp_mean.data(), result.mean(), true);
         }
-        else
-            throw "MultiplicatioNode: unknown id";
+
 
         return result;
     }

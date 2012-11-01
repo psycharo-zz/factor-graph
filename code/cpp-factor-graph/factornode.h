@@ -30,8 +30,13 @@ public:
     //! id accessor
     inline int id() const { return m_id; }
 
-    //! a single update for messages
-    virtual void receive(const GaussianMessage &msg);
+    //! propagate after receiving a message (i.e. receive in non-loopy mode)
+    virtual void propagate(int from, const GaussianMessage &msg);
+
+    //! receive update
+    virtual void receive(int from, const GaussianMessage &msg);
+    //! send update to a node (loopy mode)
+    virtual void send(int to);
 
     //! add ingoing connection to the node
     virtual void addIncoming(FactorNode *node);
@@ -75,9 +80,9 @@ protected:
     }
 
     //! add an incoming message
-    inline void addMessage(const GaussianMessage &msg)
+    inline void addMessage(int from, const GaussianMessage &msg)
     {
-        pair<MessageBox::iterator, bool> res = m_messages.insert(make_pair(msg.from(), msg));
+        pair<MessageBox::iterator, bool> res = m_messages.insert(make_pair(from, msg));
         if (!res.second)
             res.first->second = msg;
     }
@@ -95,7 +100,6 @@ protected:
 private:
     //! the unique (TODO) id
     int m_id;
-
 
     //! all incoming messages
     MessageBox m_messages;

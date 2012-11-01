@@ -7,12 +7,8 @@ classdef EvidenceNode < FactorNode
            this = this@FactorNode('EvidenceNode');
        end
       
-       function setInitial(this, message)
-           mexfactorgraph('setInitial', this.type_name, this.cpp_handle, message);
-       end
-
-       function setDest(this, node)
-           mexfactorgraph('setDest', this.type_name, this.cpp_handle, node.cpp_handle);
+       function propagate(this, message)
+           mexfactorgraph('propagate', this.type_name, this.cpp_handle, message);
        end
 
        function res = evidence(this)

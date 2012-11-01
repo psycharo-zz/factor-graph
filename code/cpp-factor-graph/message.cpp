@@ -1,9 +1,9 @@
 #include "message.h"
 
+const int Message::UNDEFINED_ID;
+
 ostream& operator <<(ostream &os, const GaussianMessage &msg)
 {
-    os << msg.from() << " " << msg.to() << endl;
-
     os << "mean[ ";
     for (size_t i = 0; i < msg.size(); i++)
         os << msg.mean()[i] << " ";

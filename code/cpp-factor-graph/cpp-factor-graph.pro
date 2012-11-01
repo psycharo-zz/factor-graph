@@ -9,9 +9,10 @@ SOURCES += main.cpp \
     message.cpp \
     equalitynode.cpp \
     addnode.cpp \
+    network.cpp \
     matlab/customnode.cpp \
-    matlab/mexfactorgraph.cpp \
-    network.cpp
+    matlab/mexfactorgraph.cpp
+
 
 
 QMAKE_CXXFLAGS += -std=c++0x
@@ -31,9 +32,12 @@ HEADERS += \
     tests/addnode_test.h \
     tests/equalitynode_test.h \
     tests/kalmanfilter_test.h \
-    matlab/customnode.h \
     network.h \
-    matlab/convert.h
+    tests/schedule_test.h \
+    tests/multiplicationnode_test.h \
+    matlab/convert.h \
+    matlab/customnode.h \
+
 
 
 # DEBUG

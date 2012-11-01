@@ -14,9 +14,10 @@ GaussianMessage CustomNode::function(int to, const MessageBox &msgs)
     MessageBox::const_iterator it = msgs.begin();
     for (int i = 0; i < msgs.size(); ++i)
     {
+        const int from = it->first;
         const GaussianMessage &msg = it->second;
-        mxSetField(mexMsgs, i, MEX_FROM, mxCreateDoubleScalar(msg.from()));
-        mxSetField(mexMsgs, i, MEX_TO, mxCreateDoubleScalar(msg.to()));
+
+        mxSetField(mexMsgs, i, MEX_FROM, mxCreateDoubleScalar(from));
         mxSetField(mexMsgs, i, MEX_TYPE, mxCreateDoubleScalar(msg.type()));
         mxSetField(mexMsgs, i, MEX_MEAN, arrayToArray(msg.mean(), 1, msg.size()));
         mxSetField(mexMsgs, i, MEX_VAR, arrayToArray(msg.variance(), msg.size(), msg.size()));
@@ -48,7 +49,7 @@ GaussianMessage CustomNode::function(int to, const MessageBox &msgs)
     for (int i = 0; i < NRHS; i++)
         mxDestroyArray(prhs[i]);
 
-    return createGaussianMessage(plhs);;
+    return createGaussianMessage(plhs);
 }
 
 

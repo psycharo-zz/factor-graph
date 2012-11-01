@@ -15,8 +15,8 @@ function testScalarGaussian
     nwk.addEdge(b, node);
     nwk.addEdge(c, node);
 
-    a.setInitial(struct('type',1, 'mean',10, 'var',5));
-    b.setInitial(struct('type',1, 'mean',20, 'var',4));
+    a.propagate(struct('type',1, 'mean',10, 'var',5));
+    b.propagate(struct('type',1, 'mean',20, 'var',4));
     msg = c.evidence();
     
 
@@ -45,8 +45,8 @@ function testMultivariateGaussian
     nwk.addEdge(b, node);
     nwk.addEdge(c, node);
 
-    a.setInitial(struct('type',1, 'mean',TESTmean1, 'var',TESTvar1));
-    b.setInitial(struct('type',1, 'mean',TESTmean2, 'var',TESTvar2));
+    a.propagate(struct('type',1, 'mean',TESTmean1, 'var',TESTvar1));
+    b.propagate(struct('type',1, 'mean',TESTmean2, 'var',TESTvar2));
     msg = c.evidence();
 
     EXPECTED_VAR=TESTvar3;

@@ -10,7 +10,7 @@ GaussianMessage AddNode::function(int to, const MessageBox &msgs)
     size_t size = msgs.begin()->second.size();
     size_t size2 = size * size;
 
-    GaussianMessage result(id(), to, size);
+    GaussianMessage result(size);
 
     double *median = result.mean();
     double *variance = result.variance();

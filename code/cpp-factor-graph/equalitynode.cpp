@@ -10,7 +10,7 @@ GaussianMessage EqualityNode::function(int to, const MessageBox &msgs)
 
     size_t size2 = size * size;
 
-    GaussianMessage result(id(), to, size);
+    GaussianMessage result(size);
 
     // m_j size
     double *mean = result.mean();
@@ -29,10 +29,11 @@ GaussianMessage EqualityNode::function(int to, const MessageBox &msgs)
 
     for (MessageBox::const_iterator it = msgs.begin(); it != msgs.end(); ++it)
     {
+        const int from = it->first;
         const GaussianMessage &msg = it->second;
 
         // skipping the message itself
-        if (msg.from() == to)
+        if (from == to)
             continue;
 
         // tmp = V

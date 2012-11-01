@@ -52,12 +52,12 @@ TEST(KalmanFilter, Scalar) {
     GaussianMessage msg = makeGaussian({1 +  randn(generator)*sd},
                                         {sd2});
 
-    xout->setInitial(msg);
+    xout->propagate(msg);
 
-    n->setInitial(makeGaussian({0},
+    n->propagate(makeGaussian({0},
                                  {sd2}));
 
-    u->setInitial(makeGaussian({u_const},
+    u->propagate(makeGaussian({u_const},
                                  {0}));
 
 
@@ -66,10 +66,10 @@ TEST(KalmanFilter, Scalar) {
     for (int i = 1; i <= N_ITERATIONS; i++)
     {
         // signal to xin
-        xin->setInitial(msg);
+        xin->propagate(msg);
 
         //  observable value to y
-        y->setInitial(makeGaussian({i+randn(generator)},
+        y->propagate(makeGaussian({i+randn(generator)},
                                      {0}));
         msg = xout->evidence();
     }
@@ -131,13 +131,13 @@ TEST(KalmanFilter, Vector) {
                                         {sd2, 0,
                                          0, sd2});
 
-    xout->setInitial(msg);
+    xout->propagate(msg);
 
-    n->setInitial(makeGaussian({0, 0},
+    n->propagate(makeGaussian({0, 0},
                                  {sd2, 0,
                                   0, sd2}));
 
-    u->setInitial(makeGaussian({u_const, u_const},
+    u->propagate(makeGaussian({u_const, u_const},
                                  {0, 0,
                                   0, 0}));
 
@@ -147,10 +147,10 @@ TEST(KalmanFilter, Vector) {
     for (int i = 1; i <= N_ITERATIONS; i++)
     {
         // signal to xin
-        xin->setInitial(msg);
+        xin->propagate(msg);
 
         //  observable value to y
-        y->setInitial(makeGaussian({i+randn(generator), i+randn(generator)},
+        y->propagate(makeGaussian({i+randn(generator), i+randn(generator)},
                                      {0, 0,
                                       0, 0}));
         msg = xout->evidence();

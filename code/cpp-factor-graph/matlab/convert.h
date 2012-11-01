@@ -11,11 +11,10 @@
 #include <cstring>
 
 static const char *MEX_FROM = "from";
-static const char *MEX_TO = "to";
 static const char *MEX_TYPE = "type";
 static const char *MEX_MEAN = "mean";
 static const char *MEX_VAR = "var";
-static const char *MEX_MSG_FIELDS[] = {MEX_FROM, MEX_TO, MEX_TYPE, MEX_MEAN, MEX_VAR};
+static const char *MEX_MSG_FIELDS[] = {MEX_FROM, MEX_TYPE, MEX_MEAN, MEX_VAR};
 static const int NUM_MEX_MSG_FIELDS = sizeof(MEX_MSG_FIELDS) / sizeof(char *);
 
 
@@ -71,15 +70,11 @@ inline Message::Type messageType(const mxArray *msg)
 
 inline GaussianMessage createGaussianMessage(const mxArray *msg)
 {
-    // TODO: make it safer
-    int from = mxGetField(msg, 0, MEX_FROM) ? mxGetPr(mxGetField(msg, 0, MEX_FROM))[0] : Message::UNDEFINED_ID;
-    int to = mxGetField(msg, 0, MEX_TO) ? mxGetPr(mxGetField(msg, 0, MEX_TO))[0] : Message::UNDEFINED_ID;
-
     // assuming the type is gaussian
     mxArray *meanArr = mxGetField(msg, 0, MEX_MEAN);
     mxArray *varArr = mxGetField(msg, 0, MEX_VAR);
 
-    return GaussianMessage(from, to, mxGetPr(meanArr), mxGetPr(varArr), mxGetN(meanArr));
+    return GaussianMessage(mxGetPr(meanArr), mxGetPr(varArr), mxGetN(meanArr));
 }
 
 
@@ -88,13 +83,11 @@ inline GaussianMessage createGaussianMessage(const mxArray *msg)
  */
 inline mxArray *messageToStruct(const GaussianMessage &msg)
 {
-    mxArray *result = mxCreateStructMatrix(1, 1, 5, MEX_MSG_FIELDS);
+    mxArray *result = mxCreateStructMatrix(1, 1, NUM_MEX_MSG_FIELDS, MEX_MSG_FIELDS);
 
-    mxSetField(result, 0, "from", mxCreateDoubleScalar(msg.from()));
-    mxSetField(result, 0, "to", mxCreateDoubleScalar(msg.to()));
-    mxSetField(result, 0, "type", mxCreateDoubleScalar(msg.type()));
-    mxSetField(result, 0, "mean", arrayToArray(msg.mean(), 1, msg.size()));
-    mxSetField(result, 0, "var", arrayToArray(msg.variance(), msg.size(), msg.size()));
+    mxSetField(result, 0, MEX_TYPE, mxCreateDoubleScalar(msg.type()));
+    mxSetField(result, 0, MEX_MEAN, arrayToArray(msg.mean(), 1, msg.size()));
+    mxSetField(result, 0, MEX_VAR, arrayToArray(msg.variance(), msg.size(), msg.size()));
 
     return result;
 }

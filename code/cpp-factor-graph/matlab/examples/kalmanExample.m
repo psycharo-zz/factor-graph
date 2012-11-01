@@ -34,9 +34,9 @@ function [ ] = kalman_example()
      % 'var' - NxN matrix
      msg = struct('mean',1+randn()*sd, 'var', sd2, 'type', 1);
      
-     xout.setInitial(msg);
-     n.setInitial(struct('mean',0, 'var',sd2, 'type', 1));
-     u.setInitial(struct('mean',u_const, 'var',0, 'type', 1));
+     xout.propagate(msg);
+     n.propagate(struct('mean',0, 'var',sd2, 'type', 1));
+     u.propagate(struct('mean',u_const, 'var',0, 'type', 1));
           
      
      N_ITERATIONS = 1000;
@@ -45,9 +45,9 @@ function [ ] = kalman_example()
      result = zeros(N_ITERATIONS, 2);    
      
      for i = 1:N_ITERATIONS
-          xin.setInitial(msg);
+         xin.propagate(msg);
          samples(i,:) = i+randn()*sd;
-         y.setInitial(struct('mean', samples(i), 'var',0, 'type', 1));
+         y.propagate(struct('mean', samples(i), 'var',0, 'type', 1));
          msg = xout.evidence();
          result(i,:) = [msg.mean, msg.var];
      end

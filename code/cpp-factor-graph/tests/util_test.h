@@ -18,13 +18,13 @@ using namespace std;
 // just for debug
 GaussianMessage makeGaussian(double mean, double variance)
 {
-    return GaussianMessage(GaussianMessage::UNDEFINED_ID, GaussianMessage::UNDEFINED_ID, &mean, &variance, 1);
+    return GaussianMessage(&mean, &variance, 1);
 }
 
 
 GaussianMessage makeGaussian(const vector<double> &mean, const vector<double> &var)
 {
-    return GaussianMessage(GaussianMessage::UNDEFINED_ID, GaussianMessage::UNDEFINED_ID, mean.data(), var.data(), mean.size());
+    return GaussianMessage(mean.data(), var.data(), mean.size());
 }
 
 

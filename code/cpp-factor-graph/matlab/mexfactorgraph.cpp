@@ -31,8 +31,8 @@ void createNode(const string &type_name, mxArray *plhs[], const mxArray *prhs[])
         result = new EqualityNode;
     else if (type_name == "CustomNode")
         result = new CustomNode;
-//    else if (type_name == "multiplicationnode")
-//        result = new MultiplicationNode(id);
+//    else if (type_name == "MultiplicationNode")
+//        result = new MultiplicationNode;
     // saving the pointer
     plhs[0] = pointerToArray(result);
 }
@@ -50,6 +50,23 @@ void processNetwork(const string &function_name, int nlhs, mxArray *plhs[], int 
         FactorNode *b = *(static_cast<FactorNode**>(mxGetData(prhs[POINTER_IDX+2])));
         network->addEdge(a, b);
     }
+    else if (function_name == "setSchedule")
+    {
+        Network *network = *(static_cast<Network**>(mxGetData(prhs[POINTER_IDX])));
+        uint64_t *pointers = (uint64_t *)mxGetData(prhs[POINTER_IDX+1]);
+        size_t size = mxGetN(prhs[POINTER_IDX+1]);
+
+        Network::Schedule schedule;
+        for (size_t i = 0; i < size; i += 2)
+            schedule.push_back(make_pair(reinterpret_cast<FactorNode*>(pointers[i]),
+                                         reinterpret_cast<FactorNode*>(pointers[i+1])));
+        network->setSchedule(schedule);
+    }
+    else if (function_name == "step")
+    {
+        Network *network = *(static_cast<Network**>(mxGetData(prhs[POINTER_IDX])));
+        network->step();
+    }
 }
 
 
@@ -59,23 +76,26 @@ void processEvidenceNode(FactorNode *node, const string &function_name, int nlhs
 {
     EvidenceNode *evdNode = static_cast<EvidenceNode*>(node);
 
-    if (function_name == "setInitial")
+    if (function_name == "propagate")
     {
         // constructing gaussian message
         const int MESSAGE_IDX = 3;
         GaussianMessage msg = createGaussianMessage(prhs[MESSAGE_IDX]);
-        evdNode->setInitial(msg);
+        evdNode->propagate(msg);
     }
-    else if (function_name == "setDest")
+    else if (function_name == "receive")
     {
-        const int DEST_NODE_IDX = 3;
-        evdNode->setDest(arrayToNode(prhs[DEST_NODE_IDX]));
+        // constructing gaussian message
+        const int MESSAGE_IDX = 3;
+        GaussianMessage msg = createGaussianMessage(prhs[MESSAGE_IDX]);
+        evdNode->receive(msg);
     }
     else if (function_name == "evidence")
     {
         GaussianMessage msg = evdNode->evidence();
         plhs[0] = messageToStruct(msg);
     }
+
 }
 
 
@@ -132,8 +152,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             delete node;
         else if (function_name == "id")
             plhs[0] = mxCreateDoubleScalar(node->id());
-        else if (function_name == "receive")
-            node->receive(createGaussianMessage(prhs[POINTER_IDX+1]));
+//        else if (function_name == "propagate" && nrhs == 5)
+//            node->propagate(arrayToInt(prhs[POINTER_IDX+1]), createGaussianMessage(prhs[POINTER_IDX+2]));
         else if (type_name == "EvidenceNode")
             processEvidenceNode(node, function_name, nlhs, plhs, nrhs, prhs);
         else if (type_name == "AddNode")

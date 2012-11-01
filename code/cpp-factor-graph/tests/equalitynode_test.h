@@ -24,8 +24,8 @@ TEST(Scalar, EqualityFirst) {
     nwk.addEdge(&b, &node);
     nwk.addEdge(&c, &node);
 
-    a.setInitial(makeGaussian(10, 5));
-    b.setInitial(makeGaussian(20, 4));
+    a.propagate(makeGaussian(10, 5));
+    b.propagate(makeGaussian(20, 4));
 
     double EXPECTED_MEAN = 15.555555555555557;
     double EXPECTED_VAR = 2.2222222222222223;
@@ -56,8 +56,8 @@ TEST_F(MultivariateGaussianTest, EqualityFirst) {
     nwk.addEdge(&c, &node);
 
 
-    a.setInitial(MESSAGE1);
-    b.setInitial(MESSAGE2);
+    a.propagate(MESSAGE1);
+    b.propagate(MESSAGE2);
     GaussianMessage msg = c.evidence();
 
 
@@ -73,9 +73,9 @@ TEST_F(MultivariateGaussianTest, EqualityFirst) {
 
     EXPECT_EQ(msg.size(), EXPECTED_MEAN.size());
     EXPECT_EQ(msg.size2(), EXPECTED_VAR.size());
-    for (int i = 0; i < msg.size(); i++)
+    for (size_t i = 0; i < msg.size(); i++)
         EXPECT_FLOAT_EQ(msg.mean()[i], EXPECTED_MEAN[i]);
-    for (int i = 0; i < msg.size2(); i++)
+    for (size_t i = 0; i < msg.size2(); i++)
         EXPECT_FLOAT_EQ(msg.variance()[i], EXPECTED_VAR[i]);
 }
 

@@ -10,11 +10,7 @@
  */
 class EvidenceNode : public FactorNode
 {
-private:
-    FactorNode *m_dest;
-
 protected:
-
     /**
      * @brief function overriden
      * @param msgs
@@ -22,53 +18,62 @@ protected:
      */
     GaussianMessage function(int, const MessageBox &msgs)
     {
-        return msgs.begin()->second;
+        return msgs.at(Message::UNDEFINED_ID);
     }
 
 
 public:
-    EvidenceNode():
-        m_dest(NULL)
-    {}
-
 
     void addIncoming(FactorNode *node)
     {
-        // TODO: do nothing or
-        m_dest = node;
+        assert(m_incoming.size() == 0);
+        FactorNode::addIncoming(node);
     }
 
 
     void addOutgoing(FactorNode *node)
     {
-        m_dest = node;
+        assert(m_outgoing.size() == 0);
+        FactorNode::addOutgoing(node);
     }
 
 
-    /**
-     * @brief receive overriden
-     * @param msg
-     */
     void receive(const GaussianMessage &msg)
     {
-        addMessage(msg);
+        addMessage(Message::UNDEFINED_ID, msg);
     }
 
 
-    void setInitial(const GaussianMessage &msg)
+    void propagate(const GaussianMessage &msg)
     {
-        m_dest->receive(GaussianMessage(id(), m_dest->id(), msg.mean(), msg.variance(), msg.size()));
+        destination()->propagate(id(), GaussianMessage(msg.mean(), msg.variance(), msg.size()));
     }
 
-    void setDest(FactorNode *node)
+    /**
+     * @brief propagate overriden
+     * @param msg either a dummy message or a message from the only connection - destination
+     */
+    void propagate(int from, const GaussianMessage &msg)
     {
-        m_dest = node;
+        assert(from == destination()->id());
+        FactorNode::propagate(from, msg);
+    }
+
+    /**
+     * @brief get the destination of the node
+     * @return
+     */
+    inline FactorNode *destination() const
+    {
+        assert(m_nodes.size() == 1);
+        return m_nodes.begin()->second;
     }
 
 
     GaussianMessage evidence() const
     {
-        return message(m_dest->id());
+        return message(destination()->id());
+
     }
 };
 

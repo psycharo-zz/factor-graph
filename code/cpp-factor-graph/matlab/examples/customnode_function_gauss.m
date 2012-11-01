@@ -15,7 +15,6 @@ function out_msg = customnode_function_gauss(from, to, msgs, incoming, outgoing)
     assert(isstruct(msgs));
     assert(all(size(msgs) <= [1 Inf]));
     assert(isa(msgs(1).from,'double'));
-    assert(isa(msgs(1).to,'double'));
     assert(isa(msgs(1).type,'double'));
     assert(isa(msgs(1).mean, 'double') && size(msgs(1).mean, 2) <= Inf);
     assert(isa(msgs(1).var, 'double') && size(msgs(1).var, 2) <= Inf);
@@ -23,7 +22,7 @@ function out_msg = customnode_function_gauss(from, to, msgs, incoming, outgoing)
 %%%%%%%%%%%%%%%%%%%%%%%% your code here %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    out_msg = struct('from', from, 'to', to, 'type',1, 'mean',[], 'var',[]);
+    out_msg = struct('from', from, 'type',1, 'mean',[], 'var',[]);
     
     isForward = isempty(find(incoming == to));
     if isForward

@@ -22,7 +22,7 @@ TEST(Scalar, EvidenceFirst) {
     nwk.addEdge(&dest, &node);
 
     GaussianMessage msg = makeGaussian(2, 3);
-    node.setInitial(msg);
+    node.propagate(msg);
 
     EXPECT_EQ(msg.mean()[0], dest.evidence().mean()[0]);
     EXPECT_EQ(msg.variance()[0], dest.evidence().variance()[0]);
