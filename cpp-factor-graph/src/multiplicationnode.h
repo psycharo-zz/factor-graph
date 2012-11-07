@@ -13,16 +13,35 @@
 class MultiplicationNode : public FactorNode
 {
 private:
-    FactorNode *m_in;
-    FactorNode *m_out;
-
     //! the matrix to multiply on
     vector<double> m_matrix;
 
+    //!
+    int m_rows;
+    int m_cols;
+
 public:
-    MultiplicationNode(const double *_matrix, int _size):
-        m_matrix(_matrix, _matrix + _size * _size)
+    MultiplicationNode(const double *matrix, int nRows, int nCols):
+        m_matrix(matrix, matrix + nRows * nCols),
+        m_rows(nRows),
+        m_cols(nCols)
+    {
+        // for now only square matrices are supported
+        assert(m_rows == m_cols);
+    }
+
+    MultiplicationNode():
+        m_rows(0),
+        m_cols(0)
     {}
+
+
+    void setMatrix(const double *matrix, int nRows, int nCols)
+    {
+        m_matrix.assign(matrix, matrix + nRows * nCols);
+        m_rows = nRows;
+        m_cols = nCols;
+    }
 
 
     void addIncoming(FactorNode *node)
@@ -40,54 +59,7 @@ public:
 
 
 protected:
-    //! the action that this node is actually doing
-    GaussianMessage function(int to, const MessageBox &msgs)
-    {
-        assert(!msgs.empty());
-        assert(m_nodes.count(to));
-
-        size_t size = msgs.begin()->second.size();
-        size_t size2 = size * size;
-
-        GaussianMessage result(size);
-
-
-        vector<double> tmp_variance(size2, 0.0);
-        vector<double> tmp_mean(size, 0.0);
-
-        // forward
-        if (isForward(to))
-        {
-            const GaussianMessage &msg = msgs.at(*m_incoming.begin());
-            matrix_mult(size, size, size, m_matrix.data(), msg.variance(), tmp_variance.data());
-            matrix_mult(size, size, size, tmp_variance.data(), m_matrix.data(), result.variance(), false, true);
-            matrix_vector_mult(size, size, m_matrix.data(), msg.mean(), result.mean());
-        }
-        else
-        {
-            const GaussianMessage &msg = msgs.at(*m_outgoing.begin());
-
-            // W_y = V_y^-1
-            vector<double> tmp_inverse(msg.variance(), msg.variance() + size2);
-            matrix_inverse(tmp_inverse.data(), size2);
-
-            // tmp = A^T W_y
-            matrix_mult(size, size, size, m_matrix.data(), tmp_inverse.data(), tmp_variance.data(), true, false);
-            // W_x = A^T W_y A = tmp A
-            matrix_mult(size, size, size, tmp_variance.data(), m_matrix.data(), result.variance());
-            // V_x = W_x^-1
-            matrix_inverse(result.variance(), size);
-
-            // (tmp m_y) = A^T W_y m_y
-            matrix_vector_mult(size, size, tmp_variance.data(), msg.mean(), tmp_mean.data());
-            // m_x = W^-1 (A^T W_y m_y) = V (tmp m_y)
-            matrix_vector_mult(size, size, result.variance(), tmp_mean.data(), result.mean(), true);
-        }
-
-
-        return result;
-    }
-
+    GaussianMessage function(int to, const MessageBox &msgs);
 
 };
 

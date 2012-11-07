@@ -12,6 +12,8 @@ TEST(KalmanFilter, Scalar) {
     normal_distribution<double> randn(0, 1);
     default_random_engine generator(chrono::system_clock::now().time_since_epoch().count());
 
+
+    // TODO: delete/smartpointers
     auto xin = new EvidenceNode();
     auto xout = new EvidenceNode();
     auto n = new EvidenceNode();

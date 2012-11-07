@@ -29,8 +29,8 @@ void createNode(const string &type_name, mxArray *plhs[], const mxArray *prhs[])
         result = new EqualityNode;
     else if (type_name == "CustomNode")
         result = new CustomNode;
-//    else if (type_name == "MultiplicationNode")
-//        result = new MultiplicationNode;
+    else if (type_name == "MultiplicationNode")
+        result = new MultiplicationNode;
     // saving the pointer
     plhs[0] = pointerToArray(result);
 }
@@ -114,6 +114,20 @@ void processEqualityNode(FactorNode *node, const string &function_name, int nlhs
 }
 
 
+void processMultiplicationNode(FactorNode *node, const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    MultiplicationNode *multNode = static_cast<MultiplicationNode*>(node);
+    if (function_name == "setMatrix")
+    {
+        // matrix
+        double *matrix = static_cast<double*>(mxGetData(prhs[POINTER_IDX+1]));
+        size_t rows = mxGetN(prhs[POINTER_IDX+1]);
+        size_t cols = mxGetM(prhs[POINTER_IDX+1]);
+        multNode->setMatrix(matrix, rows, cols);
+    }
+}
+
+
 // TODO:
 void processCustomNode(FactorNode *node, const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
@@ -137,7 +151,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     string function_name(mxArrayToString(prhs[FUNCTION_IDX]));
     string type_name(mxArrayToString(prhs[TYPE_IDX]));
 
-
     if (type_name == "Network")
         processNetwork(function_name, nlhs, plhs, nrhs, prhs);
     else if (function_name == "create")
@@ -150,8 +163,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             delete node;
         else if (function_name == "id")
             plhs[0] = mxCreateDoubleScalar(node->id());
-//        else if (function_name == "propagate" && nrhs == 5)
-//            node->propagate(arrayToInt(prhs[POINTER_IDX+1]), createGaussianMessage(prhs[POINTER_IDX+2]));
         else if (type_name == "EvidenceNode")
             processEvidenceNode(node, function_name, nlhs, plhs, nrhs, prhs);
         else if (type_name == "AddNode")
@@ -160,6 +171,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             processEqualityNode(node, function_name, nlhs, plhs, nrhs, prhs);
         else if (type_name == "CustomNode")
             processCustomNode(node, function_name, nlhs, plhs, nrhs, prhs);
+        else if (type_name == "MultiplicationNode")
+            processMultiplicationNode(node, function_name, nlhs, plhs, nrhs, prhs);
         else mexErrMsgTxt("Unknown node type or function name");
 
     }

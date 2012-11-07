@@ -34,8 +34,8 @@ extern "C" {
     void dgemm(const char *transa, const char *transb,
                size_t *N, size_t *M, size_t *K, // TODO: check the order here
                 double *alpha,
-                const double *B, size_t *ldb,
                 const double *A, size_t *lda,
+                const double *B, size_t *ldb,
                 double *beta,
                 double *C, size_t *ldc);
 
@@ -65,7 +65,7 @@ extern "C" {
  * @param B - input KxN matrix
  * @param out - output matrix MxN
  */
-inline void matrix_mult(size_t M, size_t N, size_t K, const double *A, const double *B, double *C, bool transA = false, bool transB = false)
+inline void matrix_mult(size_t M_rowsA, size_t N_colsB, size_t K_colsA, const double *A, const double *B, double *C, bool transA = false, bool transB = false)
 {
     char TN = 'N';
     char TT = 'T';
@@ -74,13 +74,13 @@ inline void matrix_mult(size_t M, size_t N, size_t K, const double *A, const dou
 
     // TODO: check if this is working for *nix
     dgemm(transA ? &TT : &TN,
-           transB ? &TT : &TN,
-           &N, &M, &K,
-           &alpha,
-           B, &K,
-           A, &M,
-           &beta,
-           C, &M);
+          transB ? &TT : &TN,
+          &M_rowsA, &N_colsB, &K_colsA,
+          &alpha,
+          A, transA ? &K_colsA : &M_rowsA,
+          B, transB ? &N_colsB : &K_colsA,
+          &beta,
+          C, &M_rowsA);
 }
 
 
@@ -92,7 +92,7 @@ inline void matrix_mult(size_t M, size_t N, size_t K, const double *A, const dou
  * @param X - the vector
  * @param out - the output matrix
  */
-inline void matrix_vector_mult(size_t M, size_t N, const double *A, const double *X, double *out, bool transA = false)
+inline void matrix_vector_mult(size_t M_rowsA, size_t N_colsA, const double *A, const double *X, double *out, bool transA = false)
 {
     char TN = 'N';
     char TT = 'T';
@@ -101,9 +101,9 @@ inline void matrix_vector_mult(size_t M, size_t N, const double *A, const double
     size_t inc = 1;
 
     dgemv(transA ? &TT : &TN,
-           &N, &M,
+           &M_rowsA, &N_colsA,
            &alpha,
-           A, &M,
+           A, &M_rowsA,
            X, &inc,
            &beta,
            out, &inc);
