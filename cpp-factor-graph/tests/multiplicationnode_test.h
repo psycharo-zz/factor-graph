@@ -3,8 +3,12 @@
 
 
 #include "util_test.h"
-
 #include <multiplicationnode.h>
+
+/**
+ * NOTE: more involved tests are in MATLAB
+ */
+
 
 // sanity check for identity matrix multiplication
 TEST(Multiplication, IdentityForward) {
