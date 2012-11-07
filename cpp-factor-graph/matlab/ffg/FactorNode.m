@@ -1,9 +1,9 @@
-classdef FactorNode < Object
+classdef FactorNode < CppObject
    
 
     methods (Access = protected)
         function this = FactorNode(type_name)
-            this = this@Object(type_name);
+            this = this@CppObject(type_name);
         end
     end
     

@@ -1,4 +1,4 @@
-classdef Object < matlab.System
+classdef CppObject < matlab.System
     %OBJECT the base class for this wrappers
     
     
@@ -11,7 +11,7 @@ classdef Object < matlab.System
     
     methods (Access = protected)
         % constructor
-        function this = Object(type_name)
+        function this = CppObject(type_name)
             this.type_name = type_name;
             this.cpp_handle = mexfactorgraph('create', this.type_name);
         end
