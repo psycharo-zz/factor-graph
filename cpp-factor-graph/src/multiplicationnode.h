@@ -8,18 +8,10 @@
 
 
 #include "factornode.h"
-#include "util.h"
+#include "matrixutil.h"
 
 class MultiplicationNode : public FactorNode
 {
-private:
-    //! the matrix to multiply on
-    vector<double> m_matrix;
-
-    //!
-    int m_rows;
-    int m_cols;
-
 public:
     MultiplicationNode(const double *matrix, int nRows, int nCols):
         m_matrix(matrix, matrix + nRows * nCols),
@@ -35,7 +27,15 @@ public:
         m_cols(0)
     {}
 
+    virtual ~MultiplicationNode() {}
 
+
+    /**
+     * @brief setMatrix set the matrix to use
+     * @param matrix
+     * @param nRows
+     * @param nCols
+     */
     void setMatrix(const double *matrix, int nRows, int nCols)
     {
         m_matrix.assign(matrix, matrix + nRows * nCols);
@@ -44,22 +44,36 @@ public:
     }
 
 
+    //! @overload
     void addIncoming(FactorNode *node)
     {
         assert(m_incoming.size() == 0);
         FactorNode::addIncoming(node);
     }
 
+    //! @overload
     void addOutgoing(FactorNode *node)
     {
         assert(m_outgoing.size() == 0);
         FactorNode::addOutgoing(node);
     }
 
+    //! @overload
+    bool isSupported(Message::Type type)
+    {
+        return type == GaussianMessage::GAUSSIAN_VARIANCE;
+    }
 
 
 protected:
     GaussianMessage function(int to, const MessageBox &msgs);
+
+    //! the matrix to multiply on
+    vector<double> m_matrix;
+
+    //!
+    size_t m_rows;
+    size_t m_cols;
 
 };
 

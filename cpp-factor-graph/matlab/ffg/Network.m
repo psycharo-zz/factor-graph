@@ -11,6 +11,10 @@ classdef Network < CppObject
             mexfactorgraph('addEdge', this.type_name, this.cpp_handle, a.cpp_handle, b.cpp_handle)
         end
         
+        function addEdgeTagged(this, a, b, tagA, tagB)
+            mexfactorgraph('addEdgeTagged', this.type_name, this.cpp_handle, a.cpp_handle, b.cpp_handle, tagA, tagB)
+        end
+        
         function setSchedule(this, schedule)
             % schedule - cell array of nodes
             N = size(schedule,2);

@@ -17,6 +17,8 @@
     #define dgetri dgetri_
     #define dgemm dgemm_
     #define dgemv dgemv_
+    #define ddot ddot_
+    #define dscal dscal_
 #endif
 
 
@@ -31,6 +33,7 @@ extern "C" {
     void dgetri(size_t* N, double* A, size_t* lda, size_t* IPIV, double* WORK, size_t* lwork, size_t* INFO);
 
 
+    // blas matrix-matrix multiplication
     void dgemm(const char *transa, const char *transb,
                size_t *N, size_t *M, size_t *K, // TODO: check the order here
                 double *alpha,
@@ -39,12 +42,19 @@ extern "C" {
                 double *beta,
                 double *C, size_t *ldc);
 
-    void dgemv(const char *trans, size_t *N, size_t *M,
+    // blas matrix-vector multiplication
+    void dgemv(const char *trans, size_t *N_rowsA, size_t *M_colsA,
                 double *alpha,
                 const double *A, size_t *lda,
                 const double *X, size_t *incx,
                 double *beta,
                 void *y, size_t *incy);
+
+    // dot product
+    double ddot(size_t *N, const double *X, size_t *incx, const double *Y, size_t *incy);
+
+    // vector
+    void dscal(size_t *N, const double *alpha, double *X, size_t *incx);
 }
 
 
@@ -65,11 +75,11 @@ extern "C" {
  * @param B - input KxN matrix
  * @param out - output matrix MxN
  */
-inline void matrix_mult(size_t M_rowsA, size_t N_colsB, size_t K_colsA, const double *A, const double *B, double *C, bool transA = false, bool transB = false)
+inline void matrix_mult(size_t M_rowsA, size_t N_colsB, size_t K_colsA, const double *A, const double *B, double *C,
+                        bool transA = false, bool transB = false, double alpha = 1.0)
 {
     char TN = 'N';
     char TT = 'T';
-    double alpha = 1.0;
     double beta = 0.0;
 
     // TODO: check if this is working for *nix
@@ -92,21 +102,20 @@ inline void matrix_mult(size_t M_rowsA, size_t N_colsB, size_t K_colsA, const do
  * @param X - the vector
  * @param out - the output matrix
  */
-inline void matrix_vector_mult(size_t M_rowsA, size_t N_colsA, const double *A, const double *X, double *out, bool transA = false)
+inline void matrix_vector_mult(size_t M_rowsA, size_t N_colsA, const double *A, const double *X, double *out, bool transA = false, double alpha = 1.0)
 {
     char TN = 'N';
     char TT = 'T';
-    double alpha = 1.0;
     double beta = 0.0;
     size_t inc = 1;
 
     dgemv(transA ? &TT : &TN,
-           &M_rowsA, &N_colsA,
-           &alpha,
-           A, &M_rowsA,
-           X, &inc,
-           &beta,
-           out, &inc);
+          &M_rowsA, &N_colsA,
+          &alpha,
+          A, transA ? &N_colsA : &M_rowsA,
+          X, &inc,
+          &beta,
+          out, &inc);
 }
 
 
@@ -126,6 +135,26 @@ inline void matrix_inverse(double* A, size_t N)
     dgetri(&N,A,&N,IPIV,WORK,&LWORK,&INFO);
     delete [] IPIV;
     delete [] WORK;
+}
+
+
+/**
+ * @brief compute the dot product of two vectors
+ */
+inline double vector_dot(const double *A, const double *B, size_t NA)
+{
+    size_t one = 1;
+    return ddot(&NA, A, &one, B, &one);
+}
+
+
+/**
+ * @brief multiply vector by a scalar
+ */
+inline void vector_scalar(double *A, size_t NA, double scalar)
+{
+    size_t one = 1.0;
+    dscal(&NA, &scalar, A, &one);
 }
 
 

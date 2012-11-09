@@ -64,7 +64,7 @@
             # C++keyLanguage: C++
             # C++keyVersion: 
             CXX='g++'
-            CXXFLAGS='-ansi -D_GNU_SOURCE'
+            CXXFLAGS='-std=c++0x -D_GNU_SOURCE'
             CXXFLAGS="$CXXFLAGS -D_FILE_OFFSET_BITS=64" 
             CXXFLAGS="$CXXFLAGS -fPIC -pthread"
             CXXLIBS="$RPATH $MLIBS -lm"
@@ -114,7 +114,7 @@
             # C++keyLanguage: C++
             # C++keyVersion: 
             CXX='g++'
-            CXXFLAGS='-ansi -D_GNU_SOURCE'
+            CXXFLAGS='-std=c++0x -D_GNU_SOURCE'
             CXXFLAGS="$CXXFLAGS -fPIC -fno-omit-frame-pointer -pthread"
             CXXLIBS="$RPATH $MLIBS -lm"
             CXXOPTIMFLAGS='-O -DNDEBUG'

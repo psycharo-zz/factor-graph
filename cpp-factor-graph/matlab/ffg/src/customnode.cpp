@@ -5,10 +5,20 @@
 #include "convert.h"
 
 
+
+bool CustomNode::isSupported(Message::Type type)
+{
+    return GaussianMessage::GAUSSIAN_VARIANCE;
+}
+
+
+
 GaussianMessage CustomNode::function(int to, const MessageBox &msgs)
 {
-    mxArray *mexMsgs = mxCreateStructMatrix(1, msgs.size(), NUM_MEX_MSG_FIELDS, MEX_MSG_FIELDS);
+    mxArray *mexMsgs = mxCreateStructMatrix(1, msgs.size(), NUM_MEX_MSG_FIELDS, MSG_FIELDS_GAUSSIAN_VAR);
 
+    // TODO:
+    // switch to an array of structs for nodes, e.g.  struct('type', 'incoming', 'msg', 'message')
     // converting the messages
     MessageBox::const_iterator it = msgs.begin();
     for (int i = 0; i < msgs.size(); ++i)

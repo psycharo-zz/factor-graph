@@ -10,12 +10,17 @@
 #include <stdint.h>
 #include <cstring>
 
+#include <factorgraph.h>
+
+// TODO: make a template-based type caster
 static const char *MEX_FROM = "from";
 static const char *MEX_TYPE = "type";
 static const char *MEX_MEAN = "mean";
 static const char *MEX_VAR = "var";
-static const char *MEX_MSG_FIELDS[] = {MEX_FROM, MEX_TYPE, MEX_MEAN, MEX_VAR};
-static const int NUM_MEX_MSG_FIELDS = sizeof(MEX_MSG_FIELDS) / sizeof(char *);
+static const char *MEX_PRECISION = "precision";
+static const char *MSG_FIELDS_GAUSSIAN_VAR[] = {MEX_FROM, MEX_TYPE, MEX_MEAN, MEX_VAR};
+static const char *MSG_FIELDS_GAUSSIAN_PRECISION[] = {MEX_FROM, MEX_TYPE, MEX_MEAN, MEX_PRECISION};
+static const int NUM_MEX_MSG_FIELDS = sizeof(MSG_FIELDS_GAUSSIAN_VAR) / sizeof(char *);
 
 
 /**
@@ -70,12 +75,27 @@ inline Message::Type messageType(const mxArray *msg)
 
 inline GaussianMessage createGaussianMessage(const mxArray *msg)
 {
-    // assuming the type is gaussian
-    mxArray *meanArr = mxGetField(msg, 0, MEX_MEAN);
-    mxArray *varArr = mxGetField(msg, 0, MEX_VAR);
+    Message::Type type = messageType(msg);
 
-    return GaussianMessage(mxGetPr(meanArr), mxGetPr(varArr), mxGetN(meanArr));
+    if (type == GaussianMessage::GAUSSIAN_VARIANCE)
+    {
+        mxArray *meanArr = mxGetField(msg, 0, MEX_MEAN);
+        mxArray *varArr = mxGetField(msg, 0, MEX_VAR);
+        return GaussianMessage(mxGetPr(meanArr), mxGetPr(varArr), mxGetN(meanArr), type);
+    }
+    else if (type == GaussianMessage::GAUSSIAN_PRECISION)
+    {
+        mxArray *meanArr = mxGetField(msg, 0, MEX_MEAN);
+        mxArray *precisionArr = mxGetField(msg, 0, MEX_PRECISION);
+        return GaussianMessage(mxGetPr(meanArr), mxGetPr(precisionArr), mxGetN(meanArr), type);
+    }
+    else
+        return GaussianMessage(0);
 }
+
+
+
+
 
 
 /**
@@ -83,11 +103,22 @@ inline GaussianMessage createGaussianMessage(const mxArray *msg)
  */
 inline mxArray *messageToStruct(const GaussianMessage &msg)
 {
-    mxArray *result = mxCreateStructMatrix(1, 1, NUM_MEX_MSG_FIELDS, MEX_MSG_FIELDS);
+    mxArray *result = NULL;
 
-    mxSetField(result, 0, MEX_TYPE, mxCreateDoubleScalar(msg.type()));
-    mxSetField(result, 0, MEX_MEAN, arrayToArray(msg.mean(), 1, msg.size()));
-    mxSetField(result, 0, MEX_VAR, arrayToArray(msg.variance(), msg.size(), msg.size()));
+    if (msg.type() == GaussianMessage::GAUSSIAN_VARIANCE)
+    {
+        result = mxCreateStructMatrix(1, 1, NUM_MEX_MSG_FIELDS, MSG_FIELDS_GAUSSIAN_VAR);
+        mxSetField(result, 0, MEX_TYPE, mxCreateDoubleScalar(msg.type()));
+        mxSetField(result, 0, MEX_MEAN, arrayToArray(msg.mean(), 1, msg.size()));
+        mxSetField(result, 0, MEX_VAR, arrayToArray(msg.variance(), msg.size(), msg.size()));
+    }
+    else // if (msg.type() == GaussianMessage::)
+    {
+        result = mxCreateStructMatrix(1, 1, NUM_MEX_MSG_FIELDS, MSG_FIELDS_GAUSSIAN_PRECISION);
+        mxSetField(result, 0, MEX_TYPE, mxCreateDoubleScalar(msg.type()));
+        mxSetField(result, 0, MEX_MEAN, arrayToArray(msg.mean(), 1, msg.size()));
+        mxSetField(result, 0, MEX_PRECISION, arrayToArray(msg.precision(), msg.size(), msg.size()));
+    }
 
     return result;
 }

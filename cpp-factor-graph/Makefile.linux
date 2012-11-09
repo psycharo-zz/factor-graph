@@ -9,5 +9,6 @@ MATLAB:
 	-I$(SRC_PATH) -I$(MATLAB_SRC_PATH) \
 	$(MATLAB_SRC_PATH)/mexfactorgraph.cpp $(MATLAB_SRC_PATH)/customnode.cpp \
 	$(SRC_PATH)/multiplicationnode.cpp $(SRC_PATH)/factornode.cpp $(SRC_PATH)/equalitynode.cpp $(SRC_PATH)/addnode.cpp $(SRC_PATH)/network.cpp $(SRC_PATH)/message.cpp \
+	$(SRC_PATH)/estimatemultiplicationnode.cpp \
 	-output $(OUTNAME) 
 

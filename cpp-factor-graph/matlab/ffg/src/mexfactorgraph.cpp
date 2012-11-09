@@ -31,10 +31,11 @@ void createNode(const string &type_name, mxArray *plhs[], const mxArray *prhs[])
         result = new CustomNode;
     else if (type_name == "MultiplicationNode")
         result = new MultiplicationNode;
+    else if (type_name == "EstimateMultiplicationNode")
+        result = new EstimateMultiplicationNode;
     // saving the pointer
     plhs[0] = pointerToArray(result);
 }
-
 
 
 void processNetwork(const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -47,6 +48,15 @@ void processNetwork(const string &function_name, int nlhs, mxArray *plhs[], int 
         FactorNode *a = *(static_cast<FactorNode**>(mxGetData(prhs[POINTER_IDX+1])));
         FactorNode *b = *(static_cast<FactorNode**>(mxGetData(prhs[POINTER_IDX+2])));
         network->addEdge(a, b);
+    }
+    else if (function_name == "addEdgeTagged")
+    {
+        Network *network = *(static_cast<Network**>(mxGetData(prhs[POINTER_IDX])));
+        FactorNode *a = *(static_cast<FactorNode**>(mxGetData(prhs[POINTER_IDX+1])));
+        FactorNode *b = *(static_cast<FactorNode**>(mxGetData(prhs[POINTER_IDX+2])));
+        string tagForA(mxArrayToString(prhs[POINTER_IDX+3]));
+        string tagForB(mxArrayToString(prhs[POINTER_IDX+4]));
+        network->addEdge(a, b, tagForA, tagForB);
     }
     else if (function_name == "setSchedule")
     {
@@ -128,6 +138,23 @@ void processMultiplicationNode(FactorNode *node, const string &function_name, in
 }
 
 
+
+void processEstimateMultiplicationNode(FactorNode *node, const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    EstimateMultiplicationNode *estNode = static_cast<EstimateMultiplicationNode*>(node);
+    if (function_name == "setMatrix")
+    {
+        // matrix
+        double *matrix = static_cast<double*>(mxGetData(prhs[POINTER_IDX+1]));
+        size_t rows = mxGetN(prhs[POINTER_IDX+1]);
+        size_t cols = mxGetM(prhs[POINTER_IDX+1]);
+        assert(rows == cols);
+        estNode->setMatrix(matrix, cols);
+    }
+
+}
+
+
 // TODO:
 void processCustomNode(FactorNode *node, const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
@@ -173,6 +200,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             processCustomNode(node, function_name, nlhs, plhs, nrhs, prhs);
         else if (type_name == "MultiplicationNode")
             processMultiplicationNode(node, function_name, nlhs, plhs, nrhs, prhs);
+        else if (type_name == "EstimateMultiplicationNode")
+            processEstimateMultiplicationNode(node, function_name, nlhs, plhs, nrhs, prhs);
         else mexErrMsgTxt("Unknown node type or function name");
 
     }

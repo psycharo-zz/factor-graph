@@ -35,6 +35,7 @@ public:
 
     //! receive update
     virtual void receive(int from, const GaussianMessage &msg);
+
     //! send update to a node (loopy mode)
     virtual void send(int to);
 
@@ -44,22 +45,36 @@ public:
     //! add outgoing connection to the node
     virtual void addOutgoing(FactorNode *node);
 
+    //! add a custom connection with the given tag
+    virtual void addConnection(FactorNode *node, const string &tag);
+
+    //! check if the message type is supported
+    virtual bool isSupported(Message::Type type) = 0;
+
 
 protected:
     //! the action that this node is actually doing
     virtual GaussianMessage function(int to, const MessageBox &msgs) = 0;
 
     //! check if the message is forward or not
-    inline bool isForward(int to_id) const
+    inline bool isForward(int node_id) const
     {
-        return m_outgoing.count(to_id) != 0;
+        return m_outgoing.count(node_id) != 0;
     }
 
-    inline bool isBackward(int to_id) const
+    inline bool isBackward(int node_id) const
     {
-        return m_incoming.count(to_id) != 0;
+        return m_incoming.count(node_id) != 0;
     }
 
+    /**
+     * @brief isConnection check whether the node is a connection with the specified tag
+     */
+    inline bool isConnection(int node_id, const string &tag)
+    {
+        map<int, string>::const_iterator it = m_connections.find(node_id);
+        return it == m_connections.end() ? false : it->second == tag;
+    }
 
     //! check if there is a message for the given id
     inline bool hasMessage(int node_id) const
@@ -82,12 +97,13 @@ protected:
     //! add an incoming message
     inline void addMessage(int from, const GaussianMessage &msg)
     {
+        assert(isSupported(msg.type()));
         pair<MessageBox::iterator, bool> res = m_messages.insert(make_pair(from, msg));
         if (!res.second)
             res.first->second = msg;
     }
 
-    //! TODO: at most three of these??
+    //! the list of all nodes
     map<int, FactorNode*> m_nodes;
 
     //! incoming connections
@@ -95,6 +111,9 @@ protected:
 
     //! outgoing connections
     set<int> m_outgoing;
+
+    //! custom connections
+    map<int, string> m_connections;
 
 
 private:

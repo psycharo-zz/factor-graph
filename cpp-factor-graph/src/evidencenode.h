@@ -12,6 +12,7 @@ class EvidenceNode : public FactorNode
 {
 protected:
     /**
+     * @overload
      * @brief function overriden
      * @param msgs
      * @return
@@ -23,7 +24,7 @@ protected:
 
 
 public:
-
+    //! @overload
     void addIncoming(FactorNode *node)
     {
         assert(m_incoming.size() == 0);
@@ -31,6 +32,7 @@ public:
     }
 
 
+    //! @overload
     void addOutgoing(FactorNode *node)
     {
         assert(m_outgoing.size() == 0);
@@ -38,18 +40,28 @@ public:
     }
 
 
+    //! @overload
+    bool isSupported(Message::Type /*type*/)
+    {
+        return true;
+    }
+
+    //! set the initial message
     void receive(const GaussianMessage &msg)
     {
         addMessage(Message::UNDEFINED_ID, msg);
     }
 
 
+    //! start propagating with the initial message
     void propagate(const GaussianMessage &msg)
     {
+        addMessage(Message::UNDEFINED_ID, msg);
         destination()->propagate(id(), GaussianMessage(msg.mean(), msg.variance(), msg.size()));
     }
 
     /**
+     * @overload
      * @brief propagate overriden
      * @param msg either a dummy message or a message from the only connection - destination
      */
@@ -61,7 +73,6 @@ public:
 
     /**
      * @brief get the destination of the node
-     * @return
      */
     inline FactorNode *destination() const
     {
@@ -70,10 +81,9 @@ public:
     }
 
 
-    GaussianMessage evidence() const
+    inline GaussianMessage evidence() const
     {
         return message(destination()->id());
-
     }
 };
 

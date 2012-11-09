@@ -3,11 +3,15 @@
 
 
 #include "factornode.h"
-#include "util.h"
+#include "matrixutil.h"
 
 
 class EqualityNode : public FactorNode
 {
+public:
+    //! @overload
+    bool isSupported(Message::Type type);
+
 protected:
     /**
      * @brief function

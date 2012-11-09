@@ -1,12 +1,15 @@
 function arExample()
 %AREXAMPLE example of autoregressive parameter estimation
+
+
+    % basic kalman-filter nodes
     x_prev = EvidenceNode;
     x_next = EvidenceNode;
     y = EvidenceNode;
     noise_U = EvidenceNode;
     b = MultiplicationNode;
 
-    A = MultiplicationNode;
+    A = EstimateMultiplicationNode;
     add_A_b = AddNode;
     equ = EqualityNode;
     c = MultiplicationNode;
@@ -15,26 +18,29 @@ function arExample()
 
     nwk = Network;
 
-    % 1
     nwk.addEdge(x_prev, A);
-    % 2
     nwk.addEdge(A, add_A_b);
-
-    % 3
     nwk.addEdge(noise_U, b);
-    % 4
     nwk.addEdge(b, add_A_b);
-
     nwk.addEdge(add_A_b, equ);
     nwk.addEdge(equ, x_next);
     nwk.addEdge(equ, c);
-
-
     nwk.addEdge(c, add_c_W);
     nwk.addEdge(noise_W, add_c_W);
     nwk.addEdge(add_c_W, y);
    
-% 
+    % parameter estimation nodes for A matrix
+%      A_prev = EvidenceNode;
+%      A_next = EvidenceNode;
+%      A_equ = EqualityNode;
+% %     
+%      nwk.addEdge(A_prev, A_equ);
+%      nwk.addEdge(A_next, A_equ);
+%      nwk.addEdgeTagged(A, A_equ, 'estimate', '');
+    
+    
+    
+    % 
 % We then use iterative message updating,
 % with several rounds of computing, first, the messages 
 
@@ -73,7 +79,7 @@ function arExample()
     matrix_c = matrix_b; 
    
     % number of observations
-    N_OBSERVATIONS = 10^4;
+    N_OBSERVATIONS = 10^3;
  
     % matrix for multiplication node A
     % TODO: zeros or randn?
@@ -122,7 +128,6 @@ function arExample()
 
         % doing the inference
         nwk.makeStep();         
-         
         % 
         msg = x_next.evidence();
 %         result(i,:) = [msg.mean, msg.var];
@@ -130,9 +135,5 @@ function arExample()
      
     msg
     REAL_x
-    
-    
-
-
 end
 

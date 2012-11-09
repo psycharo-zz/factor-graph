@@ -25,6 +25,13 @@ void FactorNode::addOutgoing(FactorNode *node)
 }
 
 
+void FactorNode::addConnection(FactorNode *node, const string &tag)
+{
+    m_nodes.insert(make_pair(node->id(), node));
+    m_connections.insert(make_pair(node->id(), tag));
+}
+
+
 
 //! a single update for messages
 void FactorNode::propagate(int from, const GaussianMessage &msg)

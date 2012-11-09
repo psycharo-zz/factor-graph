@@ -1,6 +1,5 @@
 #include "multiplicationnode.h"
 
-#include <iostream>
 
 //! the action that this node is actually doing
 GaussianMessage MultiplicationNode::function(int to, const MessageBox &msgs)
@@ -12,7 +11,6 @@ GaussianMessage MultiplicationNode::function(int to, const MessageBox &msgs)
     size_t msg_size = msgs.begin()->second.size();
 
     assert(m_cols == msg_size);
-
 
     // forward
     if (isForward(to))
@@ -35,11 +33,6 @@ GaussianMessage MultiplicationNode::function(int to, const MessageBox &msgs)
     else
     {
         size_t msg_size2 = msg_size * msg_size;
-
-        // the output size of the message
-        size_t size = m_cols;
-        // variance
-        size_t size2 = m_cols * m_cols;
 
         GaussianMessage result(m_cols);
 

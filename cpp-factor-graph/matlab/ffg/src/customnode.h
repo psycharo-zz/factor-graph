@@ -20,6 +20,9 @@ public:
         m_functionName = name;
     }
 
+    //! @overload
+    bool isSupported(Message::Type type);
+
 protected:
     GaussianMessage function(int to, const MessageBox &msgs);
 

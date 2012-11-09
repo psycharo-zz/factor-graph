@@ -1,6 +1,13 @@
 #include "equalitynode.h"
 
 
+bool EqualityNode::isSupported(Message::Type type)
+{
+    return type == Message::GAUSSIAN_VARIANCE ||
+           type == Message::GAUSSIAN_PRECISION;
+}
+
+
 GaussianMessage EqualityNode::function(int to, const MessageBox &msgs)
 {
     assert(!msgs.empty());
@@ -36,10 +43,17 @@ GaussianMessage EqualityNode::function(int to, const MessageBox &msgs)
         if (from == to)
             continue;
 
-        // tmp = V
-        tmp_precision.assign(msg.variance(), msg.variance() + size2);
-        // W_i = V^-1 = tmp^-1
-        matrix_inverse(tmp_precision.data(), size);
+        // TODO: make this nicer
+        if (msg.type() == GaussianMessage::GAUSSIAN_VARIANCE)
+        {
+            // tmp = V
+            tmp_precision.assign(msg.variance(), msg.variance() + size2);
+            // W_i = V^-1 = tmp^-1
+            matrix_inverse(tmp_precision.data(), size);
+        }
+        else if (msg.type() == GaussianMessage::GAUSSIAN_PRECISION)
+            tmp_precision.assign(msg.precision(), msg.precision() + size2);
+
 
         // W_j += W_i
         transform(variance, variance + size2, tmp_precision.data(),

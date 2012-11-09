@@ -1,5 +1,17 @@
 #include "addnode.h"
 
+bool AddNode::isSupported(Message::Type type)
+{
+    return type == GaussianMessage::GAUSSIAN_VARIANCE;
+}
+
+
+void AddNode::addOutgoing(FactorNode *node)
+{
+    assert(m_outgoing.size() == 0);
+    FactorNode::addOutgoing(node);
+}
+
 
 GaussianMessage AddNode::function(int to, const MessageBox &msgs)
 {
@@ -42,15 +54,6 @@ GaussianMessage AddNode::function(int to, const MessageBox &msgs)
 
     return result;
 }
-
-
-void AddNode::addOutgoing(FactorNode *node)
-{
-    assert(m_outgoing.size() == 0);
-    FactorNode::addOutgoing(node);
-}
-
-
 
 
 

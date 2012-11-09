@@ -6,6 +6,7 @@
 #include "tests/addnode_test.h"
 #include "tests/schedule_test.h"
 #include "tests/multiplicationnode_test.h"
+#include "tests/esitmatemultiplicationnode_test.h"
 
 
 int main(int argc, char *argv[])

@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <cstring>
+#include <cassert>
 
 
 using namespace std;
@@ -23,7 +24,8 @@ public:
     enum Type
     {
         DISCRETE = 0,
-        GAUSSIAN = 1,
+        GAUSSIAN_VARIANCE = 1,
+        GAUSSIAN_PRECISION = 2,
         CUSTOM, // for possible extensions without cpp code modifications
         UNKNOWN
     };
@@ -76,36 +78,37 @@ private:
 
     vector<double> m_mean;
 
-    vector<double> m_variance;
+    //! data for variance/precision
+    vector<double> m_data;
 
 public:
     /**
-     * @brief GaussianMessage
+     * @brief construct a gaussian (mean, variance) message
      * @param _median - mean vector
-     * @param _precision W - precision matrix (NxN)
+     * @param _variance V - variance matrix (NxN)
      * @param _size N - # of dimensions
      */
-    GaussianMessage(const double *_median, const double *_variance, size_t _size):
-        Message(GAUSSIAN),
+    GaussianMessage(const double *_median, const double *_variance, size_t _size, Message::Type _type = GAUSSIAN_VARIANCE):
+        Message(_type),
         m_size(_size)
     {
         m_mean.assign(_median, _median + _size);
-        m_variance.assign(_variance, _variance + _size * _size);
+        m_data.assign(_variance, _variance + _size * _size);
     }
 
 
     /**
      * @brief construct an empty GaussianMessage of _size
-     * @param from
-     * @param to
-     * @param _size
+     * @param _size the dimensionality
+     * @param _type the type of the message, can be either of GAUSSIAN_VARIANCE or GAUSSIAN_PRECISION
      */
-    GaussianMessage(size_t _size):
-        Message(GAUSSIAN),
+    GaussianMessage(size_t _size, Message::Type _type = GAUSSIAN_VARIANCE):
+        Message(_type),
         m_size(_size)
     {
+        assert(_type == GAUSSIAN_VARIANCE || _type == GAUSSIAN_PRECISION);
         m_mean.resize(size(), 0.0);
-        m_variance.resize(size2(), 0.0);
+        m_data.resize(size2(), 0.0);
     }
 
 
@@ -132,15 +135,39 @@ public:
      */
     inline const double *variance() const
     {
-        return m_variance.data();
+        return m_data.data();
+    }
+
+    /**
+     * @return pointer to the variance matrix
+     * NOTE: only works for type() == GAUSSIAN_VARIANCE
+     */
+    inline double *variance()
+    {
+        assert(type() == GAUSSIAN_VARIANCE);
+        return m_data.data();
     }
 
     /**
      * @return pointer to the precision matrix
+     * NOTE: only works for type() == GAUSSIAN_PRECISION
+     * TODO: INHERITANCE
      */
-    inline double *variance()
+    inline double *precision()
     {
-        return m_variance.data();
+        assert(type() == GAUSSIAN_PRECISION);
+        return m_data.data();
+    }
+
+    /**
+     * @return pointer to the precision matrix
+     * NOTE: only works for type() == GAUSSIAN_PRECISION
+     * TODO: INHERITANCE
+     */
+    inline const double *precision() const
+    {
+        assert(type() == GAUSSIAN_PRECISION);
+        return m_data.data();
     }
 
 
