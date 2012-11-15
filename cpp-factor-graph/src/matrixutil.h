@@ -19,7 +19,12 @@
     #define dgemv dgemv_
     #define ddot ddot_
     #define dscal dscal_
+    #define dgesvd dgesvd_
 #endif
+
+
+
+const int EPSILON = 1e-5;
 
 
 extern "C" {
@@ -43,25 +48,31 @@ extern "C" {
                 double *C, size_t *ldc);
 
     // blas matrix-vector multiplication
-    void dgemv(const char *trans, size_t *N_rowsA, size_t *M_colsA,
-                double *alpha,
-                const double *A, size_t *lda,
-                const double *X, size_t *incx,
-                double *beta,
-                void *y, size_t *incy);
+    void dgemv(const char *trans, const size_t *N_rowsA, const size_t *M_colsA,
+               double *alpha,
+               const double *A, size_t *lda,
+               const double *X, size_t *incx,
+               double *beta,
+               void *y, size_t *incy);
 
     // dot product
     double ddot(size_t *N, const double *X, size_t *incx, const double *Y, size_t *incy);
 
     // vector
     void dscal(size_t *N, const double *alpha, double *X, size_t *incx);
+
+//    SUBROUTINE DGESVD( JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT,
+//                      WORK, LWORK, INFO )
+    // SVD decomposition
+    void dgesvd(char *jobu, char *jobvt,
+                size_t *m, size_t *n,
+                const double *a, size_t *lda,
+                double *s,
+                double *u, size_t *ldu,
+                double *vt, size_t *ldvt,
+                double *work, int *lwork, int *info);
+
 }
-
-
-
-
-
-
 
 
 
@@ -75,7 +86,8 @@ extern "C" {
  * @param B - input KxN matrix
  * @param out - output matrix MxN
  */
-inline void matrix_mult(size_t M_rowsA, size_t N_colsB, size_t K_colsA, const double *A, const double *B, double *C,
+inline void matrix_mult(size_t M_rowsA, size_t N_colsB, size_t K_colsA,
+                        const double *A, const double *B, double *C,
                         bool transA = false, bool transB = false, double alpha = 1.0)
 {
     char TN = 'N';
@@ -92,6 +104,26 @@ inline void matrix_mult(size_t M_rowsA, size_t N_colsB, size_t K_colsA, const do
           &beta,
           C, &M_rowsA);
 }
+
+
+/**
+ * @brief matrix_add
+ * @param M_rows
+ * @param N_cols
+ * @param A
+ * @param B
+ * @param C
+ */
+inline void matrix_add(size_t M_rows, size_t N_cols,
+                       const double *A, const double *B, double *C)
+{
+    std::transform(A, A + M_rows * N_cols, B, C, std::plus<double>());
+}
+
+
+
+
+
 
 
 /**
@@ -156,6 +188,94 @@ inline void vector_scalar(double *A, size_t NA, double scalar)
     size_t one = 1.0;
     dscal(&NA, &scalar, A, &one);
 }
+
+
+/**
+ * @brief compute matrix SVD decomposition A = U S V'
+ * @param A the input matrix
+ * @param M_rows the # of rows
+ * @param N_cols the # of columns
+ * @param U matrix sized M*M
+ * @param S singular values - at most min(M_rows,N_cols)
+ * @param V' transposed left singular values
+ * @param workMult space to use for work matrix
+ * @return true if everything went OK, false otherwise
+ */
+inline void matrix_svd(const double *A, size_t M_rows, size_t N_cols, double* &U, double* &S, double * &VT)
+{
+    char jobu = 'A';
+    char jobvt = 'A';
+
+    size_t min_NM = std::min(M_rows, N_cols);
+    size_t max_NM = std::max(M_rows, N_cols);
+
+    S = new double[min_NM];
+
+    size_t ldu = M_rows;
+    U = new double[ldu * M_rows];
+    size_t ldvt = N_cols;
+    VT = new double[ldvt * N_cols];
+
+    // this is not a magic number, see fortran docs
+    int lwork = 5 * max_NM;
+    double *work = new double[lwork];
+
+    int info = 0;
+
+    dgesvd(&jobu, &jobvt,
+           &M_rows, &N_cols,
+           A, &M_rows,
+           S,
+           U, &ldu,
+           VT, &ldvt,
+           work, &lwork,
+           &info);
+    // TODO: process infO?
+}
+
+
+
+/**
+ * compute the Moore-Penrouse pseudoinverse using SVD
+ * @param A input matrix
+ * @param M_rows # of rows in A and columns in out
+ * @param N_cols # of cols in A and rows in out
+ * @param out the pseudoinverse matrix of A
+ */
+inline void matrix_pseudo_inverse(const double *A, size_t M_rows, size_t N_cols, double *out)
+{
+    // M x M
+    double *U;
+    // min(M, N)
+    double *S;
+    // N x N
+    double *VT;
+
+    // the number of singular values
+    size_t min_NM = std::min(M_rows, N_cols);
+
+    // the matrix in svd is overwritten for some reason
+    std::vector<double> tmp(A, A + M_rows * N_cols);
+
+    matrix_svd(tmp.data(), M_rows, N_cols, U, S, VT);
+
+    tmp.assign(tmp.size(), 0.0);
+
+    // transposed S matrix
+    for (size_t i = 0; i < min_NM; ++i)
+        if (std::fabs(S[i]) > EPSILON)
+            tmp[(N_cols+1) * i] =  1.0 / S[i];
+
+    std::vector<double> VS(M_rows * N_cols);
+
+    matrix_mult(N_cols, M_rows, N_cols, VT, tmp.data(), VS.data(), true);
+    matrix_mult(N_cols, M_rows, M_rows, VS.data(), U, out, false, true);
+}
+
+
+
+
+
 
 
 

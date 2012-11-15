@@ -5,7 +5,7 @@
 
 #include <utility>
 #include <map>
-
+#include <exception>
 
 /**
  * @brief The Network class
@@ -60,7 +60,7 @@ public:
     inline void setSchedule(const Schedule &schedule)
     {
         m_schedule = schedule;
-        assert(m_schedule.size() == m_nodes.size()-1);
+        assert(m_schedule.size() >= m_nodes.size()-1);
         // TODO: check the schedule?
     }
 

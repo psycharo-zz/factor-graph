@@ -10,11 +10,9 @@
 #include <cassert>
 #include <algorithm>
 
-
 using namespace std;
 
 #include "message.h"
-
 
 
 /**
@@ -97,7 +95,8 @@ protected:
     //! add an incoming message
     inline void addMessage(int from, const GaussianMessage &msg)
     {
-        assert(isSupported(msg.type()));
+        if (!isSupported(msg.type()))
+            throw Exception("FactorNode::addMessage: unsupported message type");
         pair<MessageBox::iterator, bool> res = m_messages.insert(make_pair(from, msg));
         if (!res.second)
             res.first->second = msg;
@@ -127,6 +126,9 @@ private:
     static int s_idCounter;
 
 };
+
+
+
 
 
 

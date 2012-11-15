@@ -12,7 +12,7 @@
 /**
  * @brief TEST for scalar gaussian messages
  */
-TEST(Scalar, EqualityFirst) {
+TEST(Equality, EqualityFirst) {
     EqualityNode node;
 
     EvidenceNode a;
@@ -79,6 +79,53 @@ TEST_F(MultivariateGaussianTest, EqualityFirst) {
         EXPECT_FLOAT_EQ(msg.variance()[i], EXPECTED_VAR[i]);
 }
 
+
+
+TEST(Equality, Equal) {
+
+    EvidenceNode x;
+    EvidenceNode y;
+    EvidenceNode z;
+    EqualityNode equ(GaussianMessage::GAUSSIAN_PRECISION);
+
+
+    Network nwk;
+
+    nwk.addEdge(&x, &equ);
+    nwk.addEdge(&y, &equ);
+    nwk.addEdge(&z, &equ);
+
+    Network::Schedule schedule = {
+        {&x, &equ},
+        {&y, &equ},
+        {&equ, &z},
+        {&z, &equ},
+        {&equ, &x}
+    };
+
+    nwk.setSchedule(schedule);
+
+    x.receive(makeGaussian({2, 2}, {10, 0, 0, 10}, GaussianMessage::GAUSSIAN_PRECISION));
+    y.receive(makeGaussian({2, 2}, {10, 0, 0, 10}, GaussianMessage::GAUSSIAN_PRECISION));
+
+    nwk.step();
+
+    vector<double> EXPECTED_MEAN_Z = {2,2};
+    vector<double> EXPECTED_PREC_Z = {20,0,0,20};
+    for (size_t i = 0; i < EXPECTED_MEAN_Z.size(); i++)
+        EXPECT_FLOAT_EQ(z.evidence().mean()[i], EXPECTED_MEAN_Z[i]);
+    for (size_t i = 0; i < EXPECTED_PREC_Z.size(); i++)
+        EXPECT_FLOAT_EQ(z.evidence().precision()[i], EXPECTED_PREC_Z[i]);
+
+
+    vector<double> EXPECTED_MEAN_X = {2,2};
+    vector<double> EXPECTED_PREC_X = {30,0,0,30};
+    for (size_t i = 0; i < EXPECTED_MEAN_X.size(); i++)
+        EXPECT_FLOAT_EQ(x.evidence().mean()[i], EXPECTED_MEAN_X[i]);
+    for (size_t i = 0; i < EXPECTED_PREC_X.size(); i++)
+        EXPECT_FLOAT_EQ(x.evidence().precision()[i], EXPECTED_PREC_X[i]);
+
+}
 
 
 

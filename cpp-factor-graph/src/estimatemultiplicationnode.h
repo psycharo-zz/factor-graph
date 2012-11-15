@@ -1,34 +1,33 @@
 #ifndef ESTIMATEDMULTIPLICATIONNODE_H
 #define ESTIMATEDMULTIPLICATIONNODE_H
 
-#include "factornode.h"
+#include "multiplicationnode.h"
 
 /**
  * @brief The EstimateMultiplicationNode class
  * Table 5.1 [Korl2005]
  */
-
-
-class EstimateMultiplicationNode : public FactorNode
+class EstimateMultiplicationNode : public MultiplicationNode
 {
 public:
     static const char *ESTIMATED_TAG;
 
-    EstimateMultiplicationNode():
-        m_size(0)
-    {}
-
     virtual ~EstimateMultiplicationNode() {}
 
-    /**
-     * @brief setMatrix set the matrix to use directly
-     * @param matrix
-     * @param nSize
-     */
-    void setMatrix(const double *matrix, int nSize)
+    inline void setParam(const double *v, int nSize)
     {
-        m_size = nSize;
-        m_matrix.assign(matrix, matrix + nSize * nSize);
+        m_matrix = Matrix(nSize, nSize);
+
+        for (size_t i = 1; i < size() * size() - size(); i += (size()+1))
+            m_matrix.data()[i] = 1;
+        for (size_t i = 0; i < size(); i++)
+            m_matrix.data()[size() * i] = v[i];
+    }
+
+
+    inline size_t size() const
+    {
+        return m_matrix.rows();
     }
 
     //! @overload
@@ -42,11 +41,6 @@ protected:
     //! @overload
     GaussianMessage function(int to, const MessageBox &msgs);
 
-    //! the matrix to multiply on
-    vector<double> m_matrix;
-
-    //! matrix size
-    size_t m_size;
 };
 
 #endif // ESTIMATEDMULTIPLICATIONNODE_H

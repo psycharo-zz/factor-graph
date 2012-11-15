@@ -15,6 +15,10 @@ public:
 
 protected:
     GaussianMessage function(int to, const MessageBox &msgs);
+
+    GaussianMessage forwardFunction(int to, const MessageBox &msgs);
+    GaussianMessage backwardFunction(int to, const MessageBox &msgs);
+
 };
 
 

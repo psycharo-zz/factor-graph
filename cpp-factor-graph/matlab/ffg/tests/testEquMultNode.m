@@ -1,0 +1,65 @@
+function test_suite = testEquMultNode
+initTestSuite;
+
+function testForward
+
+load('data_gaussian');
+
+nwk = Network;
+x = EvidenceNode;
+y = EvidenceNode;
+z = EvidenceNode;
+
+MATRIX = eye(1, 3);
+
+
+INPUT_X = gaussMessage([1, 1, 1], eye(3,3), 'VARIANCE');
+INPUT_Y = gaussMessage(0.5, 0, 'VARIANCE');
+
+
+equMult = EquMultNode;
+equMult.setMatrix(MATRIX);
+
+% note that the direction is important here
+nwk.addEdge(x, equMult);
+nwk.addEdge(z, equMult);
+nwk.addEdge(equMult, y);
+
+
+y.propagate(INPUT_Y);
+x.propagate(INPUT_X);
+
+
+RESULT = z.evidence();
+
+A = MATRIX;
+mean_x = INPUT_X.mean';
+var_x = INPUT_X.var;
+var_y = INPUT_Y.var;
+mean_y = INPUT_Y.mean';
+G = inv(var_y + A * var_x * A');
+EXPECTED_MEAN = (mean_x + var_x * A' * G * (mean_y - A * mean_x))';
+EXPECTED_VAR = var_x - var_x * A' * G * A * var_x;
+
+
+assertElementsAlmostEqual(RESULT.mean, EXPECTED_MEAN);
+assertElementsAlmostEqual(RESULT.var, EXPECTED_VAR);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    

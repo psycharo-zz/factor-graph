@@ -18,7 +18,9 @@ TEST(EstimateMultiplication, IdentityForward) {
         0, 0, 1
     };
 
-    MultiplicationNode A(matrix, 3, 3);
+    EstimateMultiplicationNode A;
+
+    A.setMatrix(matrix, 3, 3);
 
     nwk.addEdge(&in, &A);
     nwk.addEdge(&A, &out);
@@ -38,8 +40,10 @@ TEST(EstimateMultiplication, IdentityForward) {
 }
 
 
+
 // sanity check for identity matrix multiplication
 TEST(EstimateMultiplication, IdentityBackward) {
+
 
     Network nwk;
 
@@ -52,12 +56,13 @@ TEST(EstimateMultiplication, IdentityBackward) {
         0, 0, 1
     };
 
-    MultiplicationNode A(matrix, 3, 3);
+    EstimateMultiplicationNode A;
+    A.setMatrix(matrix, 3, 3);
 
     nwk.addEdge(&in, &A);
     nwk.addEdge(&A, &out);
 
-    GaussianMessage msg = makeGaussian({1, 2, 3}, {1, 0, 0.5, 0.5, 1, 0, 0, 0, 1});
+    GaussianMessage msg = makeGaussian({1, 2, 3}, {1, 0, 0.5, 0.5, 1, 0, 0, 0, 1}, GaussianMessage::GAUSSIAN_PRECISION);
 
     out.propagate(msg);
 
@@ -66,7 +71,9 @@ TEST(EstimateMultiplication, IdentityBackward) {
     for (size_t i = 0; i < msg.size(); i++)
         EXPECT_FLOAT_EQ(evidence.mean()[i], msg.mean()[i]);
     for (size_t i = 0; i < msg.size2(); i++)
-        EXPECT_FLOAT_EQ(evidence.variance()[i], msg.variance()[i]);
+        EXPECT_FLOAT_EQ(evidence.precision()[i], msg.precision()[i]);
+
+
 }
 
 
@@ -81,7 +88,8 @@ TEST(EstimateMultiplication, IdentityEstimate) {
 
     vector<double> EYE3 = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
-    A.setMatrix(EYE3.data(), 3);
+    A.setMatrix(EYE3.data(), 3, 3);
+
 
     nwk.addEdge(&in, &A);
     nwk.addEdge(&A, &out);
@@ -108,6 +116,25 @@ TEST(EstimateMultiplication, IdentityEstimate) {
 }
 
 
+// matrix update check
+TEST(EstimateMultiplication, ReceiveEstimate) {
+    Network nwk;
+
+    EstimateMultiplicationNode A;
+    EvidenceNode estmt;
+
+    nwk.addEdge(&A, &estmt, EstimateMultiplicationNode::ESTIMATED_TAG);
+
+    auto msg = makeGaussian({1,2,3}, {0,0,0,0,0,0,0,0,0});
+
+    A.receive(estmt.id(), msg);
+
+    vector<double> EXPECTED_MATRIX = {1, 1, 0, 2, 0, 1, 3, 0, 0};
+
+    EXPECT_EQ(A.size(), 3);
+    for (size_t i = 0; i < EXPECTED_MATRIX.size(); i++)
+        EXPECT_FLOAT_EQ(A.matrix()[i], EXPECTED_MATRIX[i]);
+}
 
 
 

@@ -33,6 +33,8 @@ void createNode(const string &type_name, mxArray *plhs[], const mxArray *prhs[])
         result = new MultiplicationNode;
     else if (type_name == "EstimateMultiplicationNode")
         result = new EstimateMultiplicationNode;
+    else if (type_name == "EquMultNode")
+        result = new EquMultNode;
     // saving the pointer
     plhs[0] = pointerToArray(result);
 }
@@ -117,10 +119,10 @@ void processAddNode(FactorNode *node, const string &function_name, int nlhs, mxA
 
 void processEqualityNode(FactorNode *node, const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-//    EqualityNode *eqNode = static_cast<EqualityNode*>(node);
-//    // TODO: check for # of arguments
-//    if (function_name == "setConnections")
-//        eqNode->setConnections(arrayToNode(prhs[3]), arrayToNode(prhs[4]), arrayToNode(prhs[5]));
+    EqualityNode *eqNode = static_cast<EqualityNode*>(node);
+    // TODO: check for # of arguments
+    if (function_name == "setType")
+        eqNode->setType((Message::Type)arrayToInt(prhs[POINTER_IDX+1]));
 }
 
 
@@ -131,12 +133,26 @@ void processMultiplicationNode(FactorNode *node, const string &function_name, in
     {
         // matrix
         double *matrix = static_cast<double*>(mxGetData(prhs[POINTER_IDX+1]));
-        size_t rows = mxGetN(prhs[POINTER_IDX+1]);
-        size_t cols = mxGetM(prhs[POINTER_IDX+1]);
+        size_t rows = mxGetM(prhs[POINTER_IDX+1]);
+        size_t cols = mxGetN(prhs[POINTER_IDX+1]);
         multNode->setMatrix(matrix, rows, cols);
     }
 }
 
+
+void processEquMultNode(FactorNode *node, const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    EquMultNode *estNode = static_cast<EquMultNode*>(node);
+    if (function_name == "setMatrix")
+    {
+        // matrix
+        double *matrix = static_cast<double*>(mxGetData(prhs[POINTER_IDX+1]));
+        size_t rows = mxGetM(prhs[POINTER_IDX+1]);
+        size_t cols = mxGetN(prhs[POINTER_IDX+1]);
+        assert(rows == cols);
+        estNode->setMatrix(matrix, rows, cols);
+    }
+}
 
 
 void processEstimateMultiplicationNode(FactorNode *node, const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -146,12 +162,11 @@ void processEstimateMultiplicationNode(FactorNode *node, const string &function_
     {
         // matrix
         double *matrix = static_cast<double*>(mxGetData(prhs[POINTER_IDX+1]));
-        size_t rows = mxGetN(prhs[POINTER_IDX+1]);
-        size_t cols = mxGetM(prhs[POINTER_IDX+1]);
+        size_t rows = mxGetM(prhs[POINTER_IDX+1]);
+        size_t cols = mxGetN(prhs[POINTER_IDX+1]);
         assert(rows == cols);
-        estNode->setMatrix(matrix, cols);
+        estNode->setMatrix(matrix, rows, cols);
     }
-
 }
 
 
@@ -162,6 +177,9 @@ void processCustomNode(FactorNode *node, const string &function_name, int nlhs, 
     if (function_name == "setFunction")
         custNode->setFunction(mxArrayToString(prhs[3]));
 }
+
+
+
 
 
 /**
@@ -175,38 +193,48 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         return;
     }
 
-    string function_name(mxArrayToString(prhs[FUNCTION_IDX]));
-    string type_name(mxArrayToString(prhs[TYPE_IDX]));
+    try {
 
-    if (type_name == "Network")
-        processNetwork(function_name, nlhs, plhs, nrhs, prhs);
-    else if (function_name == "create")
-        createNode(type_name, plhs, prhs);
-    else if (nrhs >= 3)
-    {
-        FactorNode *node = arrayToNode(prhs[POINTER_IDX]);
+        string function_name(mxArrayToString(prhs[FUNCTION_IDX]));
+        string type_name(mxArrayToString(prhs[TYPE_IDX]));
 
-        if (function_name == "delete")
-            delete node;
-        else if (function_name == "id")
-            plhs[0] = mxCreateDoubleScalar(node->id());
-        else if (type_name == "EvidenceNode")
-            processEvidenceNode(node, function_name, nlhs, plhs, nrhs, prhs);
-        else if (type_name == "AddNode")
-            processAddNode(node, function_name, nlhs, plhs, nrhs, prhs);
-        else if (type_name == "EqualityNode")
-            processEqualityNode(node, function_name, nlhs, plhs, nrhs, prhs);
-        else if (type_name == "CustomNode")
-            processCustomNode(node, function_name, nlhs, plhs, nrhs, prhs);
-        else if (type_name == "MultiplicationNode")
-            processMultiplicationNode(node, function_name, nlhs, plhs, nrhs, prhs);
-        else if (type_name == "EstimateMultiplicationNode")
-            processEstimateMultiplicationNode(node, function_name, nlhs, plhs, nrhs, prhs);
-        else mexErrMsgTxt("Unknown node type or function name");
+        if (type_name == "Network")
+            processNetwork(function_name, nlhs, plhs, nrhs, prhs);
+        else if (function_name == "create")
+            createNode(type_name, plhs, prhs);
+        else if (nrhs >= 3)
+        {
+            FactorNode *node = arrayToNode(prhs[POINTER_IDX]);
+
+            if (function_name == "delete")
+                delete node;
+            else if (function_name == "id")
+                plhs[0] = mxCreateDoubleScalar(node->id());
+            else if (type_name == "EvidenceNode")
+                processEvidenceNode(node, function_name, nlhs, plhs, nrhs, prhs);
+            else if (type_name == "AddNode")
+                processAddNode(node, function_name, nlhs, plhs, nrhs, prhs);
+            else if (type_name == "EqualityNode")
+                processEqualityNode(node, function_name, nlhs, plhs, nrhs, prhs);
+            else if (type_name == "CustomNode")
+                processCustomNode(node, function_name, nlhs, plhs, nrhs, prhs);
+            else if (type_name == "MultiplicationNode")
+                processMultiplicationNode(node, function_name, nlhs, plhs, nrhs, prhs);
+            else if (type_name == "EstimateMultiplicationNode")
+                processEstimateMultiplicationNode(node, function_name, nlhs, plhs, nrhs, prhs);
+            else if (type_name == "EquMultNode")
+                processEquMultNode(node, function_name, nlhs, plhs, nrhs, prhs);
+            else mexErrMsgTxt("Unknown node type or function name");
+
+        }
+        else
+            mexErrMsgTxt("Not enough arguments");
 
     }
-    else
-        mexErrMsgTxt("Not enough arguments");
+    catch (Exception &e)
+    {
+        mexErrMsgTxt(e.what());
+    }
 
 
 }

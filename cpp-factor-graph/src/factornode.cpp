@@ -36,7 +36,7 @@ void FactorNode::addConnection(FactorNode *node, const string &tag)
 //! a single update for messages
 void FactorNode::propagate(int from, const GaussianMessage &msg)
 {
-    for (map<int, FactorNode*>::iterator it = m_nodes.begin(); it != m_nodes.end(); ++it)
+    for (map<int, FactorNode*>::const_iterator it = m_nodes.begin(); it != m_nodes.end(); ++it)
     {
         FactorNode *n =  it->second;
         if (n->id() == from)
@@ -68,10 +68,12 @@ void FactorNode::receive(int from, const GaussianMessage &msg)
 
 void FactorNode::send(int to)
 {
-    assert(m_nodes.count(to) != 0);
+    if (m_nodes.count(to) == 0)
+        throw Exception("FactorNode::send: unknown recipient");
+
     // have all the necessary messages
-    if (m_messages.size() == m_nodes.size() ||
-        (m_messages.size()+1 == m_nodes.size() && m_messages.count(to) == 0))
+    if (m_messages.size() >= (m_incoming.size() + m_outgoing.size()) || // m_messages.size() > m_nodes.size() && m_messages.count(UNDEFINED_ID)??
+        (m_messages.size()+1 == (m_incoming.size() + m_outgoing.size()) && m_messages.count(to) == 0))
         m_nodes.at(to)->receive(id(), function(to, m_messages));
 }
 

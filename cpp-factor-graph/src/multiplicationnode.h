@@ -8,24 +8,19 @@
 
 
 #include "factornode.h"
-#include "matrixutil.h"
+#include "matrix.h"
 
 class MultiplicationNode : public FactorNode
 {
 public:
+    MultiplicationNode()
+    {}
+
     MultiplicationNode(const double *matrix, int nRows, int nCols):
-        m_matrix(matrix, matrix + nRows * nCols),
-        m_rows(nRows),
-        m_cols(nCols)
+        m_matrix(matrix, nRows, nCols)
     {
-        // for now only square matrices are supported
-        assert(m_rows == m_cols);
     }
 
-    MultiplicationNode():
-        m_rows(0),
-        m_cols(0)
-    {}
 
     virtual ~MultiplicationNode() {}
 
@@ -38,42 +33,52 @@ public:
      */
     void setMatrix(const double *matrix, int nRows, int nCols)
     {
-        m_matrix.assign(matrix, matrix + nRows * nCols);
-        m_rows = nRows;
-        m_cols = nCols;
+        m_matrix = Matrix(matrix, nRows, nCols);
+    }
+
+
+    void setMatrix(const Matrix &mx)
+    {
+        m_matrix = mx;
+    }
+
+    /**
+     * get the data pointer to node's matrix
+     */
+    const double *matrix() const
+    {
+        return m_matrix.data();
     }
 
 
     //! @overload
     void addIncoming(FactorNode *node)
     {
-        assert(m_incoming.size() == 0);
+        if (m_incoming.size() != 0)
+            throw Exception("MultiplicationNode::addIncoming: already have an incoming node");
         FactorNode::addIncoming(node);
     }
 
     //! @overload
     void addOutgoing(FactorNode *node)
     {
-        assert(m_outgoing.size() == 0);
+        if (m_outgoing.size() != 0)
+            throw Exception("MultiplicationNode::addOutgoing: already have an outgoing node");
         FactorNode::addOutgoing(node);
     }
 
     //! @overload
-    bool isSupported(Message::Type type)
-    {
-        return type == GaussianMessage::GAUSSIAN_VARIANCE;
-    }
-
+    virtual bool isSupported(Message::Type type);
 
 protected:
-    GaussianMessage function(int to, const MessageBox &msgs);
+    virtual GaussianMessage function(int to, const MessageBox &msgs);
+
+    virtual GaussianMessage forwardFunction(int to, const MessageBox &msgs);
+    virtual GaussianMessage backwardFunction(int to, const MessageBox &msgs);
+
 
     //! the matrix to multiply on
-    vector<double> m_matrix;
-
-    //!
-    size_t m_rows;
-    size_t m_cols;
+    Matrix m_matrix;
 
 };
 

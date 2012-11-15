@@ -81,12 +81,25 @@ inline GaussianMessage createGaussianMessage(const mxArray *msg)
     {
         mxArray *meanArr = mxGetField(msg, 0, MEX_MEAN);
         mxArray *varArr = mxGetField(msg, 0, MEX_VAR);
+        if (varArr == NULL || meanArr == NULL)
+        {
+            mexErrMsgTxt("createGaussianMessage: wrong message format");
+            return GaussianMessage(0);
+        }
+
         return GaussianMessage(mxGetPr(meanArr), mxGetPr(varArr), mxGetN(meanArr), type);
     }
     else if (type == GaussianMessage::GAUSSIAN_PRECISION)
     {
         mxArray *meanArr = mxGetField(msg, 0, MEX_MEAN);
         mxArray *precisionArr = mxGetField(msg, 0, MEX_PRECISION);
+
+        if (precisionArr == NULL || meanArr == NULL)
+        {
+            mexErrMsgTxt("createGaussianMessage: wrong message format");
+            return GaussianMessage(0);
+        }
+
         return GaussianMessage(mxGetPr(meanArr), mxGetPr(precisionArr), mxGetN(meanArr), type);
     }
     else

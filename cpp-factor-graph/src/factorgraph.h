@@ -8,5 +8,8 @@
 #include "multiplicationnode.h"
 #include "estimatemultiplicationnode.h"
 #include "network.h"
+#include "equmultnode.h"
+
+
 
 #endif // FACTORGRAPH_H

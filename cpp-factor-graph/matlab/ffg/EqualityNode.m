@@ -4,6 +4,10 @@ classdef EqualityNode < FactorNode
        function this = EqualityNode()
            this = this@FactorNode('EqualityNode');
        end
+       
+       function setType(this, type)
+           mexfactorgraph('setType', this.type_name, this.cpp_handle, type);
+       end
     end
 end
 

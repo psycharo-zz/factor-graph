@@ -1,7 +1,15 @@
-function [ result ] = gaussMessage(mean, variance)
+function [ result ] = gaussMessage(mean, variance, type)
 %GAUSSMESSAGE create a gaussian message given mean and variance
-    result.type = 1;
+
+    if isequal(type, 'VARIANCE')
+        result.type = 1;
+        result.var = variance;
+    elseif isequal(type, 'PRECISION')
+        result.type = 2;
+        result.precision = variance;
+    end
+        
     result.mean = mean;
-    result.var = variance;
+    
 end
 

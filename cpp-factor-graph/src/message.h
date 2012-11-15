@@ -11,6 +11,26 @@
 using namespace std;
 
 
+
+class Exception : public std::exception
+{
+public:
+    Exception(const std::string &msg):
+        m_message(msg)
+    {}
+
+    virtual const char *what()
+    {
+        return m_message.c_str();
+    }
+
+private:
+    std::string m_message;
+};
+
+
+
+
 /**
  * @brief The Message class
  * for now it is a 1-dim gaussian
@@ -88,11 +108,11 @@ public:
      * @param _variance V - variance matrix (NxN)
      * @param _size N - # of dimensions
      */
-    GaussianMessage(const double *_median, const double *_variance, size_t _size, Message::Type _type = GAUSSIAN_VARIANCE):
+    GaussianMessage(const double *_mean, const double *_variance, size_t _size, Message::Type _type = GAUSSIAN_VARIANCE):
         Message(_type),
         m_size(_size)
     {
-        m_mean.assign(_median, _median + _size);
+        m_mean.assign(_mean, _mean + _size);
         m_data.assign(_variance, _variance + _size * _size);
     }
 
@@ -144,7 +164,8 @@ public:
      */
     inline double *variance()
     {
-        assert(type() == GAUSSIAN_VARIANCE);
+        if (type() != GAUSSIAN_VARIANCE)
+            throw Exception("GaussianMessage::variance: not defined for this type");
         return m_data.data();
     }
 
@@ -155,7 +176,8 @@ public:
      */
     inline double *precision()
     {
-        assert(type() == GAUSSIAN_PRECISION);
+        if (type() != GAUSSIAN_PRECISION)
+            throw Exception("GaussianMessage::precision: not defined for this type");
         return m_data.data();
     }
 

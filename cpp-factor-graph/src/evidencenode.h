@@ -17,9 +17,9 @@ protected:
      * @param msgs
      * @return
      */
-    GaussianMessage function(int, const MessageBox &msgs)
+    GaussianMessage function(int to, const MessageBox &msgs)
     {
-        return msgs.at(Message::UNDEFINED_ID);
+        return msgs.count(to) ? msgs.at(to) : msgs.at(Message::UNDEFINED_ID);
     }
 
 
@@ -57,7 +57,7 @@ public:
     void propagate(const GaussianMessage &msg)
     {
         addMessage(Message::UNDEFINED_ID, msg);
-        destination()->propagate(id(), GaussianMessage(msg.mean(), msg.variance(), msg.size()));
+        destination()->propagate(id(), msg);
     }
 
     /**

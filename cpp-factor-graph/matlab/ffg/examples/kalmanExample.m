@@ -21,6 +21,14 @@ function [ ] = kalman_example()
     nwk.addEdge(a, y);
     nwk.addEdge(n, a);
     
+% //                    u
+% //             (e)    |
+% //      xin --> = --> + --> xout
+% //              |    (b)
+% //         n--> +(a)
+% //              |
+% //              y    
+%     
 
      sd = 10.0;
      sd2 = sd*sd;

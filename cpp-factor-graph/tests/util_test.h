@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include <message.h>
+#include <matrix.h>
 
 #include <random>
 #include <chrono>
@@ -16,15 +17,20 @@ using namespace std;
 
 
 // just for debug
-GaussianMessage makeGaussian(double mean, double variance)
+GaussianMessage makeGaussian(double mean, double variance, GaussianMessage::Type type = GaussianMessage::GAUSSIAN_VARIANCE)
 {
-    return GaussianMessage(&mean, &variance, 1);
+    return GaussianMessage(&mean, &variance, 1, type);
 }
 
 
-GaussianMessage makeGaussian(const vector<double> &mean, const vector<double> &var)
+GaussianMessage makeGaussian(const vector<double> &mean, const vector<double> &var, GaussianMessage::Type type = GaussianMessage::GAUSSIAN_VARIANCE)
 {
-    return GaussianMessage(mean.data(), var.data(), mean.size());
+    return GaussianMessage(mean.data(), var.data(), mean.size(), type);
+}
+
+GaussianMessage makeGaussianMx(const Matrix &mean, const Matrix &var, GaussianMessage::Type type = GaussianMessage::GAUSSIAN_VARIANCE)
+{
+    return GaussianMessage(mean.data(), var.data(), mean.size(), type);
 }
 
 

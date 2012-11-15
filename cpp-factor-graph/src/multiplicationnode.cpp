@@ -1,63 +1,69 @@
 #include "multiplicationnode.h"
 
 
+
+bool MultiplicationNode::isSupported(Message::Type type)
+{
+    return type == GaussianMessage::GAUSSIAN_VARIANCE ||
+           type == GaussianMessage::GAUSSIAN_PRECISION;
+}
+
+
+
 //! the action that this node is actually doing
 GaussianMessage MultiplicationNode::function(int to, const MessageBox &msgs)
 {
-    assert(!msgs.empty());
-    assert(m_nodes.count(to));
-
     // the dimensionality of the message
-    size_t msg_size = msgs.begin()->second.size();
-
-    assert(m_cols == msg_size);
-
-    // forward
-    if (isForward(to))
-    {
-        const GaussianMessage &msg = msgs.at(*m_incoming.begin());
-
-        GaussianMessage result(m_rows);
-
-        vector<double> tmp_variance(m_rows * msg_size, 0.0);
-
-        // A * V = m_rows * m_cols
-        matrix_mult(m_rows, msg_size, m_cols, m_matrix.data(), msg.variance(), tmp_variance.data());
-        // A * V * A^T
-        matrix_mult(m_rows, m_rows, m_cols, tmp_variance.data(), m_matrix.data(), result.variance(), false, true);
-
-        // m_y = A * m_x
-        matrix_vector_mult(m_rows, m_cols, m_matrix.data(), msg.mean(), result.mean());
-        return result;
-    }
-    else
-    {
-        size_t msg_size2 = msg_size * msg_size;
-
-        GaussianMessage result(m_cols);
-
-        vector<double> tmp_variance(m_cols * m_cols, 0.0);
-        vector<double> tmp_mean(m_cols, 0.0);
-
-        const GaussianMessage &msg = msgs.at(*m_outgoing.begin());
-
-        // W_y = V_y^-1
-        vector<double> tmp_inverse(msg.variance(), msg.variance() + msg_size2);
-        matrix_inverse(tmp_inverse.data(), msg_size);
-
-        // tmp = A^T W_y
-        matrix_mult(m_cols, msg_size, m_rows, m_matrix.data(), tmp_inverse.data(), tmp_variance.data(), true, false);
-        // W_x = A^T W_y A = tmp A
-        matrix_mult(m_cols, m_cols, msg_size, tmp_variance.data(), m_matrix.data(), result.variance());
-        // V_x = W_x^-1
-        matrix_inverse(result.variance(), m_cols);
-
-        // (tmp m_y) = A^T W_y m_y
-        matrix_vector_mult(m_cols, msg_size, tmp_variance.data(), msg.mean(), tmp_mean.data());
-        // m_x = W^-1 (A^T W_y m_y) = V (tmp m_y)
-        matrix_vector_mult(m_cols, m_cols, result.variance(), tmp_mean.data(), result.mean());
-
-        return result;
-    }
-
+    return isForward(to) ? forwardFunction(to, msgs) : backwardFunction(to, msgs);
 }
+
+
+GaussianMessage MultiplicationNode::forwardFunction(int to, const MessageBox &msgs)
+{
+    // TODO: implement for precision
+
+    const GaussianMessage &msgX = msgs.at(*m_incoming.begin());
+
+    Matrix meanX(msgX.mean(), msgX.size(), 1);
+    Matrix varX(msgX.variance(), msgX.size(), msgX.size());
+
+    Matrix &A = m_matrix;
+
+    Matrix meanY = A * meanX;
+    Matrix varY = A * varX * A.T();
+
+    return GaussianMessage(meanY.data(), varY.data(), meanY.size());
+}
+
+
+
+GaussianMessage MultiplicationNode::backwardFunction(int to, const MessageBox &msgs)
+{
+    const GaussianMessage &msgY = msgs.at(*m_outgoing.begin());
+    if (msgY.type() == GaussianMessage::GAUSSIAN_PRECISION)
+    {
+        Matrix meanY(msgY.mean(), msgY.size(), 1);
+        Matrix precY(msgY.precision(), msgY.size(), msgY.size());
+
+        Matrix &A = m_matrix;
+
+        Matrix precX = A.T() * precY * A;
+        Matrix meanX = precX.pinv() * A.T() * precY * meanY;
+
+        return GaussianMessage(meanX.data(), precX.data(), meanX.size(), GaussianMessage::GAUSSIAN_PRECISION);
+    }
+    else if (msgY.type() == GaussianMessage::GAUSSIAN_VARIANCE)
+    {
+        Matrix meanY(msgY.mean(), msgY.size(), 1);
+        Matrix varY(msgY.variance(), msgY.size(), msgY.size());
+
+        Matrix A = m_matrix;
+        A.inv();
+
+        Matrix meanX = A * meanY;
+        Matrix varX = A * varY * A.T();
+        return GaussianMessage(meanX.data(), varX.data(), meanX.size(), GaussianMessage::GAUSSIAN_VARIANCE);
+
+    }
+}
+
