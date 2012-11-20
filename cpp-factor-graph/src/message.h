@@ -6,9 +6,10 @@
 #include <map>
 #include <cstring>
 #include <cassert>
-
-
-using namespace std;
+#include <exception>
+#include <string>
+#include <matrix.h>
+#include <unordered_map>
 
 
 
@@ -85,9 +86,100 @@ private:
 
 
 
+/**
+ * @brief gaussian message with variance
+ */
+class VarianceMessage : public Message
+{
+public:
+    VarianceMessage():
+        Message(GAUSSIAN_VARIANCE)
+    {}
+
+    VarianceMessage(const double *_mean, const double *_variance, size_t _size):
+        Message(GAUSSIAN_VARIANCE),
+        m_mean(_mean, _size, 1),
+        m_variance(_variance, _size, _size),
+        m_size(_size)
+    {}
+
+    inline Matrix &mean()
+    {
+        return m_mean;
+    }
+
+    inline Matrix &variance()
+    {
+        return m_variance;
+    }
+
+
+    inline size_t size() const
+    {
+        return m_size;
+    }
+
+    inline size_t size2() const
+    {
+        return m_size * m_size;
+    }
+
+private:
+    Matrix m_mean;
+    Matrix m_variance;
+    size_t m_size;
+};
 
 
 /**
+ * @brief gaussian message with precision matrix
+ */
+class PrecisionMessage : public Message
+{
+public:
+    PrecisionMessage():
+        Message(GAUSSIAN_PRECISION)
+    {}
+
+    PrecisionMessage(const double *_mean, const double *_precision, size_t _size):
+        Message(GAUSSIAN_PRECISION),
+        m_mean(_mean, _size, 1),
+        m_precision(_precision, _size, _size),
+        m_size(_size)
+    {}
+
+    inline Matrix &mean()
+    {
+        return m_mean;
+    }
+
+    inline Matrix &precision()
+    {
+        return m_precision;
+    }
+
+
+    inline size_t size() const
+    {
+        return m_size;
+    }
+
+    inline size_t size2() const
+    {
+        return m_size * m_size;
+    }
+
+private:
+    Matrix m_mean;
+    Matrix m_precision;
+    size_t m_size;
+};
+
+
+
+
+/**
+ * TODO: eliminate this completely?
  * @brief The GaussianMessage class, represent multivariate gaussian,
  * consists of mean vector and precision matrix
  */
@@ -96,10 +188,10 @@ class GaussianMessage : public Message
 private:
     size_t m_size;
 
-    vector<double> m_mean;
+    std::vector<double> m_mean;
 
     //! data for variance/precision
-    vector<double> m_data;
+    std::vector<double> m_data;
 
 public:
     /**
@@ -151,7 +243,7 @@ public:
 
 
     /**
-     * @return pointer to the precision matrix
+     * @brief pointer to the precision matrix
      */
     inline const double *variance() const
     {
@@ -159,7 +251,7 @@ public:
     }
 
     /**
-     * @return pointer to the variance matrix
+     * @brief pointer to the variance matrix
      * NOTE: only works for type() == GAUSSIAN_VARIANCE
      */
     inline double *variance()
@@ -216,14 +308,14 @@ public:
 
 
 
-typedef map<int, GaussianMessage> MessageBox;
-
+typedef std::map<int, GaussianMessage> MessageBox;
 
 #include <ostream>
+
 /**
- * ostream for GaussianMessage
+ * output for GaussianMessage
  */
-ostream& operator <<(ostream &os, const GaussianMessage &msg);
+std::ostream& operator <<(std::ostream &os, const GaussianMessage &msg);
 
 
 

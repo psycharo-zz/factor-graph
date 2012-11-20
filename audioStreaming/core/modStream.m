@@ -10,7 +10,7 @@ function modStream(varargin)
 
 % process input args
 audioFile = 'test.avi'; % getAudioFile(audioFile);
-plugin = 'copy';
+plugin = 'ffg';
 target = 'm';
 %procArgs(varargin); % overwrite defaults through input args
 
@@ -20,7 +20,7 @@ hafr = dsp.AudioFileReader(audioFile, ...
   'OutputDataType', 'double');
 
 hap = dsp.AudioPlayer( ...
-  'DeviceName','pulse (ALSA)', ...
+  'DeviceName','pulse', ...
   'SampleRate',16000, ... % better: hafr.SampleRate
   'BufferSizeSource', 'Property', ...
   'BufferSize', 200, ...
@@ -33,11 +33,13 @@ hap = dsp.AudioPlayer( ...
 [p,s] = createPlugin(); 
 
 % create mex
-if strcmp(target,'mex')
-  oneframe = step(hafr); reset(hafr); % get a frame, useful for mex building
-  stepPlugin_build(plugin,oneframe,p,s); % handle to plugin
-  stepPlugin = str2func(['step',upper(plugin(1)),plugin(2:end),'_mex']);
-end
+% if strcmp(target,'mex')
+%   oneframe = step(hafr); reset(hafr); % get a frame, useful for mex building
+%   stepPlugin_build(plugin,oneframe,p,s); % handle to plugin
+%   stepPlugin = str2func(['step',upper(plugin(1)),plugin(2:end),'_mex']);
+% end
+%%%%%%%%%%%%
+
 
 while ~isDone(hafr)
   x = step(hafr);

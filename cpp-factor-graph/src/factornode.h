@@ -5,7 +5,8 @@
 #include <vector>
 #include <memory>
 #include <map>
-#include <set>
+#include <unordered_set>
+#include <unordered_map>
 #include <string>
 #include <cassert>
 #include <algorithm>
@@ -70,7 +71,7 @@ protected:
      */
     inline bool isConnection(int node_id, const string &tag)
     {
-        map<int, string>::const_iterator it = m_connections.find(node_id);
+        auto it = m_connections.find(node_id);
         return it == m_connections.end() ? false : it->second == tag;
     }
 
@@ -81,7 +82,7 @@ protected:
     }
 
     //! get the message for the specified id
-    inline GaussianMessage message(int node_id) const
+    inline const GaussianMessage &message(int node_id) const
     {
         return m_messages.at(node_id);
     }
@@ -103,16 +104,16 @@ protected:
     }
 
     //! the list of all nodes
-    map<int, FactorNode*> m_nodes;
+    unordered_map<int, FactorNode*> m_nodes;
 
     //! incoming connections
-    set<int> m_incoming;
+    unordered_set<int> m_incoming;
 
     //! outgoing connections
-    set<int> m_outgoing;
+    unordered_set<int> m_outgoing;
 
     //! custom connections
-    map<int, string> m_connections;
+    unordered_map<int, string> m_connections;
 
 
 private:

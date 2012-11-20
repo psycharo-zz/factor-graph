@@ -109,11 +109,66 @@ TEST(MatrixUtil, PseudoInverseZeros) {
 
 TEST(Matrix, Add) {
 
+    Matrix a = {{1,2,3},
+                {4,5,6}};
+    Matrix b = {{1,2,3},
+                {4,5,6}};
+    Matrix EXPECTED_ADD = {{2,4,6},
+                           {8,10,12}};
 
+    Matrix RESULT = a + b;
+    for (size_t i = 0; i < EXPECTED_ADD.size(); i++)
+        EXPECT_FLOAT_EQ(EXPECTED_ADD.data()[i], RESULT.data()[i]) << "at index " << i;
 
+    RESULT = a.T() + b.T();
+    EXPECTED_ADD = EXPECTED_ADD.T();
 
-//    Matrix a();
+    for (size_t i = 0; i < EXPECTED_ADD.rows(); i++)
+        for (size_t j = 0; j < EXPECTED_ADD.cols(); j++)
+            EXPECT_FLOAT_EQ(EXPECTED_ADD(i, j), RESULT(i, j)) << "at index " << i;
+
 }
+
+
+TEST(Matrix, Mult) {
+
+    Matrix a = {{1,2,3},
+                {4,5,6}};
+    Matrix b = {{1,4},
+                {2,5},
+                {3,6}};
+
+    Matrix RESULT = a * b;
+    Matrix EXPECTED_MULT1 = {{14,32},
+                             {32,77}};
+    for (size_t i = 0; i < EXPECTED_MULT1.rows(); i++)
+        for (size_t j = 0; j < EXPECTED_MULT1.cols(); j++)
+            EXPECT_FLOAT_EQ(EXPECTED_MULT1(i, j), RESULT(i,j)) << "at indices " << i << "\t" << j;
+
+    RESULT = b.T() * a.T();
+    for (size_t i = 0; i < EXPECTED_MULT1.rows(); i++)
+        for (size_t j = 0; j < EXPECTED_MULT1.cols(); j++)
+            EXPECT_FLOAT_EQ(EXPECTED_MULT1(i, j), RESULT(i,j)) << "at indices " << i << "\t" << j;
+
+
+    RESULT = a * a.T();
+    for (size_t i = 0; i < EXPECTED_MULT1.rows(); i++)
+        for (size_t j = 0; j < EXPECTED_MULT1.cols(); j++)
+            EXPECT_FLOAT_EQ(EXPECTED_MULT1(i, j), RESULT(i,j)) << "at indices " << i << "\t" << j;
+
+
+    Matrix EXPECTED_MULT2 = {{17, 22, 27},
+                            {22, 29, 36},
+                            {27, 36, 45}};
+    RESULT = b * a;
+    for (size_t i = 0; i < EXPECTED_MULT2.rows(); i++)
+        for (size_t j = 0; j < EXPECTED_MULT2.cols(); j++)
+            EXPECT_FLOAT_EQ(EXPECTED_MULT2(i, j), RESULT(i, j)) << "at index " << i;
+
+
+
+}
+
 
 
 

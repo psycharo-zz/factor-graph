@@ -10,9 +10,7 @@
 #include "tests/ar_test.h"
 #include "tests/matrixutil_test.h"
 #include "tests/util_test.h"
-#include "factorgraph.h"
-
-
+//#include "factorgraph.h"
 
 
 int main(int argc, char *argv[])

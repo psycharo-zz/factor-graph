@@ -128,6 +128,40 @@ TEST(Equality, Equal) {
 }
 
 
+/**
+ * @brief testing propagation for the no-information (precision = 0) message
+ */
+TEST(EqualityNode, NoInformation) {
+
+    EvidenceNode x;
+    EvidenceNode y;
+    EvidenceNode z;
+    EqualityNode equ(GaussianMessage::GAUSSIAN_PRECISION);
+
+    Network nwk;
+
+    nwk.addEdge(&x, &equ);
+    nwk.addEdge(&y, &equ);
+    nwk.addEdge(&z, &equ);
+
+    x.propagate(makeGaussian({2,3}, {1, 0, 0, 1}, GaussianMessage::GAUSSIAN_PRECISION));
+
+    // dummy message for no
+    z.propagate(makeGaussian({12313, 123131321}, {0, 0, 0, 0}, GaussianMessage::GAUSSIAN_PRECISION));
+
+
+    vector<double> EXPECTED_MEAN = {2,3};
+    vector<double> EXPECTED_PREC = {1, 0, 0, 1};
+    for (size_t i = 0; i < EXPECTED_MEAN.size(); i++)
+        EXPECT_FLOAT_EQ(y.evidence().mean()[i], EXPECTED_MEAN[i]);
+
+    for (size_t i = 0; i < EXPECTED_PREC.size(); i++)
+        EXPECT_FLOAT_EQ(y.evidence().precision()[i], EXPECTED_PREC[i]);
+
+
+}
+
+
 
 
 #endif // EQUALITYNODE_TEST_H

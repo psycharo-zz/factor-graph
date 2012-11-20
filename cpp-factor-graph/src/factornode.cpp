@@ -36,7 +36,7 @@ void FactorNode::addConnection(FactorNode *node, const string &tag)
 //! a single update for messages
 void FactorNode::propagate(int from, const GaussianMessage &msg)
 {
-    for (map<int, FactorNode*>::const_iterator it = m_nodes.begin(); it != m_nodes.end(); ++it)
+    for (auto it = m_nodes.begin(); it != m_nodes.end(); ++it)
     {
         FactorNode *n =  it->second;
         if (n->id() == from)

@@ -48,11 +48,11 @@ GaussianMessage MultiplicationNode::backwardFunction(int to, const MessageBox &m
         Matrix &A = m_matrix;
 
         Matrix precX = A.T() * precY * A;
-        Matrix meanX = precX.pinv() * A.T() * precY * meanY;
+        Matrix meanX = pinv(precX) * A.T() * precY * meanY;
 
         return GaussianMessage(meanX.data(), precX.data(), meanX.size(), GaussianMessage::GAUSSIAN_PRECISION);
     }
-    else if (msgY.type() == GaussianMessage::GAUSSIAN_VARIANCE)
+    else // if (msgY.type() == GaussianMessage::GAUSSIAN_VARIANCE)
     {
         Matrix meanY(msgY.mean(), msgY.size(), 1);
         Matrix varY(msgY.variance(), msgY.size(), msgY.size());
@@ -63,7 +63,6 @@ GaussianMessage MultiplicationNode::backwardFunction(int to, const MessageBox &m
         Matrix meanX = A * meanY;
         Matrix varX = A * varY * A.T();
         return GaussianMessage(meanX.data(), varX.data(), meanX.size(), GaussianMessage::GAUSSIAN_VARIANCE);
-
     }
 }
 

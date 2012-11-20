@@ -81,7 +81,7 @@ public:
     }
 
 
-    inline GaussianMessage evidence() const
+    inline const GaussianMessage &evidence() const
     {
         return message(destination()->id());
     }

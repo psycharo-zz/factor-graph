@@ -36,7 +36,7 @@ GaussianMessage AddNode::forwardFunction(int to, const MessageBox &msgs)
     double *median = result.mean();
     double *variance = result.variance();
 
-    for (set<int>::iterator it = m_incoming.begin(); it != m_incoming.end(); ++it)
+    for (auto it = m_incoming.begin(); it != m_incoming.end(); ++it)
     {
         const GaussianMessage &msg = msgs.at(*it);
         transform(msg.mean(), msg.mean() + size, median, median, std::plus<double>());
@@ -59,7 +59,7 @@ GaussianMessage AddNode::backwardFunction(int to, const MessageBox &msgs)
     transform(outMsg.mean(), outMsg.mean() + size, median, median, std::plus<double>());
     transform(outMsg.variance(), outMsg.variance() + size2, variance, variance, std::plus<double>());
 
-    for (set<int>::iterator it = m_incoming.begin(); it != m_incoming.end(); ++it)
+    for (auto it = m_incoming.begin(); it != m_incoming.end(); ++it)
     {
         if (*it == to)
             continue;

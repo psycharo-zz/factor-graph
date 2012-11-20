@@ -2,6 +2,8 @@
 
 const int Message::UNDEFINED_ID;
 
+using namespace std;
+
 ostream& operator <<(ostream &os, const GaussianMessage &msg)
 {
     os << "mean[ ";
