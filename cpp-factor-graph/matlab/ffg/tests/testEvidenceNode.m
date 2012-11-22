@@ -3,9 +3,9 @@ initTestSuite;
 
 function testScalar
 
-nwk = Network;
-node = EvidenceNode;
-dest = EvidenceNode;
+nwk = ffg.Network;
+node = ffg.EvidenceNode;
+dest = ffg.EvidenceNode;
 nwk.addEdge(node, dest);
 
 msg = struct('type',1,'mean',2, 'var',3);

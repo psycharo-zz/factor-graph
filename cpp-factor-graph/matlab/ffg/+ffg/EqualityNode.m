@@ -1,8 +1,8 @@
-classdef EqualityNode < FactorNode
+classdef EqualityNode < ffg.FactorNode
     %EQUALITYNODE Equality factor node. Gaussian
     methods
        function this = EqualityNode()
-           this = this@FactorNode('EqualityNode');
+           this = this@ffg.FactorNode('EqualityNode');
        end
        
        function setType(this, type)

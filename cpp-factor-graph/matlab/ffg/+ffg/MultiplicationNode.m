@@ -1,4 +1,4 @@
-classdef MultiplicationNode < FactorNode
+classdef MultiplicationNode < ffg.FactorNode
     %MULTIPLICATIONNODE multiplication-by-matrix-node
     %   Detailed explanation goes here
     
@@ -7,7 +7,7 @@ classdef MultiplicationNode < FactorNode
     
     methods
         function this = MultiplicationNode()
-            this = this@FactorNode('MultiplicationNode');            
+            this = this@ffg.FactorNode('MultiplicationNode');            
         end
 
         function setMatrix(this, matrix)

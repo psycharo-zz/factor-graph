@@ -5,12 +5,12 @@ function testForward
 
 load('data_gaussian');
 
-nwk = Network;
-x = EvidenceNode;
-y = EvidenceNode;
+nwk = ffg.Network;
+x = ffg.EvidenceNode;
+y = ffg.EvidenceNode;
 
 MATRIX = TestMultiplication.INPUT1.matrix;
-A = MultiplicationNode;
+A = ffg.MultiplicationNode;
 A.setMatrix(MATRIX);
 
 nwk.addEdge(x, A);
@@ -34,12 +34,12 @@ function testBackward
 
 load('data_gaussian');
 
-nwk = Network;
-x = EvidenceNode;
-y = EvidenceNode;
+nwk = ffg.Network;
+x = ffg.EvidenceNode;
+y = ffg.EvidenceNode;
 
 MATRIX = TestMultiplication.INPUT1.matrix;
-A = MultiplicationNode;
+A = ffg.MultiplicationNode;
 A.setMatrix(MATRIX);
 
 nwk.addEdge(x, A);

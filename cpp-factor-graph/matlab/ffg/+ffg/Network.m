@@ -1,10 +1,10 @@
-classdef Network < CppObject
+classdef Network < ffg.CppObject
     %NETWORK the whole network. TODO: check if this should be a factor node
     %   Detailed explanation goes here
     
     methods
         function this = Network()
-            this = this@CppObject('Network');
+            this = this@ffg.CppObject('Network');
         end
         
         function addEdge(this, a, b)

@@ -1,10 +1,11 @@
-classdef CustomNode < FactorNode
+classdef CustomNode < ffg.FactorNode
     %CUSTOMNODE Base class for customized nodes
-    %   Detailed explanation goes here
+    %   
+    %
     
     methods
         function this = CustomNode()
-            this = this@FactorNode('CustomNode');            
+            this = this@ffg.FactorNode('CustomNode');            
         end
         
         function setFunction(this, functionName)

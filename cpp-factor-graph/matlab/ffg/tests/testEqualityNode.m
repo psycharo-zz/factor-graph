@@ -4,13 +4,13 @@ function test_suite = testEqualityNode
 initTestSuite;
 
 function testScalarGaussian
-    node = EqualityNode;
+    node = ffg.EqualityNode;
 
-    a = EvidenceNode;
-    b = EvidenceNode;
-    c = EvidenceNode;
+    a = ffg.EvidenceNode;
+    b = ffg.EvidenceNode;
+    c = ffg.EvidenceNode;
 
-    nwk = Network;
+    nwk = ffg.Network;
     nwk.addEdge(a, node);
     nwk.addEdge(b, node);
     nwk.addEdge(c, node);
@@ -34,13 +34,13 @@ function testMultivariateGaussian
 
     load('data_gaussian.mat');
 
-    node = EqualityNode;
+    node = ffg.EqualityNode;
 
-    a = EvidenceNode;
-    b = EvidenceNode;
-    c = EvidenceNode;
+    a = ffg.EvidenceNode;
+    b = ffg.EvidenceNode;
+    c = ffg.EvidenceNode;
 
-    nwk = Network;
+    nwk = ffg.Network;
     nwk.addEdge(a, node);
     nwk.addEdge(b, node);
     nwk.addEdge(c, node);

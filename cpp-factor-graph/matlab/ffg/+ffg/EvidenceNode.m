@@ -1,10 +1,10 @@
-classdef EvidenceNode < FactorNode
+classdef EvidenceNode < ffg.FactorNode
     %EVIDENCENODE Summary of this class goes here
     %   Detailed explanation goes here
    
     methods
        function this = EvidenceNode()
-           this = this@FactorNode('EvidenceNode');
+           this = this@ffg.FactorNode('EvidenceNode');
        end
       
        function propagate(this, message)

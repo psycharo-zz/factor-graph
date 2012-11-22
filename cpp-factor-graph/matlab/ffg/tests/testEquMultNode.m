@@ -5,19 +5,19 @@ function testForward
 
 load('data_gaussian');
 
-nwk = Network;
-x = EvidenceNode;
-y = EvidenceNode;
-z = EvidenceNode;
+nwk = ffg.Network;
+x = ffg.EvidenceNode;
+y = ffg.EvidenceNode;
+z = ffg.EvidenceNode;
 
 MATRIX = eye(1, 3);
 
 
-INPUT_X = gaussMessage([1, 1, 1], eye(3,3), 'VARIANCE');
-INPUT_Y = gaussMessage(0.5, 0, 'VARIANCE');
+INPUT_X = ffg.gaussMessage([1, 1, 1], eye(3,3), 'VARIANCE');
+INPUT_Y = ffg.gaussMessage(0.5, 0, 'VARIANCE');
 
 
-equMult = EquMultNode;
+equMult = ffg.EquMultNode;
 equMult.setMatrix(MATRIX);
 
 % note that the direction is important here

@@ -1,4 +1,4 @@
-classdef EquMultNode < FactorNode
+classdef EquMultNode < ffg.FactorNode
     %EQUMULTNODE compound node
     
     properties
@@ -6,7 +6,7 @@ classdef EquMultNode < FactorNode
     
     methods
         function this = EquMultNode()
-            this = this@FactorNode('EquMultNode');            
+            this = this@ffg.FactorNode('EquMultNode');            
         end
 
         function setMatrix(this, matrix)

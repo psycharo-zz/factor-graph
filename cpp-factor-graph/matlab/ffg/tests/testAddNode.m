@@ -6,11 +6,11 @@ initTestSuite;
 
 function testForward
 
-    nwk = Network;
-    node = AddNode;
-    a = EvidenceNode;
-    b = EvidenceNode;
-    c = EvidenceNode;
+    nwk = ffg.Network;
+    node = ffg.AddNode;
+    a = ffg.EvidenceNode;
+    b = ffg.EvidenceNode;
+    c = ffg.EvidenceNode;
     nwk.addEdge(a, node);
     nwk.addEdge(b, node);
     nwk.addEdge(node, c);
@@ -30,11 +30,11 @@ function testForward
 
 function testBackward
 
-    nwk = Network;
-    node = AddNode;
-    a = EvidenceNode;
-    b = EvidenceNode;
-    c = EvidenceNode;
+    nwk = ffg.Network;
+    node = ffg.AddNode;
+    a = ffg.EvidenceNode;
+    b = ffg.EvidenceNode;
+    c = ffg.EvidenceNode;
     nwk.addEdge(a, node);
     nwk.addEdge(b, node);
     nwk.addEdge(node, c);

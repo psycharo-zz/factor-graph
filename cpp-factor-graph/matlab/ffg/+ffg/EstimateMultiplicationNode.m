@@ -1,4 +1,4 @@
-classdef EstimateMultiplicationNode < FactorNode
+classdef EstimateMultiplicationNode < ffg.FactorNode
     %ESTIMATEMULTIPLICATIONNODE used for estimating parameters
     %   
     
@@ -7,7 +7,7 @@ classdef EstimateMultiplicationNode < FactorNode
     
     methods
         function this = EstimateMultiplicationNode()
-            this = this@FactorNode('EstimateMultiplicationNode');            
+            this = this@ffg.FactorNode('EstimateMultiplicationNode');            
         end
 
         function setMatrix(this, matrix)

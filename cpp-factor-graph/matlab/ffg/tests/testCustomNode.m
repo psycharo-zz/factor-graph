@@ -4,12 +4,12 @@ function test_suite = testCustomNode
 initTestSuite;
 
 function testAddForwardNode
-    nwk = Network;
+    nwk = ffg.Network;
     node = CustomAddNode;
     
-    a = EvidenceNode;
-    b = EvidenceNode;
-    c = EvidenceNode;
+    a = ffg.EvidenceNode;
+    b = ffg.EvidenceNode;
+    c = ffg.EvidenceNode;
     nwk.addEdge(a, node);
     nwk.addEdge(b, node);
     nwk.addEdge(node, c);
@@ -27,12 +27,12 @@ function testAddForwardNode
     
     
 function testAddBackwardNode
-    nwk = Network;
+    nwk = ffg.Network;
     node = CustomAddNode;
     
-    a = EvidenceNode;
-    b = EvidenceNode;
-    c = EvidenceNode;
+    a = ffg.EvidenceNode;
+    b = ffg.EvidenceNode;
+    c = ffg.EvidenceNode;
     nwk.addEdge(a, node);
     nwk.addEdge(b, node);
     nwk.addEdge(node, c);
