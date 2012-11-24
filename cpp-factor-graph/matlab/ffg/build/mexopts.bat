@@ -63,7 +63,7 @@ rem ********************************************************************
 rem Compiler parameters
 rem ********************************************************************
 set COMPILER=x86_64-w64-mingw32-gcc
-set COMPFLAGS=-c -fexceptions "-I%MATLAB%\extern\include" 
+set COMPFLAGS=-c -fexceptions "-I%MATLAB%\extern\include" -std=c++0x
 set OPTIMFLAGS=-O3
 set DEBUGFLAGS=-g -Wall
 set NAME_OBJECT=-o 

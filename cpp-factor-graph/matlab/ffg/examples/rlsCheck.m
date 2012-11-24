@@ -17,7 +17,7 @@ function rlsCheck(  )
     b = eye(M,1);
     
     REAL_x = eye(1,M);
-    msg = gaussMessage(REAL_x, eye(M, M) * REAL_varU, 'VARIANCE');
+    msg = ffg.gaussMessage(REAL_x, eye(M, M) * REAL_varU, 'VARIANCE');
     
     mean_a = REAL_A; % zeros(1,M);
     prec_a = eye(M,M);
@@ -39,7 +39,7 @@ function rlsCheck(  )
          curr = multiplyForward(x_next, matrix_A);
          
          %% adding noise
-         noiseU = gaussMessage(zeros(1,M), b * REAL_varU * b', 'VARIANCE');
+         noiseU = ffg.gaussMessage(zeros(1,M), b * REAL_varU * b', 'VARIANCE');
          curr = addForward(curr, noiseU);
          
          %% the next message based on X_n-1 and Y
@@ -76,6 +76,9 @@ function rlsCheck(  )
          prec_a = prec_a + prec_9;
          
     end
+    
+    
+    mean_a
     
    
     

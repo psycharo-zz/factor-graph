@@ -1,15 +1,15 @@
 function [ ] = kalmanScheduleExample()
 
-    xin = EvidenceNode;
-    xout = EvidenceNode;
-    n = EvidenceNode;
-    y = EvidenceNode;
-    e = EqualityNode;
-    a = AddNode;
-    u = EvidenceNode;
-    b = AddNode;
+    xin = ffg.EvidenceNode;
+    xout = ffg.EvidenceNode;
+    n = ffg.EvidenceNode;
+    y = ffg.EvidenceNode;
+    e = ffg.EqualityNode;
+    a = ffg.AddNode;
+    u = ffg.EvidenceNode;
+    b = ffg.AddNode;
     
-    nwk = Network();
+    nwk = ffg.Network;
    
     nwk.addEdge(xin, e);
 
@@ -36,11 +36,11 @@ function [ ] = kalmanScheduleExample()
      % for gaussians only:
      % 'mean' - 1xN vector
      % 'var' - NxN matrix
-     msg = struct('mean',1+randn()*sd, 'var', sd2, 'type', 1);
+     msg = struct('mean',1+randn()*sd, 'var', sd2, 'type', 'VARIANCE');
      
      xout.receive(msg);
-     n.receive(struct('mean',0, 'var',sd2, 'type', 1));
-     u.receive(struct('mean',u_const, 'var',0, 'type', 1));
+     n.receive(struct('mean',0, 'var',sd2, 'type', 'VARIANCE'));
+     u.receive(struct('mean',u_const, 'var',0, 'type', 'VARIANCE'));
           
      
      N_ITERATIONS = 1000;
@@ -51,7 +51,7 @@ function [ ] = kalmanScheduleExample()
      for i = 1:N_ITERATIONS
          xin.receive(msg);
          samples(i,:) = i+randn()*sd;
-         y.receive(struct('mean', samples(i), 'var',0, 'type', 1));
+         y.receive(struct('mean', samples(i), 'var',0, 'type', 'VARIANCE'));
          
          nwk.makeStep();         
          

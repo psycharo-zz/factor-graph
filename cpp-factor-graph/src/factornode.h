@@ -3,15 +3,10 @@
 
 
 #include <vector>
-#include <memory>
 #include <map>
-#include <unordered_set>
-#include <unordered_map>
+#include <set>
 #include <string>
-#include <cassert>
 #include <algorithm>
-
-using namespace std;
 
 #include "message.h"
 
@@ -45,10 +40,16 @@ public:
     virtual void addOutgoing(FactorNode *node);
 
     //! add a custom connection with the given tag
-    virtual void addConnection(FactorNode *node, const string &tag);
+    virtual void addConnection(FactorNode *node, const std::string &tag);
 
     //! check if the message type is supported
     virtual bool isSupported(Message::Type type) = 0;
+
+    //! get all the messages
+    inline const MessageBox &messages() const
+    {
+        return m_messages;
+    }
 
 
 protected:
@@ -69,9 +70,9 @@ protected:
     /**
      * @brief isConnection check whether the node is a connection with the specified tag
      */
-    inline bool isConnection(int node_id, const string &tag)
+    inline bool isConnection(int node_id, const std::string &tag)
     {
-        auto it = m_connections.find(node_id);
+        std::map<int, std::string>::iterator it = m_connections.find(node_id);
         return it == m_connections.end() ? false : it->second == tag;
     }
 
@@ -88,33 +89,27 @@ protected:
     }
 
 
-    inline MessageBox &messages()
-    {
-        return m_messages;
-    }
-
     //! add an incoming message
     inline void addMessage(int from, const GaussianMessage &msg)
     {
         if (!isSupported(msg.type()))
             throw Exception("FactorNode::addMessage: unsupported message type");
-        pair<MessageBox::iterator, bool> res = m_messages.insert(make_pair(from, msg));
+        std::pair<MessageBox::iterator, bool> res = m_messages.insert(std::make_pair(from, msg));
         if (!res.second)
             res.first->second = msg;
     }
 
     //! the list of all nodes
-    unordered_map<int, FactorNode*> m_nodes;
+    std::map<int, FactorNode*> m_nodes;
 
     //! incoming connections
-    unordered_set<int> m_incoming;
+    std::set<int> m_incoming;
 
     //! outgoing connections
-    unordered_set<int> m_outgoing;
+    std::set<int> m_outgoing;
 
     //! custom connections
-    unordered_map<int, string> m_connections;
-
+    std::map<int, std::string> m_connections;
 
 private:
     //! the unique (TODO) id

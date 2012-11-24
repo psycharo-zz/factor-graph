@@ -4,8 +4,9 @@
 
 #include <algorithm>
 #include <functional>
+
+
 using namespace std;
-using namespace placeholders;
 
 
 const char *EstimateMultiplicationNode::ESTIMATED_TAG = "estimated";
@@ -44,13 +45,13 @@ void EstimateMultiplicationNode::receive(int from, const GaussianMessage &msg)
 
 GaussianMessage EstimateMultiplicationNode::function(int to, const MessageBox &msgs)
 {
-    assert(!msgs.empty());
-    assert(m_nodes.count(to));
-
+    // TODO: handle msgs.empty() separately
+    if (!m_nodes.count(to) || msgs.empty())
+        throw Exception("EstimateMultilpicationNode::function(): unknown recipient");
     // the dimensionality of the message
     size_t msg_size = msgs.begin()->second.size();
     if (msg_size != size())
-        throw Exception("EstimateMultiplicationNode::function: inconsistent dimensionalities");
+        throw Exception("EstimateMultiplicationNode::function(): inconsistent dimensionalities");
 
     // forward
     if (isForward(to))
@@ -63,11 +64,14 @@ GaussianMessage EstimateMultiplicationNode::function(int to, const MessageBox &m
         const GaussianMessage &msgX = msgs.at(*m_incoming.begin());
         const GaussianMessage &msgY = msgs.at(*m_outgoing.begin());
 
+        std::copy(msgX.mean(), msgX.mean() + msgX.size(), result.mean());
+
         // TODO: change to matrices
         // m_a = m_y[1] * m_x / ||m_x||^2
         double scalar = msgY.mean()[0] / vector_dot(msgX.mean(), msgX.mean(), msgX.size());
-        std::transform(msgX.mean(), msgX.mean() + msgX.size(), result.mean(),
-                       bind(multiplies<double>(), scalar, _1));
+        matrix_scalar_mult(1, result.size(), result.mean(), scalar);
+//        std::transform(msgX.mean(), msgX.mean() + msgX.size(), result.mean(),
+//                       bind(multiplies<double>(), scalar, _1));
 
         double sd2 = (msgY.type() == GaussianMessage::GAUSSIAN_VARIANCE) ? msgY.variance()[0] : 1.0 / msgY.precision()[0];
         // W_a = m_x * m_x^T / sd_y2

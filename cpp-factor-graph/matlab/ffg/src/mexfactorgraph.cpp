@@ -1,20 +1,21 @@
 #include <mex.h>
 
-#include <factorgraph.h>
-
-
-#include "customnode.h"
-#include "convert.h"
-
+#include <string>
+#include <stdexcept>
+#include <iostream>
 
 using namespace std;
 
 
-/* Check for proper number of arguments */
+// Check for proper number of arguments
 static const size_t FUNCTION_IDX = 0;
 static const size_t TYPE_IDX = 1;
 static const size_t POINTER_IDX = 2;
 
+
+#include <factorgraph.h>
+#include "customnode.h"
+#include "convert.h"
 
 
 
@@ -80,8 +81,6 @@ void processNetwork(const string &function_name, int nlhs, mxArray *plhs[], int 
 }
 
 
-
-
 void processEvidenceNode(FactorNode *node, const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     EvidenceNode *evdNode = static_cast<EvidenceNode*>(node);
@@ -122,7 +121,16 @@ void processEqualityNode(FactorNode *node, const string &function_name, int nlhs
     EqualityNode *eqNode = static_cast<EqualityNode*>(node);
     // TODO: check for # of arguments
     if (function_name == "setType")
-        eqNode->setType((Message::Type)arrayToInt(prhs[POINTER_IDX+1]));
+    {
+        const char *typeName = mxArrayToString(prhs[POINTER_IDX+1]);
+        if (typeName == NULL)
+            throw std::runtime_error("processEqualityNode: string is expected");
+        eqNode->setType(Message::typeByName(typeName));
+    }
+    else if (function_name == "type")
+        plhs[0] = mxCreateString(Message::typeName(eqNode->type()).c_str());
+    // TODO:
+    //throw UnknownFunctionException;
 }
 
 
@@ -149,7 +157,6 @@ void processEquMultNode(FactorNode *node, const string &function_name, int nlhs,
         double *matrix = static_cast<double*>(mxGetData(prhs[POINTER_IDX+1]));
         size_t rows = mxGetM(prhs[POINTER_IDX+1]);
         size_t cols = mxGetN(prhs[POINTER_IDX+1]);
-        assert(rows == cols);
         estNode->setMatrix(matrix, rows, cols);
     }
 }
@@ -164,7 +171,8 @@ void processEstimateMultiplicationNode(FactorNode *node, const string &function_
         double *matrix = static_cast<double*>(mxGetData(prhs[POINTER_IDX+1]));
         size_t rows = mxGetM(prhs[POINTER_IDX+1]);
         size_t cols = mxGetN(prhs[POINTER_IDX+1]);
-        assert(rows == cols);
+        if (rows != cols)
+            throw std::runtime_error("processEstimateMultiplicationNode");
         estNode->setMatrix(matrix, rows, cols);
     }
 }
@@ -182,9 +190,7 @@ void processCustomNode(FactorNode *node, const string &function_name, int nlhs, 
 
 
 
-/**
- * the entry point into the function
- */
+// the entry point into the function
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     if (nrhs < 2)
@@ -193,10 +199,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         return;
     }
 
-    try {
+    string function_name(mxArrayToString(prhs[FUNCTION_IDX]));
+    string type_name(mxArrayToString(prhs[TYPE_IDX]));
 
-        string function_name(mxArrayToString(prhs[FUNCTION_IDX]));
-        string type_name(mxArrayToString(prhs[TYPE_IDX]));
+    try {
 
         if (type_name == "Network")
             processNetwork(function_name, nlhs, plhs, nrhs, prhs);
@@ -210,6 +216,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 delete node;
             else if (function_name == "id")
                 plhs[0] = mxCreateDoubleScalar(node->id());
+            else if (function_name == "messages")
+                plhs[0] = messageBoxToStruct(node->messages());
             else if (type_name == "EvidenceNode")
                 processEvidenceNode(node, function_name, nlhs, plhs, nrhs, prhs);
             else if (type_name == "AddNode")
@@ -230,12 +238,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         else
             mexErrMsgTxt("Not enough arguments");
 
+
     }
-    catch (Exception &e)
+    catch (std::exception &e)
     {
         mexErrMsgTxt(e.what());
     }
-
+    catch (...)
+    {
+        mexErrMsgTxt("Unknown error");
+    }
 
 }
 

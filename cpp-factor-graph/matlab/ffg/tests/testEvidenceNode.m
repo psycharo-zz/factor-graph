@@ -8,7 +8,7 @@ node = ffg.EvidenceNode;
 dest = ffg.EvidenceNode;
 nwk.addEdge(node, dest);
 
-msg = struct('type',1,'mean',2, 'var',3);
+msg = struct('type','VARIANCE','mean',2, 'var',3);
 node.propagate(msg);
 assertEqual(msg.mean, dest.evidence().mean);
 assertEqual(msg.var, dest.evidence().var);

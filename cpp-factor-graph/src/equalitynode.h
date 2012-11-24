@@ -23,6 +23,12 @@ public:
         m_type = _type;
     }
 
+    //! get the type of the node
+    inline Message::Type type() const
+    {
+        return m_type;
+    }
+
     //! @overload
     bool isSupported(Message::Type type);
 

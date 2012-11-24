@@ -13,7 +13,7 @@
 #include <climits>
 #include <cmath>
 #include <set>
-using namespace std;
+
 
 
 // just for debug
@@ -23,7 +23,9 @@ GaussianMessage makeGaussian(double mean, double variance, GaussianMessage::Type
 }
 
 
-GaussianMessage makeGaussian(const vector<double> &mean, const vector<double> &var, GaussianMessage::Type type = GaussianMessage::GAUSSIAN_VARIANCE)
+GaussianMessage makeGaussian(const std::vector<double> &mean,
+                             const std::vector<double> &var,
+                             GaussianMessage::Type type = GaussianMessage::GAUSSIAN_VARIANCE)
 {
     return GaussianMessage(mean.data(), var.data(), mean.size(), type);
 }
@@ -55,9 +57,6 @@ protected:
     {}
 
 };
-
-
-
 
 
 

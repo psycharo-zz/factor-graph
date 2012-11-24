@@ -21,7 +21,6 @@ GaussianMessage MultiplicationNode::function(int to, const MessageBox &msgs)
 GaussianMessage MultiplicationNode::forwardFunction(int to, const MessageBox &msgs)
 {
     // TODO: implement for precision
-
     const GaussianMessage &msgX = msgs.at(*m_incoming.begin());
 
     Matrix meanX(msgX.mean(), msgX.size(), 1);

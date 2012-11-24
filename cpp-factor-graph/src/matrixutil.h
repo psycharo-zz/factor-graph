@@ -9,10 +9,12 @@
 
 #include <algorithm>
 #include <vector>
+#include <cmath>
+
 
 
 // macroses for compilation
-#if !defined (WIN32)  && !defined (_WIN32) || !defined (_WIN64)
+#ifndef MATLAB
     #define dgetrf dgetrf_
     #define dgetri dgetri_
     #define dgemm dgemm_
@@ -22,55 +24,102 @@
     #define dgesvd dgesvd_
 #endif
 
+#ifdef MATLAB
+#include <mex.h>
+inline void printMatrix(const double *a, size_t m, size_t n)
+{
+    for (size_t i = 0; i < m; i++)
+    {
+        for (size_t j = 0; j < n; j++)
+            mexPrintf("%f ", a[j * m + i]);
+        mexPrintf("\n");
+    }
+    mexPrintf("\n");
+}
+
+#endif
 
 
-const int EPSILON = 1e-5;
+
+const int EPSILON = 1e-6;
 
 
 extern "C" {
 
-    // TODO: vary namings depending on the platform
-
     // LU decomoposition of a general matrix
-    void dgetrf(size_t * M, size_t *N, double* A, size_t * lda, size_t* IPIV, size_t* INFO);
+    void dgetrf(ptrdiff_t * M,
+                ptrdiff_t *N,
+                double* A,
+                ptrdiff_t *lda,
+                ptrdiff_t *IPIV,
+                ptrdiff_t *INFO);
 
     // generate inverse of a matrix given its LU decomposition
-    void dgetri(size_t* N, double* A, size_t* lda, size_t* IPIV, double* WORK, size_t* lwork, size_t* INFO);
+    void dgetri(ptrdiff_t* N,
+                double* A,
+                ptrdiff_t* lda,
+                ptrdiff_t* IPIV,
+                double* WORK,
+                ptrdiff_t* lwork,
+                ptrdiff_t* INFO);
 
 
     // blas matrix-matrix multiplication
-    void dgemm(const char *transa, const char *transb,
-               size_t *N, size_t *M, size_t *K, // TODO: check the order here
-                double *alpha,
-                const double *A, size_t *lda,
-                const double *B, size_t *ldb,
-                double *beta,
-                double *C, size_t *ldc);
+    void dgemm(const char *transa, 
+               const char *transb,
+               ptrdiff_t *N, 
+               ptrdiff_t *M, 
+               ptrdiff_t *K, // TODO: check the order here
+               double *alpha,
+               const double *A,
+               ptrdiff_t *lda,
+               const double *B, 
+               ptrdiff_t *ldb,
+               double *beta,
+               double *C, 
+               ptrdiff_t *ldc);
 
     // blas matrix-vector multiplication
-    void dgemv(const char *trans, const size_t *N_rowsA, const size_t *M_colsA,
+    void dgemv(const char *trans, 
+               const ptrdiff_t *N_rowsA, 
+               const ptrdiff_t *M_colsA,
                double *alpha,
-               const double *A, size_t *lda,
-               const double *X, size_t *incx,
+               const double *A, 
+               ptrdiff_t *lda,
+               const double *X, 
+               ptrdiff_t *incx,
                double *beta,
-               void *y, size_t *incy);
+               void *y, 
+               ptrdiff_t *incy);
 
     // dot product
-    double ddot(size_t *N, const double *X, size_t *incx, const double *Y, size_t *incy);
+    double ddot(ptrdiff_t *N, 
+                const double *X, 
+                ptrdiff_t *incx, 
+                const double *Y, 
+                ptrdiff_t *incy);
 
     // vector
-    void dscal(size_t *N, const double *alpha, double *X, size_t *incx);
+    void dscal(ptrdiff_t *N,
+               const double *alpha,
+               double *X,
+               ptrdiff_t *incx);
 
-//    SUBROUTINE DGESVD( JOBU, JOBVT, M, N, A, LDA, S, U, LDU, VT, LDVT,
-//                      WORK, LWORK, INFO )
     // SVD decomposition
-    void dgesvd(char *jobu, char *jobvt,
-                size_t *m, size_t *n,
-                const double *a, size_t *lda,
+    void dgesvd(char *jobu, 
+                char *jobvt,
+                ptrdiff_t *m, 
+                ptrdiff_t *n,
+                const double *a, 
+                ptrdiff_t *lda,
                 double *s,
-                double *u, size_t *ldu,
-                double *vt, size_t *ldvt,
-                double *work, int *lwork, int *info);
+                double *u, 
+                ptrdiff_t *ldu,
+                double *vt, 
+                ptrdiff_t *ldvt,
+                double *work, 
+                ptrdiff_t *lwork, 
+                ptrdiff_t *info);
 
 }
 
@@ -88,21 +137,32 @@ extern "C" {
  */
 inline void matrix_mult(size_t M_rowsA, size_t N_colsB, size_t K_colsA,
                         const double *A, const double *B, double *C,
-                        bool transA = false, bool transB = false, double alpha = 1.0)
+                        bool transA = false, bool transB = false, double alpha = 1.0, double beta = 0.0)
 {
     char TN = 'N';
     char TT = 'T';
-    double beta = 0.0;
+    ptrdiff_t M = M_rowsA;
+    ptrdiff_t N = N_colsB;
+    ptrdiff_t K = K_colsA;
 
     // TODO: check if this is working for *nix
     dgemm(transA ? &TT : &TN,
           transB ? &TT : &TN,
-          &M_rowsA, &N_colsB, &K_colsA,
+          &M, &N, &K,
           &alpha,
-          A, transA ? &K_colsA : &M_rowsA,
-          B, transB ? &N_colsB : &K_colsA,
+          A, transA ? &K : &M,
+          B, transB ? &N : &K,
           &beta,
-          C, &M_rowsA);
+          C, &M);
+}
+
+
+/**
+ * multiply the matrix by scalar
+ */
+inline void matrix_scalar_mult(size_t M_rows, size_t N_cols, double *MX, double val)
+{
+    matrix_mult(M_rows, N_cols, 1, NULL, NULL, MX, false, false, 0, val);
 }
 
 
@@ -134,12 +194,13 @@ inline void matrix_add(size_t M_rows, size_t N_cols,
  * @param X - the vector
  * @param out - the output matrix
  */
-inline void matrix_vector_mult(size_t M_rowsA, size_t N_colsA, const double *A, const double *X, double *out, bool transA = false, double alpha = 1.0)
+inline void matrix_vector_mult(ptrdiff_t M_rowsA, ptrdiff_t N_colsA, const double *A, const double *X, double *out, bool transA = false, double alpha = 1.0)
 {
     char TN = 'N';
     char TT = 'T';
     double beta = 0.0;
-    size_t inc = 1;
+
+    ptrdiff_t inc = 1;
 
     dgemv(transA ? &TT : &TN,
           &M_rowsA, &N_colsA,
@@ -157,12 +218,12 @@ inline void matrix_vector_mult(size_t M_rowsA, size_t N_colsA, const double *A, 
  * @param A
  * @param N
  */
-inline void matrix_inverse(double* A, size_t N)
+inline void matrix_inverse(double* A, ptrdiff_t N)
 {
-    size_t *IPIV = new size_t[N+1];
-    size_t LWORK = N*N;
+    ptrdiff_t *IPIV = new ptrdiff_t[N+1];
+    ptrdiff_t LWORK = N*N;
     double *WORK = new double[LWORK];
-    size_t INFO;
+    ptrdiff_t INFO;
     dgetrf(&N,&N,A,&N,IPIV,&INFO);
     dgetri(&N,A,&N,IPIV,WORK,&LWORK,&INFO);
     delete [] IPIV;
@@ -173,9 +234,9 @@ inline void matrix_inverse(double* A, size_t N)
 /**
  * @brief compute the dot product of two vectors
  */
-inline double vector_dot(const double *A, const double *B, size_t NA)
+inline double vector_dot(const double *A, const double *B, ptrdiff_t NA)
 {
-    size_t one = 1;
+    ptrdiff_t one = 1;
     return ddot(&NA, A, &one, B, &one);
 }
 
@@ -183,9 +244,9 @@ inline double vector_dot(const double *A, const double *B, size_t NA)
 /**
  * @brief multiply vector by a scalar
  */
-inline void vector_scalar(double *A, size_t NA, double scalar)
+inline void vector_scalar(double *A, ptrdiff_t NA, double scalar)
 {
-    size_t one = 1.0;
+    ptrdiff_t one = 1.0;
     dscal(&NA, &scalar, A, &one);
 }
 
@@ -201,28 +262,22 @@ inline void vector_scalar(double *A, size_t NA, double scalar)
  * @param workMult space to use for work matrix
  * @return true if everything went OK, false otherwise
  */
-inline void matrix_svd(const double *A, size_t M_rows, size_t N_cols, double* &U, double* &S, double * &VT)
+inline bool matrix_svd(const double *A, ptrdiff_t M_rows, ptrdiff_t N_cols, double* U, double* S, double * VT)
 {
-    char jobu = 'A';
-    char jobvt = 'A';
-
     size_t min_NM = std::min(M_rows, N_cols);
     size_t max_NM = std::max(M_rows, N_cols);
 
-    S = new double[min_NM];
-
-    size_t ldu = M_rows;
-    U = new double[ldu * M_rows];
-    size_t ldvt = N_cols;
-    VT = new double[ldvt * N_cols];
+    ptrdiff_t ldu = M_rows;
+    ptrdiff_t ldvt = N_cols;
 
     // this is not a magic number, see fortran docs
-    int lwork = 5 * max_NM;
+    ptrdiff_t lwork = 5 * max_NM;
+
     double *work = new double[lwork];
 
-    int info = 0;
+    ptrdiff_t info = 0;
 
-    dgesvd(&jobu, &jobvt,
+    dgesvd("A", "A",
            &M_rows, &N_cols,
            A, &M_rows,
            S,
@@ -230,8 +285,12 @@ inline void matrix_svd(const double *A, size_t M_rows, size_t N_cols, double* &U
            VT, &ldvt,
            work, &lwork,
            &info);
-    // TODO: process infO?
+    
+    delete [] work;
+    
+    return info == 0;
 }
+
 
 
 
@@ -244,32 +303,30 @@ inline void matrix_svd(const double *A, size_t M_rows, size_t N_cols, double* &U
  */
 inline void matrix_pseudo_inverse(const double *A, size_t M_rows, size_t N_cols, double *out)
 {
-    // M x M
-    double *U;
-    // min(M, N)
-    double *S;
-    // N x N
-    double *VT;
-
     // the number of singular values
     size_t min_NM = std::min(M_rows, N_cols);
+
+    // TODO: vectors?
+    std::vector<double> U(M_rows * M_rows);
+    std::vector<double> S(min_NM);
+    std::vector<double> VT(N_cols * N_cols);
 
     // the matrix in svd is overwritten for some reason
     std::vector<double> tmp(A, A + M_rows * N_cols);
 
-    matrix_svd(tmp.data(), M_rows, N_cols, U, S, VT);
-
+    matrix_svd(tmp.data(), M_rows, N_cols, U.data(), S.data(), VT.data());
     tmp.assign(tmp.size(), 0.0);
 
     // transposed S matrix
     for (size_t i = 0; i < min_NM; ++i)
-        if (std::fabs(S[i]) > EPSILON)
+        if (fabs(S[i]) > EPSILON)
             tmp[(N_cols+1) * i] =  1.0 / S[i];
 
     std::vector<double> VS(M_rows * N_cols);
 
-    matrix_mult(N_cols, M_rows, N_cols, VT, tmp.data(), VS.data(), true);
-    matrix_mult(N_cols, M_rows, M_rows, VS.data(), U, out, false, true);
+    matrix_mult(N_cols, M_rows, N_cols, VT.data(), tmp.data(), VS.data(), true);
+    matrix_mult(N_cols, M_rows, M_rows, VS.data(), U.data(), out, false, true);
+    
 }
 
 

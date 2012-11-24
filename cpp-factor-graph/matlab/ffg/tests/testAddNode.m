@@ -15,8 +15,8 @@ function testForward
     nwk.addEdge(b, node);
     nwk.addEdge(node, c);
     
-    a.propagate(struct('type', 1,'mean',10,'var',5));
-    b.propagate(struct('type', 1,'mean',20,'var',4));
+    a.propagate(struct('type', 'VARIANCE','mean',10,'var',5));
+    b.propagate(struct('type', 'VARIANCE','mean',20,'var',4));
 
     EXPECTED_MEAN_C = 30;
     EXPECTED_VAR_C = 9;
@@ -39,8 +39,8 @@ function testBackward
     nwk.addEdge(b, node);
     nwk.addEdge(node, c);
 
-    c.propagate(struct('type', 1,'mean',10,'var',5));
-    b.propagate(struct('type', 1,'mean',20,'var',4));
+    c.propagate(struct('type', 'VARIANCE','mean',10,'var',5));
+    b.propagate(struct('type', 'VARIANCE','mean',20,'var',4));
 
     EXPECTED_MEAN_A = -10;
     EXPECTED_VAR_A = 9;

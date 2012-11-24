@@ -1,6 +1,6 @@
 #include "message.h"
 
-const int Message::UNDEFINED_ID;
+const int Message::UNDEFINED_ID = -1;
 
 using namespace std;
 
@@ -11,9 +11,10 @@ ostream& operator <<(ostream &os, const GaussianMessage &msg)
         os << msg.mean()[i] << " ";
     os << "]" << endl;
 
-    os << "variance[ ";
+    const double *data = (msg.type() == Message::GAUSSIAN_VARIANCE) ? msg.variance() : msg.precision();
+    os << ((msg.type() == Message::GAUSSIAN_VARIANCE) ? "variance[ " : "precision[ ");
     for (size_t i = 0; i < msg.size2(); i++)
-        os << msg.variance()[i] << " ";
+        os << data[i] << " ";
     os << "]" << endl;
     return os;
 }

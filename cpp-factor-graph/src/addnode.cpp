@@ -2,6 +2,9 @@
 
 #include "matrix.h"
 
+
+using namespace std;
+
 bool AddNode::isSupported(Message::Type type)
 {
     return type == GaussianMessage::GAUSSIAN_VARIANCE;
@@ -10,17 +13,17 @@ bool AddNode::isSupported(Message::Type type)
 
 void AddNode::addOutgoing(FactorNode *node)
 {
-    assert(m_outgoing.size() == 0);
+    if (m_outgoing.size() != 0)
+        throw Exception("AddNode::addOutgoing(): only one outgoing node is supported");
+
     FactorNode::addOutgoing(node);
 }
 
 
 GaussianMessage AddNode::function(int to, const MessageBox &msgs)
 {
-    assert(!msgs.empty());
-    assert(isForward(to) || isBackward(to));
-    assert(m_outgoing.size() == 1);
-
+    if (msgs.empty() || m_outgoing.size() != 1)
+        throw Exception("AddNode::function(): no messages or network not configured");
     return isForward(to) ? forwardFunction(to, msgs) : backwardFunction(to, msgs);
 }
 
@@ -36,7 +39,7 @@ GaussianMessage AddNode::forwardFunction(int to, const MessageBox &msgs)
     double *median = result.mean();
     double *variance = result.variance();
 
-    for (auto it = m_incoming.begin(); it != m_incoming.end(); ++it)
+    for (set<int>::iterator it = m_incoming.begin(); it != m_incoming.end(); ++it)
     {
         const GaussianMessage &msg = msgs.at(*it);
         transform(msg.mean(), msg.mean() + size, median, median, std::plus<double>());
@@ -59,7 +62,7 @@ GaussianMessage AddNode::backwardFunction(int to, const MessageBox &msgs)
     transform(outMsg.mean(), outMsg.mean() + size, median, median, std::plus<double>());
     transform(outMsg.variance(), outMsg.variance() + size2, variance, variance, std::plus<double>());
 
-    for (auto it = m_incoming.begin(); it != m_incoming.end(); ++it)
+    for (set<int>::iterator it = m_incoming.begin(); it != m_incoming.end(); ++it)
     {
         if (*it == to)
             continue;

@@ -1,8 +1,11 @@
 #include "equmultnode.h"
 
-
 #include <algorithm>
-#include "matrix.h"
+#include <matrix.h>
+
+using namespace std;
+
+
 
 bool EquMultNode::isSupported(Message::Type type)
 {
@@ -30,7 +33,7 @@ GaussianMessage EquMultNode::functionBackward(int to, const MessageBox &msgs)
     const GaussianMessage &msgY = msgs.at(*m_outgoing.begin());
 
     // x stands for the message from one of equality endpoints
-    auto it = m_incoming.begin();
+    set<int>::const_iterator it = m_incoming.begin();
     const GaussianMessage &msgX = (*it != to) ? msgs.at(*it) : msgs.at(*++it);
 
     Matrix meanX(msgX.mean(), msgX.size(), 1);

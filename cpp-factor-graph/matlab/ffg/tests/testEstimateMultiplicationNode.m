@@ -17,7 +17,7 @@ nwk.addEdge(x, A);
 nwk.addEdge(A, y);
 
 % msg = 
-INPUT_MSG = struct('type', 1, 'mean', TestMultiplication.INPUT1.mean, 'var', TestMultiplication.INPUT1.var);
+INPUT_MSG = struct('type', 'VARIANCE', 'mean', TestMultiplication.INPUT1.mean, 'var', TestMultiplication.INPUT1.var);
 
 x.propagate(INPUT_MSG);
 
@@ -45,7 +45,7 @@ nwk.addEdge(x, A);
 nwk.addEdge(A, y);
 
 % msg = 
-INPUT_MSG = struct('type', 1, 'mean', TestMultiplication.INPUT1.mean, 'var', TestMultiplication.INPUT1.var);
+INPUT_MSG = struct('type', 'VARIANCE', 'mean', TestMultiplication.INPUT1.mean, 'var', TestMultiplication.INPUT1.var);
 
 y.propagate(INPUT_MSG);
 
@@ -76,9 +76,9 @@ nwk.addEdgeTagged(A, estmt, 'estimate', '');
 
 
 
-INPUT_MSG_X = struct('type', 1, 'mean', TestMultiplication.INPUT1.mean, 'var', TestMultiplication.INPUT1.var);
+INPUT_MSG_X = struct('type', 'VARIANCE', 'mean', TestMultiplication.INPUT1.mean, 'var', TestMultiplication.INPUT1.var);
 MSG_SIZE = length(INPUT_MSG_X.mean);
-INPUT_MSG_Y = struct('type', 1, 'mean', eye(1, MSG_SIZE), 'var', eye(MSG_SIZE, MSG_SIZE));
+INPUT_MSG_Y = struct('type', 'VARIANCE', 'mean', eye(1, MSG_SIZE), 'var', eye(MSG_SIZE, MSG_SIZE));
 
 A.setMatrix(eye(MSG_SIZE, MSG_SIZE));
 

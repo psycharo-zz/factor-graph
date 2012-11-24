@@ -1,5 +1,8 @@
 #include "equalitynode.h"
 
+using namespace std;
+
+
 
 bool EqualityNode::isSupported(Message::Type type)
 {
@@ -18,7 +21,8 @@ GaussianMessage EqualityNode::function(int to, const MessageBox &msgs)
 
 GaussianMessage EqualityNode::functionVariance(int to, const MessageBox &msgs)
 {
-    assert(!msgs.empty());
+    if (msgs.empty())
+        throw std::runtime_error("EqualityNode::functionVariance(): no messages");
 
     // TODO: assert on various sizes of messages
     size_t size = msgs.begin()->second.size();
@@ -84,20 +88,27 @@ GaussianMessage EqualityNode::functionPrecision(int to, const MessageBox &msgs)
 
     GaussianMessage result(size, GaussianMessage::GAUSSIAN_PRECISION);
 
+//    Matrix resultMean(size, 1);
+//    Matrix resultPrec(size, size);
     vector<double> mean(size, 0.0);
     vector<double> MW(size, 0.0);
 
-    for (auto p : msgs)
+    for (MessageBox::const_iterator it = msgs.begin(); it != msgs.end(); ++it)
     {
-        const int from = p.first;
-        const GaussianMessage &msg = p.second;
+        const int from = it->first;
+        const GaussianMessage &msg = it->second;
 
         if (from == to)
             continue;
 
+        // Matrix W_i(msg.precision(), size, size);
+        // Matrix m_i(msg.mean(), size, 1);
+        // resultPrec += W_i;
+        // resultMean += (W_i * m_i);
+
         // W+...+W
-        transform(result.precision(), result.precision() + size2, msg.precision(),
-                  result.precision(), std::plus<double>());
+        std::transform(result.precision(), result.precision() + size2, msg.precision(),
+                       result.precision(), std::plus<double>());
 
         matrix_vector_mult(size, size, msg.precision(), msg.mean(), MW.data());
         // Wm
@@ -105,10 +116,11 @@ GaussianMessage EqualityNode::functionPrecision(int to, const MessageBox &msgs)
                   mean.begin(), std::plus<double>());
     }
 
+
     // TODO: check if the normal inverse will work
-    vector<double> pinv(size * size);
-    matrix_pseudo_inverse(result.precision(), size, size, pinv.data());
-    matrix_vector_mult(size, size, pinv.data(), mean.data(), result.mean());
+    Matrix tmp(result.precision(), size, size);
+    tmp.pinv();
+    matrix_vector_mult(size, size, tmp.data(), mean.data(), result.mean());
 
     return result;
 }

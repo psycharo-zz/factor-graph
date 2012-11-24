@@ -9,6 +9,8 @@
 
 #include <network.h>
 
+using namespace std;
+
 /**
  * @brief TEST for scalar gaussian messages
  */
@@ -144,14 +146,16 @@ TEST(EqualityNode, NoInformation) {
     nwk.addEdge(&y, &equ);
     nwk.addEdge(&z, &equ);
 
-    x.propagate(makeGaussian({2,3}, {1, 0, 0, 1}, GaussianMessage::GAUSSIAN_PRECISION));
+    x.propagate(makeGaussian({1, 2, 3}, {1, 0, 0, 0, 1, 0, 0, 0, 1}, GaussianMessage::GAUSSIAN_PRECISION));
 
     // dummy message for no
-    z.propagate(makeGaussian({12313, 123131321}, {0, 0, 0, 0}, GaussianMessage::GAUSSIAN_PRECISION));
+    z.propagate(makeGaussian({0, 0, 0}, {0, 0, 0,
+                                         0, 0, 0,
+                                         0, 0, 0}, GaussianMessage::GAUSSIAN_PRECISION));
 
 
-    vector<double> EXPECTED_MEAN = {2,3};
-    vector<double> EXPECTED_PREC = {1, 0, 0, 1};
+    vector<double> EXPECTED_MEAN = {1, 2,3};
+    vector<double> EXPECTED_PREC = {1, 0, 0, 0, 1, 0, 0, 0, 1};
     for (size_t i = 0; i < EXPECTED_MEAN.size(); i++)
         EXPECT_FLOAT_EQ(y.evidence().mean()[i], EXPECTED_MEAN[i]);
 

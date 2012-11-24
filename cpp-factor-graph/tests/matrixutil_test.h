@@ -5,6 +5,11 @@
 #include <matrixutil.h>
 
 
+#include <vector>
+using namespace std;
+
+
+
 TEST(MatrixUtil, SingularValueDecomposition)
 {
     double INPUT_MATRIX[] = {
@@ -13,11 +18,11 @@ TEST(MatrixUtil, SingularValueDecomposition)
         3,4
     };
 
-    double *U;
-    double *S;
-    double *VT;
+    std::vector<double> U(2 * 2);
+    std::vector<double> S(2);
+    std::vector<double> VT(3 * 3);
 
-    matrix_svd(INPUT_MATRIX, 2, 3, U, S, VT);
+    matrix_svd(INPUT_MATRIX, 2, 3, U.data(), S.data(), VT.data());
 
     double EXPECTED_U[] = {
         -0.569594837762602,  -0.821925617555625,
@@ -107,6 +112,28 @@ TEST(MatrixUtil, PseudoInverseZeros) {
         EXPECT_FLOAT_EQ(EXPECTED_PINV[i], RESULT[i]) << "at index " << i;
 }
 
+
+TEST(MatrixUtil, MatrixScalarMult) {
+    double INPUT_MATRIX[] = {
+        1, 1, 1,
+        2, 2, 2,
+        3, 3, 3
+    };
+
+    double EXPECTED_MATRIX[] = {
+        1.5, 1.5, 1.5,
+        3,     3,   3,
+        4.5, 4.5, 4.5
+    };
+
+    matrix_scalar_mult(3, 3, INPUT_MATRIX, 1.5);
+
+    for (int i = 0; i < 3*3; i++)
+        EXPECT_FLOAT_EQ(EXPECTED_MATRIX[i], INPUT_MATRIX[i]) << "at index " << i;
+}
+
+
+#if __cplusplus >= 201108L
 TEST(Matrix, Add) {
 
     Matrix a = {{1,2,3},
@@ -168,7 +195,7 @@ TEST(Matrix, Mult) {
 
 
 }
-
+#endif
 
 
 

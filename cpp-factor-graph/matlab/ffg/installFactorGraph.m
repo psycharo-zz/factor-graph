@@ -1,35 +1,34 @@
 function installFactorGraph
+
+    disp('Building factor graph framework for your platform...');
     
     MATLAB_FULL_PATH = fileparts(which(mfilename));
     APP_FULL_PATH = fileparts(fileparts(MATLAB_FULL_PATH));
-    
+
     addpath(APP_FULL_PATH);
 
     OUT_NAME = 'mexfactorgraph';
     SRC_PATH = [APP_FULL_PATH filesep 'src'];
     MATLAB_SRC_PATH = [MATLAB_FULL_PATH filesep 'src'];
     BUILD_PATH = [MATLAB_FULL_PATH filesep 'build'];
+
     
-   
-    MEXOPTS_PATH = BUILD_PATH;
     if isunix
-        MEXOPTS_PATH = [MEXOPTS_PATH filesep 'mexopts.sh'];
+        MEXOPTS = [' -f ' BUILD_PATH filesep 'mexopts.sh'  ' -DMATLAB'];
     elseif  ispc
-        MEXOPTS_PATH = [MEXOPTS_PATH filesep 'mexopts.bat'];
+        MEXOPTS = '-lmwblas -lmwlapack -DMATLAB';
     else 
         error('installFactorGraph:Unsupported platform');
     end
     
     % core sources
-    sources = dir([SRC_PATH filesep '*.cpp']);
-    SOURCES_NAMES = sprintf([SRC_PATH filesep '%s\t'], sources(1:end).name);
-    % matlab support sources
-    sources = dir([MATLAB_SRC_PATH filesep '*.cpp']);
-    SOURCES_NAMES = [SOURCES_NAMES, sprintf([MATLAB_SRC_PATH filesep '%s\t'], sources(1:end).name)];
-            
+    sources = cell2mat(arrayfun(@(x) struct('name', ['"' SRC_PATH filesep x.name '" ']), dir([SRC_PATH filesep '*.cpp']), 'UniformOutput', false));
+    SOURCES_NAMES = [sources.name];
+    sources = cell2mat(arrayfun(@(x) struct('name', ['"' MATLAB_SRC_PATH filesep x.name '" ']), dir([MATLAB_SRC_PATH filesep '*.cpp']), 'UniformOutput', false));
+    SOURCES_NAMES = [SOURCES_NAMES, sources.name];
+    eval(['mex ' SOURCES_NAMES ' -I"' SRC_PATH '" ' MEXOPTS ' -output ' OUT_NAME]);
     
-    eval(sprintf('mex -f %s -I%s %s -output %s', MEXOPTS_PATH, SRC_PATH, SOURCES_NAMES, OUT_NAME));
+    disp('Done!');
     
-    
-    
+    % TODO: testing?
 end

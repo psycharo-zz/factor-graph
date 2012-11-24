@@ -68,7 +68,12 @@ inline FactorNode *arrayToNode(const mxArray *arr)
 
 inline Message::Type messageType(const mxArray *msg)
 {
-    return mxGetField(msg, 0, "type") ? (Message::Type) mxGetPr(mxGetField(msg, 0, "type"))[0] : Message::UNKNOWN;
+    std::string typeName = mxArrayToString(mxGetField(msg, 0, "type"));
+    if (typeName == Message::typeName(Message::GAUSSIAN_VARIANCE))
+        return Message::GAUSSIAN_VARIANCE;
+    else if (typeName == Message::typeName(Message::GAUSSIAN_PRECISION))
+        return Message::GAUSSIAN_PRECISION;
+    return Message::UNKNOWN;
 }
 
 
@@ -107,33 +112,49 @@ inline GaussianMessage createGaussianMessage(const mxArray *msg)
 }
 
 
-
-
-
-
 /**
  * convert message to the matlab structure
  */
-inline mxArray *messageToStruct(const GaussianMessage &msg)
+inline mxArray *messageToStruct(const GaussianMessage &msg, int from = Message::UNDEFINED_ID)
 {
     mxArray *result = NULL;
 
     if (msg.type() == GaussianMessage::GAUSSIAN_VARIANCE)
     {
         result = mxCreateStructMatrix(1, 1, NUM_MEX_MSG_FIELDS, MSG_FIELDS_GAUSSIAN_VAR);
-        mxSetField(result, 0, MEX_TYPE, mxCreateDoubleScalar(msg.type()));
+        mxSetField(result, 0, MEX_FROM, mxCreateDoubleScalar(from));
+        mxSetField(result, 0, MEX_TYPE, mxCreateString(Message::typeName(msg.type()).c_str()));
         mxSetField(result, 0, MEX_MEAN, arrayToArray(msg.mean(), 1, msg.size()));
         mxSetField(result, 0, MEX_VAR, arrayToArray(msg.variance(), msg.size(), msg.size()));
     }
     else // if (msg.type() == GaussianMessage::)
     {
         result = mxCreateStructMatrix(1, 1, NUM_MEX_MSG_FIELDS, MSG_FIELDS_GAUSSIAN_PRECISION);
-        mxSetField(result, 0, MEX_TYPE, mxCreateDoubleScalar(msg.type()));
+        mxSetField(result, 0, MEX_FROM, mxCreateDoubleScalar(from));
+        mxSetField(result, 0, MEX_TYPE, mxCreateString(Message::typeName(msg.type()).c_str()));
         mxSetField(result, 0, MEX_MEAN, arrayToArray(msg.mean(), 1, msg.size()));
         mxSetField(result, 0, MEX_PRECISION, arrayToArray(msg.precision(), msg.size(), msg.size()));
     }
 
     return result;
+}
+
+
+/**
+ * @brief messageBoxToStruct
+ * @return array of structs (TODO: switch to cell arrays?)
+ */
+inline mxArray *messageBoxToStruct(const MessageBox &msgs)
+{
+    mxArray *mexMsgs = mxCreateCellMatrix(1, msgs.size());
+    MessageBox::const_iterator it = msgs.begin();
+    for (size_t i = 0; i < msgs.size(); ++i)
+    {
+        mxSetCell(mexMsgs, i, messageToStruct(it->second, it->first));
+        ++it;
+    }
+    return mexMsgs;
+
 }
 
 

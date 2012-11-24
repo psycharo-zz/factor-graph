@@ -4,6 +4,7 @@
 
 #include "convert.h"
 
+using namespace std;
 
 
 bool CustomNode::isSupported(Message::Type type)
@@ -21,7 +22,7 @@ GaussianMessage CustomNode::function(int to, const MessageBox &msgs)
     // switch to an array of structs for nodes, e.g.  struct('type', 'incoming', 'msg', 'message')
     // converting the messages
     MessageBox::const_iterator it = msgs.begin();
-    for (int i = 0; i < msgs.size(); ++i)
+    for (size_t i = 0; i < msgs.size(); ++i)
     {
         const int from = it->first;
         const GaussianMessage &msg = it->second;

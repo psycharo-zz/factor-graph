@@ -9,24 +9,14 @@
 #include <exception>
 #include <string>
 #include <matrix.h>
-#include <unordered_map>
+#include <stdexcept>
 
 
-
-class Exception : public std::exception
+class Exception : public std::runtime_error
 {
 public:
-    Exception(const std::string &msg):
-        m_message(msg)
+    Exception(const std::string &msg): std::runtime_error(msg)
     {}
-
-    virtual const char *what()
-    {
-        return m_message.c_str();
-    }
-
-private:
-    std::string m_message;
 };
 
 
@@ -44,7 +34,6 @@ public:
      */
     enum Type
     {
-        DISCRETE = 0,
         GAUSSIAN_VARIANCE = 1,
         GAUSSIAN_PRECISION = 2,
         CUSTOM, // for possible extensions without cpp code modifications
@@ -52,10 +41,32 @@ public:
     };
 
 
+    static std::string typeName(Type type)
+    {
+        if (type == GAUSSIAN_VARIANCE)
+            return "VARIANCE";
+        else if (type == GAUSSIAN_PRECISION)
+            return "PRECISION";
+        else
+            return "UNKNOWN";
+    }
+
+    static Type typeByName(const std::string &name)
+    {
+        // TODO
+        if (name == "VARIANCE")
+            return GAUSSIAN_VARIANCE;
+        else if (name == "PRECISION")
+            return GAUSSIAN_PRECISION;
+        else
+            return UNKNOWN;
+    }
+
+
     /**
      * @brief UNDEFINED_ID for sources with undefined identifier
      */
-    static const int UNDEFINED_ID = -1;
+    static const int UNDEFINED_ID;
 
     /**
      * @brief Message
@@ -247,6 +258,8 @@ public:
      */
     inline const double *variance() const
     {
+        if (type() != GAUSSIAN_VARIANCE)
+            throw Exception("GaussianMessage::variance: not defined for this type");
         return m_data.data();
     }
 
@@ -280,7 +293,8 @@ public:
      */
     inline const double *precision() const
     {
-        assert(type() == GAUSSIAN_PRECISION);
+        if (type() != GAUSSIAN_PRECISION)
+            throw Exception("GaussianMessage::precision: not defined for this type");
         return m_data.data();
     }
 

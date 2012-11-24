@@ -7,6 +7,7 @@
 #include <vector>
 #include <ostream>
 #include <cstring>
+#include <stdexcept>
 
 
 /**
@@ -55,7 +56,7 @@ public:
         m_data.resize(_rows * _cols, 0.0);
     }
 
-
+#if __cplusplus >= 201103L
     /**
      * @brief
      * @param l
@@ -77,7 +78,7 @@ public:
             ++i;
         }
     }
-
+#endif
 
 
     inline double *data() { return m_data.data(); }
@@ -96,6 +97,10 @@ public:
      */
     inline Matrix operator *(const Matrix &other) const
     {
+        if (m_cols != other.m_rows)
+            throw std::runtime_error("Matrix::operator*(): dimensionalities do not conform");
+
+
         Matrix result(rows(), other.cols());
         matrix_mult(rows(), other.cols(), cols(), data(), other.data(), result.data(), m_transposed, other.transposed());
         return result;
@@ -125,7 +130,8 @@ public:
      */
     inline void inv()
     {
-        assert(m_rows == m_cols);
+        if (m_rows != m_cols)
+            throw std::runtime_error("Matrix::inv(): dimensionalities do not conform.");
         matrix_inverse(data(), m_rows);
     }
 
@@ -151,6 +157,9 @@ public:
      */
     inline Matrix operator +(const Matrix &other) const
     {
+        if (m_rows != other.m_rows || m_cols != other.cols())
+            throw std::runtime_error("Matrix::operator+: dimensionalities do not conform");
+
         Matrix result(rows(), cols(), (m_transposed && other.m_transposed));
 
         if ((m_transposed && other.m_transposed) ||
@@ -179,6 +188,9 @@ public:
      */
     inline Matrix &operator +=(const Matrix &other)
     {
+        if (m_rows != other.m_rows || m_cols != other.cols())
+            throw std::runtime_error("Matrix::operator+(): dimensionalities do not conform");
+
         if ((m_transposed && other.m_transposed) || (!m_transposed && !other.m_transposed))
             std::transform(data(), data() + size(), other.data(), data(), std::plus<double>());
         else if (m_transposed && !other.m_transposed)
@@ -203,6 +215,10 @@ public:
      */
     inline Matrix operator -(const Matrix &other) const
     {
+        if (m_rows != other.m_rows || m_cols != other.cols())
+            throw std::runtime_error("Matrix::operator-: dimensionalities do not conform");
+
+
         Matrix result(m_rows, m_cols, m_transposed && other.m_transposed);
 
         if ((m_transposed && other.m_transposed) ||
@@ -230,6 +246,10 @@ public:
      */
     inline Matrix &operator -=(const Matrix &other)
     {
+        if (m_rows != other.m_rows || m_cols != other.cols())
+            throw std::runtime_error("Matrix::operator-=(): dimensionalities do not conform");
+
+
         if ((m_transposed && other.m_transposed) || (!m_transposed && !other.m_transposed))
             std::transform(data(), data() + size(), other.data(), data(), std::minus<double>());
         else if (m_transposed && !other.m_transposed)
@@ -267,8 +287,9 @@ inline Matrix eye(size_t M, size_t N)
 inline Matrix inv(const Matrix &mx)
 {
     // TODO: switch to exceptions?
-    assert(mx.cols() == mx.rows());
-    Matrix result(mx.rows(), mx.cols());
+    if (mx.cols() != mx.rows())
+        throw std::runtime_error("inv(): dimensionalities do not conform");
+    Matrix result(mx.data(), mx.rows(), mx.cols());
     matrix_inverse(result.data(), result.rows());
     return result;
 }

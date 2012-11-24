@@ -17,8 +17,8 @@ function testAddForwardNode
     EXPECTED_MEAN_C = 30;
     EXPECTED_VAR_C = 9;
     
-    a.propagate(struct('type', 1,'mean',10,'var',5));
-    b.propagate(struct('type', 1,'mean',20,'var',4));
+    a.propagate(struct('type', 'VARIANCE','mean',10,'var',5));
+    b.propagate(struct('type', 'VARIANCE','mean',20,'var',4));
 
     msg = c.evidence();
     assertEqual(size(msg.mean,2), 1);
@@ -38,8 +38,8 @@ function testAddBackwardNode
     nwk.addEdge(node, c);
 
 
-    c.propagate(struct('type', 1,'mean',10,'var',5));
-    b.propagate(struct('type', 1,'mean',20,'var',4));
+    c.propagate(struct('type', 'VARIANCE', 'mean',10, 'var',5));
+    b.propagate(struct('type', 'VARIANCE', 'mean',20, 'var',4));
 
     EXPECTED_MEAN_A = -10;
     EXPECTED_VAR_A = 9;

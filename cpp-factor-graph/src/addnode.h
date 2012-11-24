@@ -22,5 +22,4 @@ protected:
 };
 
 
-
 #endif // ADDNODE_H

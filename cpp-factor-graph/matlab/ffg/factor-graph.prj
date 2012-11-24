@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<deployment-project plugin="plugin.apptool" plugin-version="1.0">
+  <configuration target="target.mlapps" target-name="Package App" name="factor-graph" location="C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\matlab\ffg" file="C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\matlab\ffg\factor-graph.prj" build-checksum="4039750635">
+    <param.appname>factor-graph</param.appname>
+    <param.authnamewatermark>Timur Bagautdinov</param.authnamewatermark>
+    <param.email />
+    <param.company />
+    <param.icon />
+    <param.summary />
+    <param.description />
+    <param.screenshot />
+    <param.version>0.1</param.version>
+    <param.products.name>
+      <item>MATLAB</item>
+    </param.products.name>
+    <param.products.id>
+      <item>1</item>
+    </param.products.id>
+    <param.products.version>
+      <item>8.0</item>
+    </param.products.version>
+    <param.platforms>
+      <item>win64</item>
+    </param.platforms>
+    <param.output>${PROJECT_ROOT}\factor-graph.mlappinstall</param.output>
+    <param.guid>90296aa3-ebfd-4c9c-9033-e6a054cb78b0</param.guid>
+    <unset>
+      <param.email />
+      <param.company />
+      <param.icon />
+      <param.screenshot />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}\installFactorGraph.m</file>
+    </fileset.main>
+    <fileset.depfun>
+      <file>${PROJECT_ROOT}\+ffg\AddNode.m</file>
+      <file>${PROJECT_ROOT}\+ffg\CppObject.m</file>
+      <file>${PROJECT_ROOT}\+ffg\CustomNode.m</file>
+      <file>${PROJECT_ROOT}\+ffg\EqualityNode.m</file>
+      <file>${PROJECT_ROOT}\+ffg\EquMultNode.m</file>
+      <file>${PROJECT_ROOT}\+ffg\EstimateMultiplicationNode.m</file>
+      <file>${PROJECT_ROOT}\+ffg\EvidenceNode.m</file>
+      <file>${PROJECT_ROOT}\+ffg\FactorNode.m</file>
+      <file>${PROJECT_ROOT}\+ffg\gaussMessage.m</file>
+      <file>${PROJECT_ROOT}\+ffg\MultiplicationNode.m</file>
+      <file>${PROJECT_ROOT}\+ffg\Network.m</file>
+      <file>${PROJECT_ROOT}\build\mexopts.bat</file>
+      <file>${PROJECT_ROOT}\build\mexopts.sh</file>
+      <file>${PROJECT_ROOT}\src\convert.h</file>
+      <file>${PROJECT_ROOT}\src\customnode.cpp</file>
+      <file>${PROJECT_ROOT}\src\customnode.h</file>
+      <file>${PROJECT_ROOT}\src\mexfactorgraph.cpp</file>
+      <file>${PROJECT_ROOT}\tests\data_gaussian.mat</file>
+      <file>${PROJECT_ROOT}\tests\testAddNode.m</file>
+      <file>${PROJECT_ROOT}\tests\testCustomNode.m</file>
+      <file>${PROJECT_ROOT}\tests\testEqualityNode.m</file>
+      <file>${PROJECT_ROOT}\tests\testEquMultNode.m</file>
+      <file>${PROJECT_ROOT}\tests\testEstimateMultiplicationNode.m</file>
+      <file>${PROJECT_ROOT}\tests\testEvidenceNode.m</file>
+      <file>${PROJECT_ROOT}\tests\testMultiplicationNode.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\arrayToString.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\compareFloats.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\comparisonMessage.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\containsRegexp.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\generateDoc.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\isAlmostEqual.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\isSetUpString.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\isTearDownString.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\isTestCaseSubclass.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\isTestString.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\parseFloatAssertInputs.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\stringToCellArray.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\assertElementsAlmostEqual.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\assertEqual.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\assertExceptionThrown.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\assertFalse.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\assertFilesEqual.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\assertTrue.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\assertVectorsAlmostEqual.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\CommandWindowTestRunDisplay.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\FunctionHandleTestCase.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\info.xml</file>
+      <file>${PROJECT_ROOT}\tests\xunit\initTestSuite.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\runtests.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\TestCase.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\TestCaseInDir.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\TestCaseWithAddPath.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\TestComponent.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\TestComponentInDir.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\TestRunDisplay.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\TestRunLogger.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\TestRunMonitor.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\TestSuite.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\TestSuiteInDir.m</file>
+      <file>${PROJECT_ROOT}\tests\xunit\VerboseTestRunDisplay.m</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\addnode.cpp</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\addnode.h</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\equalitynode.cpp</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\equalitynode.h</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\equmultnode.cpp</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\equmultnode.h</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\estimatemultiplicationnode.cpp</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\estimatemultiplicationnode.h</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\evidencenode.h</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\factorgraph.h</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\factornode.cpp</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\factornode.h</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\matrix.h</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\matrixutil.h</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\message.cpp</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\message.h</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\multiplicationnode.cpp</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\multiplicationnode.h</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\network.cpp</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\network.h</file>
+      <file>C:\Users\s116791\Documents\MATLAB\Apps\factorgraph - 7\mexfactorgraph.mexw64</file>
+    </fileset.depfun>
+    <fileset.resources>
+      <file>${PROJECT_ROOT}\+ffg</file>
+      <file>${PROJECT_ROOT}\build</file>
+      <file>${PROJECT_ROOT}\src</file>
+      <file>${PROJECT_ROOT}\tests</file>
+      <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src</file>
+    </fileset.resources>
+    <fileset.package />
+    <build-deliverables>
+      <file name="factor-graph.mlappinstall" location="C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\matlab\ffg" optional="false">C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\matlab\ffg\factor-graph.mlappinstall</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>C:\Program Files\MATLAB\R2012b</root>
+    </matlab>
+    <platform>
+      <unix>false</unix>
+      <mac>false</mac>
+      <windows>true</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>6.1</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>
+

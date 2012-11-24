@@ -17,7 +17,7 @@ nwk.addEdge(x, A);
 nwk.addEdge(A, y);
 
 % msg = 
-INPUT_MSG = struct('type', 1, 'mean', TestMultiplication.INPUT1.mean, 'var', TestMultiplication.INPUT1.var);
+INPUT_MSG = struct('type', 'VARIANCE', 'mean', TestMultiplication.INPUT1.mean, 'var', TestMultiplication.INPUT1.var);
 
 x.propagate(INPUT_MSG);
 
@@ -46,7 +46,7 @@ nwk.addEdge(x, A);
 nwk.addEdge(A, y);
 
 % for now backward message only supports mean
-INPUT_MSG = struct('type', 2, 'mean', TestMultiplication.INPUT1.mean, 'precision', TestMultiplication.INPUT1.var);
+INPUT_MSG = struct('type', 'PRECISION', 'mean', TestMultiplication.INPUT1.mean, 'precision', TestMultiplication.INPUT1.var);
 
 y.propagate(INPUT_MSG);
 
