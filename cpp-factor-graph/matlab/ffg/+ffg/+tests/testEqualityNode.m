@@ -32,7 +32,7 @@ function testScalarGaussian
 
 function testMultivariateGaussian
 
-    load('data_gaussian.mat');
+    load('+ffg/+tests/data_gaussian');
 
     node = ffg.EqualityNode;
     a = ffg.EvidenceNode;

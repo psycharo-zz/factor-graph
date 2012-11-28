@@ -5,8 +5,10 @@ set(CMAKE_CXX_FLAGS -std=gnu++0x)
 
 list(APPEND SRC_LIST
 tests/main.cpp
-src/*.cpp
-src/*.h
+matlab/ffg/src/customnode.cpp
+matlab/ffg/src/mexfactorgraph.cpp
+matlab/ffg/src/customnode.h
+matlab/ffg/src/convert.h
 tests/*.h
 
 )

@@ -15,6 +15,7 @@
 // TODO: make a template-based type caster
 static const char *MEX_FROM = "from";
 static const char *MEX_TYPE = "type";
+static const char *MEX_CONN = "connection";
 static const char *MEX_MEAN = "mean";
 static const char *MEX_VAR = "var";
 static const char *MEX_PRECISION = "precision";
@@ -39,7 +40,7 @@ inline mxArray *pointerToArray(void *ptr)
  * @param M - number of rows
  * @param N - number of cols
  */
-inline mxArray *arrayToArray(const double *src, size_t M, size_t N)
+inline mxArray *arrayToMatrix(const double *src, size_t M, size_t N)
 {
     mxArray *result = mxCreateDoubleMatrix(M, N, mxREAL);
     memcpy(mxGetPr(result), src, sizeof(double) * M * N);
@@ -124,16 +125,16 @@ inline mxArray *messageToStruct(const GaussianMessage &msg, int from = Message::
         result = mxCreateStructMatrix(1, 1, NUM_MEX_MSG_FIELDS, MSG_FIELDS_GAUSSIAN_VAR);
         mxSetField(result, 0, MEX_FROM, mxCreateDoubleScalar(from));
         mxSetField(result, 0, MEX_TYPE, mxCreateString(Message::typeName(msg.type()).c_str()));
-        mxSetField(result, 0, MEX_MEAN, arrayToArray(msg.mean(), 1, msg.size()));
-        mxSetField(result, 0, MEX_VAR, arrayToArray(msg.variance(), msg.size(), msg.size()));
+        mxSetField(result, 0, MEX_MEAN, arrayToMatrix(msg.mean(), 1, msg.size()));
+        mxSetField(result, 0, MEX_VAR, arrayToMatrix(msg.variance(), msg.size(), msg.size()));
     }
     else // if (msg.type() == GaussianMessage::)
     {
         result = mxCreateStructMatrix(1, 1, NUM_MEX_MSG_FIELDS, MSG_FIELDS_GAUSSIAN_PRECISION);
         mxSetField(result, 0, MEX_FROM, mxCreateDoubleScalar(from));
         mxSetField(result, 0, MEX_TYPE, mxCreateString(Message::typeName(msg.type()).c_str()));
-        mxSetField(result, 0, MEX_MEAN, arrayToArray(msg.mean(), 1, msg.size()));
-        mxSetField(result, 0, MEX_PRECISION, arrayToArray(msg.precision(), msg.size(), msg.size()));
+        mxSetField(result, 0, MEX_MEAN, arrayToMatrix(msg.mean(), 1, msg.size()));
+        mxSetField(result, 0, MEX_PRECISION, arrayToMatrix(msg.precision(), msg.size(), msg.size()));
     }
 
     return result;
@@ -141,14 +142,13 @@ inline mxArray *messageToStruct(const GaussianMessage &msg, int from = Message::
 
 
 /**
- * @brief messageBoxToStruct
- * @return array of structs (TODO: switch to cell arrays?)
+ * @brief convert the map to a cell array of structs
  */
-inline mxArray *messageBoxToStruct(const MessageBox &msgs)
+inline mxArray *messagesToCellArray(const MessageBox &msgs)
 {
     mxArray *mexMsgs = mxCreateCellMatrix(1, msgs.size());
     MessageBox::const_iterator it = msgs.begin();
-    for (size_t i = 0; i < msgs.size(); ++i)
+    for (int i = 0; i < msgs.size(); ++i)
     {
         mxSetCell(mexMsgs, i, messageToStruct(it->second, it->first));
         ++it;
@@ -156,6 +156,32 @@ inline mxArray *messageBoxToStruct(const MessageBox &msgs)
     return mexMsgs;
 
 }
+
+
+/**
+ * @brief convert the map to an array of unified structs (mean, var)
+ */
+inline mxArray *messagesToStructArray(const MessageBox &msgs)
+{
+    mxArray *result = mxCreateStructMatrix(1, msgs.size(), NUM_MEX_MSG_FIELDS, MSG_FIELDS_GAUSSIAN_VAR);
+    MessageBox::const_iterator it = msgs.begin();
+    for (int i = 0; i < msgs.size(); ++i)
+    {
+        int from = it->first;
+        const GaussianMessage &msg = it->second;
+        mxSetField(result, i, MEX_FROM, mxCreateDoubleScalar(from));
+        mxSetField(result, i, MEX_TYPE, mxCreateString(Message::typeName(msg.type()).c_str()));
+        mxSetField(result, i, MEX_MEAN, arrayToMatrix(msg.mean(), 1, msg.size()));
+        if (msg.type() == GaussianMessage::GAUSSIAN_VARIANCE)
+            mxSetField(result, i, MEX_VAR, arrayToMatrix(msg.variance(), msg.size(), msg.size()));
+        else // if (msg.type() == GaussianMessage::GAUSSIAN_PRECISION)
+            mxSetField(result, i, MEX_VAR, arrayToMatrix(msg.precision(), msg.size(), msg.size()));
+        ++it;
+    }
+
+    return result;
+}
+
 
 
 

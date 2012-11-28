@@ -259,7 +259,7 @@ public:
     inline const double *variance() const
     {
         if (type() != GAUSSIAN_VARIANCE)
-            throw Exception("GaussianMessage::variance: not defined for this type");
+            throw std::runtime_error("GaussianMessage::variance: not defined for this type");
         return m_data.data();
     }
 
@@ -270,7 +270,7 @@ public:
     inline double *variance()
     {
         if (type() != GAUSSIAN_VARIANCE)
-            throw Exception("GaussianMessage::variance: not defined for this type");
+            throw std::runtime_error("GaussianMessage::variance: not defined for this type");
         return m_data.data();
     }
 
@@ -282,7 +282,7 @@ public:
     inline double *precision()
     {
         if (type() != GAUSSIAN_PRECISION)
-            throw Exception("GaussianMessage::precision: not defined for this type");
+            throw std::runtime_error("GaussianMessage::precision: not defined for this type");
         return m_data.data();
     }
 
@@ -294,7 +294,7 @@ public:
     inline const double *precision() const
     {
         if (type() != GAUSSIAN_PRECISION)
-            throw Exception("GaussianMessage::precision: not defined for this type");
+            throw std::runtime_error("GaussianMessage::precision: not defined for this type");
         return m_data.data();
     }
 

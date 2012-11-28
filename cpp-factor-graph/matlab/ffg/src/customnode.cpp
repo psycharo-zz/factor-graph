@@ -16,50 +16,58 @@ bool CustomNode::isSupported(Message::Type type)
 
 GaussianMessage CustomNode::function(int to, const MessageBox &msgs)
 {
-    mxArray *mexMsgs = mxCreateStructMatrix(1, msgs.size(), NUM_MEX_MSG_FIELDS, MSG_FIELDS_GAUSSIAN_VAR);
-
-    // TODO:
-    // switch to an array of structs for nodes, e.g.  struct('type', 'incoming', 'msg', 'message')
-    // converting the messages
-    MessageBox::const_iterator it = msgs.begin();
-    for (size_t i = 0; i < msgs.size(); ++i)
-    {
-        const int from = it->first;
-        const GaussianMessage &msg = it->second;
-
-        mxSetField(mexMsgs, i, MEX_FROM, mxCreateDoubleScalar(from));
-        mxSetField(mexMsgs, i, MEX_TYPE, mxCreateDoubleScalar(msg.type()));
-        mxSetField(mexMsgs, i, MEX_MEAN, arrayToArray(msg.mean(), 1, msg.size()));
-        mxSetField(mexMsgs, i, MEX_VAR, arrayToArray(msg.variance(), msg.size(), msg.size()));
-        ++it;
-    }
-
     // number of outputs
     const int NRLS = 1;
+
     mxArray *plhs;
 
+    const char *FIELDS[] = {MEX_FROM, MEX_TYPE, MEX_CONN, MEX_MEAN, MEX_VAR};
+    const size_t NUM_FIELDS = 5;
+
+    mxArray *mexMsgs = mxCreateStructMatrix(1, msgs.size(), NUM_FIELDS, FIELDS);
+
     // number of inputs
-    const int NRHS = 5;
+    const int NRHS = 3;
     mxArray *prhs[NRHS];
     prhs[0] = mxCreateDoubleScalar(id());
     prhs[1] = mxCreateDoubleScalar(to);
     prhs[2] = mexMsgs;
 
-    // TODO: change double to int?
-    vector<double> tmp_data;
+    MessageBox::const_iterator it = msgs.begin();
+    for (int i = 0; i < msgs.size(); ++i)
+    {
+        int from = it->first;
+        const GaussianMessage &msg = it->second;
 
-    tmp_data.assign(m_incoming.begin(), m_incoming.end());
-    prhs[3] = arrayToArray(tmp_data.data(), 1, tmp_data.size());
+        string connType;
+        if (m_incoming.count(from))
+            connType = "INCOMING";
+        else if (m_outgoing.count(from))
+            connType = "OUTGOING";
+        else
+            connType = m_connections.at(from);
 
-    tmp_data.assign(m_outgoing.begin(), m_outgoing.end());
-    prhs[4] = arrayToArray(tmp_data.data(), 1, tmp_data.size());
+
+        mxSetField(mexMsgs, i, MEX_FROM, mxCreateDoubleScalar(from));
+        mxSetField(mexMsgs, i, MEX_TYPE, mxCreateString(Message::typeName(msg.type()).c_str()));
+        mxSetField(mexMsgs, i, MEX_CONN, mxCreateString(connType.c_str()));
+        mxSetField(mexMsgs, i, MEX_MEAN, arrayToMatrix(msg.mean(), 1, msg.size()));
+        if (msg.type() == GaussianMessage::GAUSSIAN_VARIANCE)
+            mxSetField(mexMsgs, i, MEX_VAR, arrayToMatrix(msg.variance(), msg.size(), msg.size()));
+        else // if (msg.type() == GaussianMessage::GAUSSIAN_PRECISION)
+            mxSetField(mexMsgs, i, MEX_VAR, arrayToMatrix(msg.precision(), msg.size(), msg.size()));
+
+        ++it;
+    }
 
     mexCallMATLAB(NRLS, &plhs, NRHS, prhs, m_functionName.c_str());
-
     for (int i = 0; i < NRHS; i++)
         mxDestroyArray(prhs[i]);
 
     return createGaussianMessage(plhs);
 }
+
+
+
 
 

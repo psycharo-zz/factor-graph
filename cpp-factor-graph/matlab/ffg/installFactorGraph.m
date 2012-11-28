@@ -5,7 +5,7 @@ function installFactorGraph
     MATLAB_FULL_PATH = fileparts(which(mfilename));
     APP_FULL_PATH = fileparts(fileparts(MATLAB_FULL_PATH));
 
-    addpath(APP_FULL_PATH);
+    addpath(genpath(APP_FULL_PATH));
 
     OUT_NAME = 'mexfactorgraph';
     SRC_PATH = [APP_FULL_PATH filesep 'src'];
@@ -29,6 +29,8 @@ function installFactorGraph
     eval(['mex ' SOURCES_NAMES ' -I"' SRC_PATH '" ' MEXOPTS ' -output ' OUT_NAME]);
     
     disp('Done!');
+    
+    runtests ffg.tests;
     
     % TODO: testing?
 end

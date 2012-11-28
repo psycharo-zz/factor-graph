@@ -3,7 +3,7 @@ initTestSuite;
 
 function testForward
 
-load('data_gaussian');
+load('+ffg/+tests/data_gaussian');
 
 nwk = ffg.Network;
 x = ffg.EvidenceNode;

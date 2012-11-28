@@ -5,7 +5,9 @@ initTestSuite;
 
 function testAddForwardNode
     nwk = ffg.Network;
-    node = CustomAddNode;
+    node = ffg.CustomNode;
+        
+    node.setFunction('ffg.tests.customnode_function_gauss');
     
     a = ffg.EvidenceNode;
     b = ffg.EvidenceNode;
@@ -28,7 +30,9 @@ function testAddForwardNode
     
 function testAddBackwardNode
     nwk = ffg.Network;
-    node = CustomAddNode;
+    node = ffg.CustomNode;
+    
+    node.setFunction('ffg.tests.customnode_function_gauss');
     
     a = ffg.EvidenceNode;
     b = ffg.EvidenceNode;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
-  <configuration target="target.mlapps" target-name="Package App" name="factor-graph" location="C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\matlab\ffg" file="C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\matlab\ffg\factor-graph.prj" build-checksum="4039750635">
+  <configuration target="target.mlapps" target-name="Package App" name="factor-graph" location="C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\matlab\ffg" file="C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\matlab\ffg\factor-graph.prj" build-checksum="2158009761">
     <param.appname>factor-graph</param.appname>
     <param.authnamewatermark>Timur Bagautdinov</param.authnamewatermark>
     <param.email />
@@ -19,9 +19,7 @@
     <param.products.version>
       <item>8.0</item>
     </param.products.version>
-    <param.platforms>
-      <item>win64</item>
-    </param.platforms>
+    <param.platforms />
     <param.output>${PROJECT_ROOT}\factor-graph.mlappinstall</param.output>
     <param.guid>90296aa3-ebfd-4c9c-9033-e6a054cb78b0</param.guid>
     <unset>
@@ -29,11 +27,21 @@
       <param.company />
       <param.icon />
       <param.screenshot />
+      <param.platforms />
     </unset>
     <fileset.main>
       <file>${PROJECT_ROOT}\installFactorGraph.m</file>
     </fileset.main>
     <fileset.depfun>
+      <file>${PROJECT_ROOT}\+ffg\+tests\customnode_function_gauss.m</file>
+      <file>${PROJECT_ROOT}\+ffg\+tests\data_gaussian.mat</file>
+      <file>${PROJECT_ROOT}\+ffg\+tests\testAddNode.m</file>
+      <file>${PROJECT_ROOT}\+ffg\+tests\testCustomNode.m</file>
+      <file>${PROJECT_ROOT}\+ffg\+tests\testEqualityNode.m</file>
+      <file>${PROJECT_ROOT}\+ffg\+tests\testEquMultNode.m</file>
+      <file>${PROJECT_ROOT}\+ffg\+tests\testEstimateMultiplicationNode.m</file>
+      <file>${PROJECT_ROOT}\+ffg\+tests\testEvidenceNode.m</file>
+      <file>${PROJECT_ROOT}\+ffg\+tests\testMultiplicationNode.m</file>
       <file>${PROJECT_ROOT}\+ffg\AddNode.m</file>
       <file>${PROJECT_ROOT}\+ffg\CppObject.m</file>
       <file>${PROJECT_ROOT}\+ffg\CustomNode.m</file>
@@ -51,49 +59,39 @@
       <file>${PROJECT_ROOT}\src\customnode.cpp</file>
       <file>${PROJECT_ROOT}\src\customnode.h</file>
       <file>${PROJECT_ROOT}\src\mexfactorgraph.cpp</file>
-      <file>${PROJECT_ROOT}\tests\data_gaussian.mat</file>
-      <file>${PROJECT_ROOT}\tests\testAddNode.m</file>
-      <file>${PROJECT_ROOT}\tests\testCustomNode.m</file>
-      <file>${PROJECT_ROOT}\tests\testEqualityNode.m</file>
-      <file>${PROJECT_ROOT}\tests\testEquMultNode.m</file>
-      <file>${PROJECT_ROOT}\tests\testEstimateMultiplicationNode.m</file>
-      <file>${PROJECT_ROOT}\tests\testEvidenceNode.m</file>
-      <file>${PROJECT_ROOT}\tests\testMultiplicationNode.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\arrayToString.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\compareFloats.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\comparisonMessage.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\containsRegexp.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\generateDoc.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\isAlmostEqual.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\isSetUpString.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\isTearDownString.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\isTestCaseSubclass.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\isTestString.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\parseFloatAssertInputs.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\+xunit\+utils\stringToCellArray.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\assertElementsAlmostEqual.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\assertEqual.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\assertExceptionThrown.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\assertFalse.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\assertFilesEqual.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\assertTrue.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\assertVectorsAlmostEqual.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\CommandWindowTestRunDisplay.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\FunctionHandleTestCase.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\info.xml</file>
-      <file>${PROJECT_ROOT}\tests\xunit\initTestSuite.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\runtests.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\TestCase.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\TestCaseInDir.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\TestCaseWithAddPath.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\TestComponent.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\TestComponentInDir.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\TestRunDisplay.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\TestRunLogger.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\TestRunMonitor.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\TestSuite.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\TestSuiteInDir.m</file>
-      <file>${PROJECT_ROOT}\tests\xunit\VerboseTestRunDisplay.m</file>
+      <file>${PROJECT_ROOT}\xunit\+xunit\+utils\arrayToString.m</file>
+      <file>${PROJECT_ROOT}\xunit\+xunit\+utils\compareFloats.m</file>
+      <file>${PROJECT_ROOT}\xunit\+xunit\+utils\comparisonMessage.m</file>
+      <file>${PROJECT_ROOT}\xunit\+xunit\+utils\containsRegexp.m</file>
+      <file>${PROJECT_ROOT}\xunit\+xunit\+utils\generateDoc.m</file>
+      <file>${PROJECT_ROOT}\xunit\+xunit\+utils\isAlmostEqual.m</file>
+      <file>${PROJECT_ROOT}\xunit\+xunit\+utils\isSetUpString.m</file>
+      <file>${PROJECT_ROOT}\xunit\+xunit\+utils\isTearDownString.m</file>
+      <file>${PROJECT_ROOT}\xunit\+xunit\+utils\isTestCaseSubclass.m</file>
+      <file>${PROJECT_ROOT}\xunit\+xunit\+utils\isTestString.m</file>
+      <file>${PROJECT_ROOT}\xunit\+xunit\+utils\parseFloatAssertInputs.m</file>
+      <file>${PROJECT_ROOT}\xunit\+xunit\+utils\stringToCellArray.m</file>
+      <file>${PROJECT_ROOT}\xunit\assertElementsAlmostEqual.m</file>
+      <file>${PROJECT_ROOT}\xunit\assertEqual.m</file>
+      <file>${PROJECT_ROOT}\xunit\assertExceptionThrown.m</file>
+      <file>${PROJECT_ROOT}\xunit\assertFalse.m</file>
+      <file>${PROJECT_ROOT}\xunit\assertFilesEqual.m</file>
+      <file>${PROJECT_ROOT}\xunit\assertTrue.m</file>
+      <file>${PROJECT_ROOT}\xunit\assertVectorsAlmostEqual.m</file>
+      <file>${PROJECT_ROOT}\xunit\CommandWindowTestRunDisplay.m</file>
+      <file>${PROJECT_ROOT}\xunit\FunctionHandleTestCase.m</file>
+      <file>${PROJECT_ROOT}\xunit\info.xml</file>
+      <file>${PROJECT_ROOT}\xunit\runtests.m</file>
+      <file>${PROJECT_ROOT}\xunit\TestCase.m</file>
+      <file>${PROJECT_ROOT}\xunit\TestCaseInDir.m</file>
+      <file>${PROJECT_ROOT}\xunit\TestCaseWithAddPath.m</file>
+      <file>${PROJECT_ROOT}\xunit\TestComponent.m</file>
+      <file>${PROJECT_ROOT}\xunit\TestComponentInDir.m</file>
+      <file>${PROJECT_ROOT}\xunit\TestRunDisplay.m</file>
+      <file>${PROJECT_ROOT}\xunit\TestRunLogger.m</file>
+      <file>${PROJECT_ROOT}\xunit\TestSuite.m</file>
+      <file>${PROJECT_ROOT}\xunit\TestSuiteInDir.m</file>
+      <file>${PROJECT_ROOT}\xunit\VerboseTestRunDisplay.m</file>
       <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\addnode.cpp</file>
       <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\addnode.h</file>
       <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\equalitynode.cpp</file>
@@ -114,13 +112,14 @@
       <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\multiplicationnode.h</file>
       <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\network.cpp</file>
       <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src\network.h</file>
-      <file>C:\Users\s116791\Documents\MATLAB\Apps\factorgraph - 7\mexfactorgraph.mexw64</file>
     </fileset.depfun>
     <fileset.resources>
       <file>${PROJECT_ROOT}\+ffg</file>
       <file>${PROJECT_ROOT}\build</file>
       <file>${PROJECT_ROOT}\src</file>
-      <file>${PROJECT_ROOT}\tests</file>
+      <file>${PROJECT_ROOT}\xunit</file>
+      <file>${PROJECT_ROOT}\xunit\initTestSuite.m</file>
+      <file>${PROJECT_ROOT}\xunit\TestRunMonitor.m</file>
       <file>C:\Users\s116791\Documents\factor-graph\cpp-factor-graph\src</file>
     </fileset.resources>
     <fileset.package />

@@ -217,7 +217,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             else if (function_name == "id")
                 plhs[0] = mxCreateDoubleScalar(node->id());
             else if (function_name == "messages")
-                plhs[0] = messageBoxToStruct(node->messages());
+                plhs[0] = messagesToCellArray(node->messages());
             else if (type_name == "EvidenceNode")
                 processEvidenceNode(node, function_name, nlhs, plhs, nrhs, prhs);
             else if (type_name == "AddNode")
