@@ -1,17 +1,15 @@
 classdef CppObject < matlab.System
-    %OBJECT the base class for this wrappers
-    
+    %OBJECT the base class for C++ wrappers
+    % All the nodes in this framework should be sublclassed from this one
     
     properties (Hidden = true, SetAccess = private)
-        % the pointer to the cpp code
-        cpp_handle;
-        % the name of the class
-        type_name;
+        cpp_handle; % The pointer to the cpp object
+        type_name;  % The name of the class
     end    
     
     methods (Access = protected)
-        % constructor
         function this = CppObject(type_name)
+            % (ffg) basic constructor
             this.type_name = type_name;
             this.cpp_handle = mexfactorgraph('create', this.type_name);
         end
@@ -20,6 +18,7 @@ classdef CppObject < matlab.System
     
     methods
         function delete(this)
+            % (ffg) basic destructor
             mexfactorgraph('delete', this.type_name, this.cpp_handle);
         end
     end

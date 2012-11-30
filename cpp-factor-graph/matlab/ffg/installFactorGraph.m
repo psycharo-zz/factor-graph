@@ -2,6 +2,9 @@ function installFactorGraph
 
     disp('Building factor graph framework for your platform...');
     
+    % clearing in case it hasn't been cleared before
+    clear mexfactorgraph;
+    
     MATLAB_FULL_PATH = fileparts(which(mfilename));
     APP_FULL_PATH = fileparts(fileparts(MATLAB_FULL_PATH));
 

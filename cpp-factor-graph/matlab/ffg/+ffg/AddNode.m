@@ -1,6 +1,5 @@
 classdef AddNode < ffg.FactorNode
-    %ADDNODE Adding factor node. Gaussian
-    %   Detailed explanation goes here
+    %ADDNODE Adding factor node. Gaussian messages only. (Table 2, Loeliger 2007)
     
     methods
        function this = AddNode()

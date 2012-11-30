@@ -52,9 +52,7 @@ function [ ] = kalmanScheduleExample()
          xin.receive(msg);
          samples(i,:) = i+randn()*sd;
          y.receive(struct('mean', samples(i), 'var',0, 'type', 'VARIANCE'));
-         
          nwk.makeStep();         
-         
          msg = xout.evidence();
          result(i,:) = [msg.mean, msg.var];
      end

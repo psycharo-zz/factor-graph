@@ -10,11 +10,12 @@
 #include <algorithm>
 #include <vector>
 #include <cmath>
+#include <cstddef>
 
 
 
 // macroses for compilation
-#ifndef MATLAB
+#if !defined(MATLAB) || (!defined(_WIN32) && !defined(_WIN64))
     #define dgetrf dgetrf_
     #define dgetri dgetri_
     #define dgemm dgemm_
@@ -36,7 +37,6 @@ inline void printMatrix(const double *a, size_t m, size_t n)
     }
     mexPrintf("\n");
 }
-
 #endif
 
 

@@ -1,5 +1,5 @@
 classdef FactorNode < ffg.CppObject
-   
+    %FACTORNODE base class for all factor nodes
 
     methods (Access = protected)
         function this = FactorNode(type_name)
@@ -8,18 +8,21 @@ classdef FactorNode < ffg.CppObject
     end
     
     methods
-        % get id
+        
         function result = id(this)
+            % (ffg) get node's identifier. mostly needed for debug purposes
             result = mexfactorgraph('id', this.type_name, this.cpp_handle);
         end
         
-        % receive a message
+        
         function receive(this, message)
+            % (ffg) receive a single message
             mexfactorgraph('receive', this.type_name, this.cpp_handle, message);
         end
         
-        % get all the current messages of the node
         function result = messages(this)
+            % (ffg) get all the current messages of the node. mostly needed for
+            % debug purposes
             result = mexfactorgraph('messages', this.type_name, this.cpp_handle);
         end
     end

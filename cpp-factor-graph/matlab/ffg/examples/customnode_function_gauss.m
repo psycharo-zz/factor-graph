@@ -1,9 +1,7 @@
 function out_msg = customnode_function_gauss(from, to, msgs)
+% from - the sender of the message
 % to - the destination of the message
 % msgs - array of messages (struct)
-% incoming - array of ids for incoming nodes
-% outgoing - array of ids for outgoing nodes
-% other - array of ids and tags for other nodes
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
 %%%%%%%%% specifying input types for gaussian (codegen) %%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
