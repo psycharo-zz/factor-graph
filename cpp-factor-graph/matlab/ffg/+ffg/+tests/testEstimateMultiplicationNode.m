@@ -3,13 +3,16 @@ initTestSuite;
 
 function testForward
 
-load('+ffg/+tests/data_gaussian');
+
+DIM = 3;
 
 nwk = ffg.Network;
 x = ffg.EvidenceNode;
 y = ffg.EvidenceNode;
 
-MATRIX = TestMultiplication.INPUT1.matrix;
+
+MATRIX = randn(DIM, DIM);
+
 A = ffg.MultiplicationNode;
 A.setMatrix(MATRIX);
 
@@ -17,27 +20,29 @@ nwk.addEdge(x, A);
 nwk.addEdge(A, y);
 
 % msg = 
-INPUT_MSG = struct('type', 'VARIANCE', 'mean', TestMultiplication.INPUT1.mean, 'var', TestMultiplication.INPUT1.var);
+INPUT_MSG = ffg.gaussMessage(randn(1, DIM), randn(DIM, DIM), 'VARIANCE');
 
 x.propagate(INPUT_MSG);
 
 RESULT_MSG = y.evidence();
 
-MEAN_EXPECTED = MATRIX * TestMultiplication.INPUT1.mean';
-VAR_EXPECTED = MATRIX * TestMultiplication.INPUT1.var * MATRIX';
+
+MEAN_EXPECTED = MATRIX * INPUT_MSG.mean';
+VAR_EXPECTED = MATRIX * INPUT_MSG.var * MATRIX';
 
 assertElementsAlmostEqual(RESULT_MSG.mean', MEAN_EXPECTED);
 assertElementsAlmostEqual(RESULT_MSG.var, VAR_EXPECTED);
 
 function testBackward
 
-load('+ffg/+tests/data_gaussian');
+DIM = 3;
+
 
 nwk = ffg.Network;
 x = ffg.EvidenceNode;
 y = ffg.EvidenceNode;
 
-MATRIX = TestMultiplication.INPUT1.matrix;
+MATRIX = randn(DIM, DIM);
 A = ffg.MultiplicationNode;
 A.setMatrix(MATRIX);
 
@@ -45,14 +50,14 @@ nwk.addEdge(x, A);
 nwk.addEdge(A, y);
 
 % msg = 
-INPUT_MSG = struct('type', 'VARIANCE', 'mean', TestMultiplication.INPUT1.mean, 'var', TestMultiplication.INPUT1.var);
+INPUT_MSG = ffg.gaussMessage(randn(1, DIM), randn(DIM, DIM), 'VARIANCE');
 
+% one propagation iteration
 y.propagate(INPUT_MSG);
-
 RESULT_MSG = x.evidence();
 
-VAR_EXPECTED = inv(MATRIX' * inv(TestMultiplication.INPUT1.var) * MATRIX);
-MEAN_EXPECTED = VAR_EXPECTED * MATRIX' * inv(TestMultiplication.INPUT1.var) * TestMultiplication.INPUT1.mean';
+VAR_EXPECTED = inv(MATRIX' * inv(INPUT_MSG.var) * MATRIX);
+MEAN_EXPECTED = VAR_EXPECTED * MATRIX' * inv(INPUT_MSG.var) * INPUT_MSG.mean';
 
 assertElementsAlmostEqual(RESULT_MSG.mean', MEAN_EXPECTED);
 assertElementsAlmostEqual(RESULT_MSG.var, VAR_EXPECTED);
@@ -61,7 +66,6 @@ assertElementsAlmostEqual(RESULT_MSG.var, VAR_EXPECTED);
 
 function testEstimateBackward
 
-load('+ffg/+tests/data_gaussian');
 
 nwk = ffg.Network;
 x = ffg.EvidenceNode;
@@ -75,10 +79,11 @@ nwk.addEdge(A, y);
 nwk.addEdgeTagged(A, estmt, 'estimate', '');
 
 
+DIM = 4;
 
-INPUT_MSG_X = struct('type', 'VARIANCE', 'mean', TestMultiplication.INPUT1.mean, 'var', TestMultiplication.INPUT1.var);
+INPUT_MSG_X = ffg.gaussMessage(randn(1, DIM), randn(DIM, DIM), 'VARIANCE');
 MSG_SIZE = length(INPUT_MSG_X.mean);
-INPUT_MSG_Y = struct('type', 'VARIANCE', 'mean', eye(1, MSG_SIZE), 'var', eye(MSG_SIZE, MSG_SIZE));
+INPUT_MSG_Y = ffg.gaussMessage(eye(1, DIM), eye(DIM, DIM), 'VARIANCE');
 
 A.setMatrix(eye(MSG_SIZE, MSG_SIZE));
 

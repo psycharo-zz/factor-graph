@@ -89,6 +89,15 @@ TEST(Schedule, Scalar) {
 
     ASSERT_NEAR(msg.mean()[0], N_ITERATIONS, 2);
     ASSERT_NEAR(msg.variance()[0], 0.1, 0.1);
+
+    delete xin;
+    delete xout;
+    delete n;
+    delete y;
+    delete e;
+    delete a;
+    delete u;
+    delete b;
 }
 
 

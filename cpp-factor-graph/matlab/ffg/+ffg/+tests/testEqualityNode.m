@@ -4,6 +4,8 @@ function test_suite = testEqualityNode
 initTestSuite;
 
 function testScalarGaussian
+    % simle 
+
     node = ffg.EqualityNode;
 
     a = ffg.EvidenceNode;
@@ -15,13 +17,19 @@ function testScalarGaussian
     nwk.addEdge(b, node);
     nwk.addEdge(c, node);
 
-    a.propagate(struct('type','VARIANCE', 'mean',10, 'var',5));
-    b.propagate(struct('type','VARIANCE', 'mean',20, 'var',4));
+    msgA = ffg.gaussMessage(10, 5, 'VARIANCE');
+    msgB = ffg.gaussMessage(20, 4, 'VARIANCE');
+    
+    a.propagate(msgA);
+    b.propagate(msgB);
+
     msg = c.evidence();
     
+    
+    PRECISION_C = (1 / msgA.var + 1 / msgB.var);
 
-    EXPECTED_MEAN = 15.555555555555557;
-    EXPECTED_VAR = 2.2222222222222223;
+    EXPECTED_MEAN = 1 / PRECISION_C * (1 / msgA.var * msgA.mean + 1 / msgB.var * msgB.mean);
+    EXPECTED_VAR = 1 / PRECISION_C;
 
     
     assertEqual(size(msg.mean,2), 1);
@@ -31,8 +39,9 @@ function testScalarGaussian
     return;
 
 function testMultivariateGaussian
-
-    load('+ffg/+tests/data_gaussian');
+% multidimensional gaussians
+   
+    DIMENSIONALITY = 4;
 
     node = ffg.EqualityNode;
     a = ffg.EvidenceNode;
@@ -43,13 +52,19 @@ function testMultivariateGaussian
     nwk.addEdge(a, node);
     nwk.addEdge(b, node);
     nwk.addEdge(c, node);
-
-    a.propagate(ffg.gaussMessage(TESTmean1, TESTvar1, 'VARIANCE'));
-    b.propagate(ffg.gaussMessage(TESTmean2, TESTvar2, 'VARIANCE'));
+    
+    % randomly generating
+    msgA = ffg.gaussMessage(randn(1, DIMENSIONALITY), randn(DIMENSIONALITY, DIMENSIONALITY), 'VARIANCE');
+    msgB = ffg.gaussMessage(randn(1, DIMENSIONALITY), randn(DIMENSIONALITY, DIMENSIONALITY), 'VARIANCE');
+    
+    a.propagate(msgA);
+    b.propagate(msgB);
     msg = c.evidence();
+   
 
-    EXPECTED_VAR=TESTvar3;
-    EXPECTED_MEAN=TESTmean3';
+    PRECISION = inv(msgA.var) + inv(msgB.var);
+    EXPECTED_VAR=inv(PRECISION);
+    EXPECTED_MEAN=(inv(PRECISION) * (inv(msgA.var) * msgA.mean' + inv(msgB.var) * msgB.mean'))';
 
     assertEqual(size(msg.mean), size(EXPECTED_MEAN));
     assertEqual(size(msg.var), size(EXPECTED_VAR));
@@ -60,6 +75,7 @@ function testMultivariateGaussian
     return;
     
 function testNoInformation
+    % testing whether the 0 precision will cause no problems
 
     node = ffg.EqualityNode;
     node.setType('PRECISION');
@@ -73,12 +89,16 @@ function testNoInformation
     nwk.addEdge(b, node);
     nwk.addEdge(c, node);
     
-    M = 3;
+    % number of dimensions
+    DIM = 3;
     
-    a.propagate(ffg.gaussMessage([1,2,3], eye(M,M), 'PRECISION'));
-    b.propagate(ffg.gaussMessage(zeros(1,3), zeros(M,M), 'PRECISION'));
+    msgA = ffg.gaussMessage([1,2,3], eye(DIM, DIM), 'PRECISION');
+    msgB = ffg.gaussMessage(zeros(1,3), zeros(DIM, DIM), 'PRECISION');
+    a.propagate(msgA);
+    b.propagate(msgB);
     
-    EXPECTED_MESSAGE = ffg.gaussMessage([1,2,3], eye(M,M), 'PRECISION');
+    EXPECTED_MESSAGE = msgA;
+    
     assertElementsAlmostEqual(EXPECTED_MESSAGE.mean, c.evidence().mean);
     assertElementsAlmostEqual(EXPECTED_MESSAGE.precision, c.evidence().precision);
     

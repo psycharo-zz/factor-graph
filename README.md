@@ -103,7 +103,45 @@ An example of such a function is `examples/customnode_function_gauss.m`
 
 # Development
 The major part of the C++ codebase has lots of comments. The examples of how to use it can be
-found in `src/tests`.
+found [here](https://github.com/psycharo/factor-graph/tree/master/cpp-factor-graph/tests).
+
+The base class for nodes is `FactorNode`. You will probably need to use one of the following 
+fields to create your own nodes:
+```
+// the list of all nodes
+std::map<int, FactorNode*> m_nodes;
+// incoming connections
+std::set<int> m_incoming;
+// outgoing connections
+std::set<int> m_outgoing;
+// custom connections
+std::map<int, std::string> m_connections;
+```
+
+`m_nodes` is contains all the nodes indexed by their ids. Every node has its own unique id that is stored 
+in a static variable of `FactorNode`.
+
+`m_incoming` and `m_outgoing` for each node contain ids of the nodes that
+have an edge to the node with the corresponding direction; they are useful since most of the nodes
+have only two types of connections (e.g. for addition factor node summands will be incoming 
+connections, and the result will be an outgoing one). 
+
+For other types of connections, `m_connections` should be used. It contains a list of connection tags (strings) indexed
+by ids (the backward mapping (tag --> id) might be added later if necessary). An example of using
+this would be `EstimateMultiplicationNode`, where an additional type of connection is necessary (`ESTIMATED_TAG`).
+
+We did this so generic on purpose (and might generalize it a bit more). It allows nodes to be as independent as possible: nodes
+are not aware of other node's types.
+
+To create a node with custom behavior, one should provide own implementation of the node's function:
+```c++
+virtual GaussianMessage function(int to, const MessageBox &msgs) = 0;
+```
+
+It constructs a message to a specific node. To do that, we need only to know the receiver - `to` and 
+the messages that have been received from node's connections `msgs`, which underneath is a map (id --> message). 
+
+
 
 
 # TODO

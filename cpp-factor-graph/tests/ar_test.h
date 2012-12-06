@@ -119,6 +119,20 @@ TEST(AutoRegressive, RLS) {
     ASSERT_LE(relError, 0.3);
     ASSERT_LE(absError, 0.5);
 
+    delete x_prev;
+    delete x_next;
+    delete y;
+    delete noise_U;
+    delete noise_W;
+    delete b;
+    delete A;
+    delete add_A_b;
+    delete add_W_y;
+    delete equMult;
+    delete a_equ;
+    delete a_prev;
+    delete a_next;
+
 }
 
 
