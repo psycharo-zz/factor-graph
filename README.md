@@ -13,8 +13,8 @@ TODO: general description
 The example considered will be a simple Kalman Filter (available in `examples/kalmanFilter.m`).
 
 ```
-x_n = x_{n-1} + e
-y = x_n + u
+x_n = x_{n-1} + e_n
+y_n = x_n + u_n
 ```
 
 First, we need to create factor nodes themselves:
