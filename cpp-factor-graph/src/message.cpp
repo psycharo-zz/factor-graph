@@ -11,7 +11,7 @@ ostream& operator <<(ostream &os, const GaussianMessage &msg)
         os << msg.mean()[i] << " ";
     os << "]" << endl;
 
-    const double *data = (msg.type() == Message::GAUSSIAN_VARIANCE) ? msg.variance() : msg.precision();
+    const double *data = msg.variance().data();
     os << ((msg.type() == Message::GAUSSIAN_VARIANCE) ? "variance[ " : "precision[ ");
     for (size_t i = 0; i < msg.size2(); i++)
         os << data[i] << " ";

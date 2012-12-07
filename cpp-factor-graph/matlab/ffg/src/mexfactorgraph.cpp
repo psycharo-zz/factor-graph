@@ -45,38 +45,44 @@ void processNetwork(const string &function_name, int nlhs, mxArray *plhs[], int 
 {
     if (function_name == "create")
         plhs[0] = pointerToArray(new Network);
-    else if (function_name == "addEdge")
+    else
     {
         Network *network = *(static_cast<Network**>(mxGetData(prhs[POINTER_IDX])));
-        FactorNode *a = *(static_cast<FactorNode**>(mxGetData(prhs[POINTER_IDX+1])));
-        FactorNode *b = *(static_cast<FactorNode**>(mxGetData(prhs[POINTER_IDX+2])));
-        network->addEdge(a, b);
-    }
-    else if (function_name == "addEdgeTagged")
-    {
-        Network *network = *(static_cast<Network**>(mxGetData(prhs[POINTER_IDX])));
-        FactorNode *a = *(static_cast<FactorNode**>(mxGetData(prhs[POINTER_IDX+1])));
-        FactorNode *b = *(static_cast<FactorNode**>(mxGetData(prhs[POINTER_IDX+2])));
-        string tagForA(mxArrayToString(prhs[POINTER_IDX+3]));
-        string tagForB(mxArrayToString(prhs[POINTER_IDX+4]));
-        network->addEdge(a, b, tagForA, tagForB);
-    }
-    else if (function_name == "setSchedule")
-    {
-        Network *network = *(static_cast<Network**>(mxGetData(prhs[POINTER_IDX])));
-        uint64_t *pointers = (uint64_t *)mxGetData(prhs[POINTER_IDX+1]);
-        size_t size = mxGetN(prhs[POINTER_IDX+1]);
 
-        Network::Schedule schedule;
-        for (size_t i = 0; i < size; i += 2)
-            schedule.push_back(make_pair(reinterpret_cast<FactorNode*>(pointers[i]),
-                                         reinterpret_cast<FactorNode*>(pointers[i+1])));
-        network->setSchedule(schedule);
-    }
-    else if (function_name == "step")
-    {
-        Network *network = *(static_cast<Network**>(mxGetData(prhs[POINTER_IDX])));
-        network->step();
+        if (function_name == "addEdge" && nrhs == 5)
+        {
+            FactorNode *a = *(static_cast<FactorNode**>(mxGetData(prhs[POINTER_IDX+1])));
+            FactorNode *b = *(static_cast<FactorNode**>(mxGetData(prhs[POINTER_IDX+2])));
+            network->addEdge(a, b);
+        }
+        else if (function_name == "addEdge" && nrhs == 7)
+        {
+            FactorNode *a = *(static_cast<FactorNode**>(mxGetData(prhs[POINTER_IDX+1])));
+            FactorNode *b = *(static_cast<FactorNode**>(mxGetData(prhs[POINTER_IDX+2])));
+            string tagForA(mxArrayToString(prhs[POINTER_IDX+3]));
+            string tagForB(mxArrayToString(prhs[POINTER_IDX+4]));
+            network->addEdge(a, b, tagForA, tagForB);
+        }
+        else if (function_name == "setSchedule" && nrhs == 4)
+        {
+            uint64_t *pointers = (uint64_t *)mxGetData(prhs[POINTER_IDX+1]);
+            size_t size = mxGetN(prhs[POINTER_IDX+1]);
+            Network::Schedule schedule;
+            for (size_t i = 0; i < size; i += 2)
+                schedule.push_back(make_pair(reinterpret_cast<FactorNode*>(pointers[i]),
+                                             reinterpret_cast<FactorNode*>(pointers[i+1])));
+            network->setSchedule(schedule);
+        }
+        else if (function_name == "step")
+            network->step();
+        else if (function_name == "adjacencyMatrix")
+            plhs[0] = networkAdjacencyMatrix(*network);
+        else if (function_name == "nodes")
+            plhs[0] = networkNodes(*network);
+        else if (function_name == "delete")
+            delete network;
+        else
+            throw std::runtime_error("Network: unknown function or wrong number of parameters");
     }
 }
 
@@ -104,7 +110,8 @@ void processEvidenceNode(FactorNode *node, const string &function_name, int nlhs
         GaussianMessage msg = evdNode->evidence();
         plhs[0] = messageToStruct(msg);
     }
-
+    else
+        throw std::runtime_error("Network: unknown function or wrong number of parameters");
 }
 
 

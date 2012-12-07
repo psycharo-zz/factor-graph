@@ -22,7 +22,7 @@ GaussianMessage EquMultNode::function(int to, const MessageBox &msgs)
 GaussianMessage EquMultNode::functionForward(int to, const MessageBox &/*msgs*/)
 {
     // TODO:
-    throw Exception("EquMultNode::functionForward: not implemented yet");
+    throw std::runtime_error("EquMultNode::functionForward: not implemented yet");
 }
 
 
@@ -36,18 +36,19 @@ GaussianMessage EquMultNode::functionBackward(int to, const MessageBox &msgs)
     set<int>::const_iterator it = m_incoming.begin();
     const GaussianMessage &msgX = (*it != to) ? msgs.at(*it) : msgs.at(*++it);
 
-    Matrix meanX(msgX.mean(), msgX.size(), 1);
-    Matrix varX(msgX.variance(), msgX.size(), msgX.size());
+    const Matrix &meanX = msgX.mean();
+    const Matrix &varX = msgX.variance();
 
-    Matrix meanY(msgY.mean(), msgY.size(), 1);
-    Matrix varY(msgY.variance(), msgY.size(), msgY.size());
+    const Matrix &meanY = msgY.mean();
+    const Matrix &varY = msgY.variance();
 
-    Matrix &A = m_matrix;
+    const Matrix &A = m_matrix;
 
     Matrix G = varY + A * varX * A.T();
     G.inv();
-    Matrix mean = meanX + varX * A.T() * G * (meanY - A * meanX);
-    Matrix var = varX - varX * A.T() * G * A * varX;
 
-    return GaussianMessage(mean.data(), var.data(), mean.size());
+    GaussianMessage result(meanX.size());
+    result.mean() = meanX + varX * A.T() * G * (meanY - A * meanX);
+    result.variance() = varX - varX * A.T() * G * A * varX;
+    return result;
 }

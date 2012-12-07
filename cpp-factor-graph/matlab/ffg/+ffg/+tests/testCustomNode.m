@@ -62,7 +62,7 @@ function testAddBackwardNode
     assertElementsAlmostEqual(msg.mean, EXPECTED_MEAN_A);
     assertElementsAlmostEqual(msg.var, EXPECTED_VAR_A);
 
-
+   
     
     
 

@@ -1,10 +1,10 @@
 function test_suite = testAddNode()
-%TESTADDNODE Summary of this function goes here
-%   Detailed explanation goes here
+%TESTADDNODE testing ffg.AddNode
 initTestSuite;
 
 
 function testForward
+%TESTFORWARD case for forward message (the result knowing all summands)
 
     nwk = ffg.Network;
     node = ffg.AddNode;
@@ -32,6 +32,7 @@ function testForward
 
 
 function testBackward
+%TESTFORWARD case for backward message (one of the summands knowing result)
 
     nwk = ffg.Network;
     node = ffg.AddNode;

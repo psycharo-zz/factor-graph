@@ -76,7 +76,7 @@ A = ffg.EstimateMultiplicationNode;
 
 nwk.addEdge(x, A);
 nwk.addEdge(A, y);
-nwk.addEdgeTagged(A, estmt, 'estimate', '');
+nwk.addEdge(A, estmt, 'estimate', '');
 
 
 DIM = 4;

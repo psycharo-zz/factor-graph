@@ -10,6 +10,7 @@ classdef EvidenceNode < ffg.FactorNode
       
        function propagate(this, message)
            % (ffg) start propagating messages in non-loopy mode 
+           %  message - incoming message
            %  (NOTE: for loopy graphs the behavior is undefined)
            mexfactorgraph('propagate', this.type_name, this.cpp_handle, message);
        end

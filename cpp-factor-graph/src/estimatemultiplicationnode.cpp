@@ -22,7 +22,7 @@ bool EstimateMultiplicationNode::isSupported(Message::Type type)
 void EstimateMultiplicationNode::receive(int from, const GaussianMessage &msg)
 {
     if (!(isForward(from) || isBackward(from) || isConnection(from, ESTIMATED_TAG)))
-        throw Exception("EstimateMultiplicationNode::receive: unknown connection");
+        throw std::runtime_error("EstimateMultiplicationNode::receive: unknown connection");
 
     if (isConnection(from, ESTIMATED_TAG))
     {
@@ -47,11 +47,11 @@ GaussianMessage EstimateMultiplicationNode::function(int to, const MessageBox &m
 {
     // TODO: handle msgs.empty() separately
     if (!m_nodes.count(to) || msgs.empty())
-        throw Exception("EstimateMultilpicationNode::function(): unknown recipient");
+        throw std::runtime_error("EstimateMultilpicationNode::function(): unknown recipient");
     // the dimensionality of the message
     size_t msg_size = msgs.begin()->second.size();
     if (msg_size != size())
-        throw Exception("EstimateMultiplicationNode::function(): inconsistent dimensionalities");
+        throw std::runtime_error("EstimateMultiplicationNode::function(): inconsistent dimensionalities");
 
     // forward
     if (isForward(to))
@@ -64,22 +64,20 @@ GaussianMessage EstimateMultiplicationNode::function(int to, const MessageBox &m
         const GaussianMessage &msgX = msgs.at(*m_incoming.begin());
         const GaussianMessage &msgY = msgs.at(*m_outgoing.begin());
 
-        std::copy(msgX.mean(), msgX.mean() + msgX.size(), result.mean());
+        const Matrix &meanX = msgX.mean();
+
+        result.mean() = meanX;
 
         // TODO: change to matrices
         // m_a = m_y[1] * m_x / ||m_x||^2
-        double scalar = msgY.mean()[0] / vector_dot(msgX.mean(), msgX.mean(), msgX.size());
-        matrix_scalar_mult(1, result.size(), result.mean(), scalar);
-//        std::transform(msgX.mean(), msgX.mean() + msgX.size(), result.mean(),
-//                       bind(multiplies<double>(), scalar, _1));
+        double scalar = msgY.mean()(0,0) / vector_dot(msgX.mean().data(), msgX.mean().data(), msgX.size());
 
-        double sd2 = (msgY.type() == GaussianMessage::GAUSSIAN_VARIANCE) ? msgY.variance()[0] : 1.0 / msgY.precision()[0];
+        matrix_scalar_mult(1, result.size(), result.mean().data(), scalar);
+
+        double sd2 = (msgY.type() == GaussianMessage::GAUSSIAN_VARIANCE) ? msgY.variance()(0, 0) : 1.0 / msgY.precision()(0, 0);
+
         // W_a = m_x * m_x^T / sd_y2
-        matrix_mult(msgX.size(), msgX.size(), 1,
-                    msgX.mean(), msgX.mean(),
-                    result.precision(),
-                    false, false,
-                    1.0 / sd2);
+        mult(meanX, meanX.T(), result.precision(), 1.0 / sd2);
 
         return result;
     }

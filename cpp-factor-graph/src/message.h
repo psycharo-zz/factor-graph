@@ -12,14 +12,6 @@
 #include <stdexcept>
 
 
-class Exception : public std::runtime_error
-{
-public:
-    Exception(const std::string &msg): std::runtime_error(msg)
-    {}
-};
-
-
 
 
 /**
@@ -143,7 +135,7 @@ private:
 
 
 /**
- * @brief gaussian message with precision matrix
+ * @brief inverted ga
  */
 class PrecisionMessage : public Message
 {
@@ -199,10 +191,11 @@ class GaussianMessage : public Message
 private:
     size_t m_size;
 
-    std::vector<double> m_mean;
+    //! mean
+    Matrix m_mean;
 
-    //! data for variance/precision
-    std::vector<double> m_data;
+    //! variance/precision
+    Matrix m_variance;
 
 public:
     /**
@@ -213,11 +206,10 @@ public:
      */
     GaussianMessage(const double *_mean, const double *_variance, size_t _size, Message::Type _type = GAUSSIAN_VARIANCE):
         Message(_type),
+        m_mean(_mean, _size, 1),
+        m_variance(_variance, _size, _size),
         m_size(_size)
-    {
-        m_mean.assign(_mean, _mean + _size);
-        m_data.assign(_variance, _variance + _size * _size);
-    }
+    {}
 
 
     /**
@@ -227,75 +219,54 @@ public:
      */
     GaussianMessage(size_t _size, Message::Type _type = GAUSSIAN_VARIANCE):
         Message(_type),
+        m_mean(_size, 1),
+        m_variance(_size, _size),
         m_size(_size)
     {
         assert(_type == GAUSSIAN_VARIANCE || _type == GAUSSIAN_PRECISION);
-        m_mean.resize(size(), 0.0);
-        m_data.resize(size2(), 0.0);
     }
 
 
-
-    /**
-     * @return pointer to the median vector
-     */
-    inline const double *mean() const
+    //! mean
+    inline const Matrix &mean() const
     {
-        return m_mean.data();
+        return m_mean;
     }
 
-    /**
-     * @return pointer to the median vector
-     */
-    inline double *mean()
+    inline Matrix &mean()
     {
-        return m_mean.data();
+        return m_mean;
     }
 
 
-    /**
-     * @brief pointer to the precision matrix
-     */
-    inline const double *variance() const
+    //! variance/precision matrix
+    inline const Matrix &variance() const
     {
         if (type() != GAUSSIAN_VARIANCE)
             throw std::runtime_error("GaussianMessage::variance: not defined for this type");
-        return m_data.data();
+        return m_variance;
     }
 
-    /**
-     * @brief pointer to the variance matrix
-     * NOTE: only works for type() == GAUSSIAN_VARIANCE
-     */
-    inline double *variance()
+    //! variance/precision matrix
+    inline Matrix &variance()
     {
         if (type() != GAUSSIAN_VARIANCE)
             throw std::runtime_error("GaussianMessage::variance: not defined for this type");
-        return m_data.data();
+        return m_variance;
     }
 
-    /**
-     * @return pointer to the precision matrix
-     * NOTE: only works for type() == GAUSSIAN_PRECISION
-     * TODO: INHERITANCE
-     */
-    inline double *precision()
+    inline const Matrix &precision() const
     {
         if (type() != GAUSSIAN_PRECISION)
             throw std::runtime_error("GaussianMessage::precision: not defined for this type");
-        return m_data.data();
+        return m_variance;
     }
 
-    /**
-     * @return pointer to the precision matrix
-     * NOTE: only works for type() == GAUSSIAN_PRECISION
-     * TODO: INHERITANCE
-     */
-    inline const double *precision() const
+    inline Matrix &precision()
     {
         if (type() != GAUSSIAN_PRECISION)
             throw std::runtime_error("GaussianMessage::precision: not defined for this type");
-        return m_data.data();
+        return m_variance;
     }
 
 
@@ -315,8 +286,6 @@ public:
     {
         return m_size * m_size;
     }
-
-
 };
 
 

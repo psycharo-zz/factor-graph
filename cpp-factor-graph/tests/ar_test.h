@@ -100,7 +100,7 @@ TEST(AutoRegressive, RLS) {
         a_prev->receive(a_next->evidence());
     }
 
-    const double *ESTIMATED_A = a_next->evidence().mean();
+    const Matrix &ESTIMATED_A = a_next->evidence().mean();
 
     // computing the average errors
     double absError = 0.0;

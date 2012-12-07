@@ -23,15 +23,19 @@ GaussianMessage MultiplicationNode::forwardFunction(int to, const MessageBox &ms
     // TODO: implement for precision
     const GaussianMessage &msgX = msgs.at(*m_incoming.begin());
 
-    Matrix meanX(msgX.mean(), msgX.size(), 1);
-    Matrix varX(msgX.variance(), msgX.size(), msgX.size());
+    const Matrix &meanX = msgX.mean();
+    const Matrix &varX = msgX.variance();
 
-    Matrix &A = m_matrix;
+    const Matrix &A = m_matrix;
 
-    Matrix meanY = A * meanX;
-    Matrix varY = A * varX * A.T();
+    GaussianMessage result(A.rows());
 
-    return GaussianMessage(meanY.data(), varY.data(), meanY.size());
+    mult(A, meanX, result.mean());
+
+    // A * varX * A.T()
+    mult(A * varX, A.T(), result.variance());
+
+    return result;
 }
 
 
@@ -41,27 +45,30 @@ GaussianMessage MultiplicationNode::backwardFunction(int to, const MessageBox &m
     const GaussianMessage &msgY = msgs.at(*m_outgoing.begin());
     if (msgY.type() == GaussianMessage::GAUSSIAN_PRECISION)
     {
-        Matrix meanY(msgY.mean(), msgY.size(), 1);
-        Matrix precY(msgY.precision(), msgY.size(), msgY.size());
+        const Matrix &meanY = msgY.mean();
+        const Matrix &precY = msgY.precision();
 
-        Matrix &A = m_matrix;
+        const Matrix &A = m_matrix;
 
-        Matrix precX = A.T() * precY * A;
-        Matrix meanX = pinv(precX) * A.T() * precY * meanY;
-
-        return GaussianMessage(meanX.data(), precX.data(), meanX.size(), GaussianMessage::GAUSSIAN_PRECISION);
+        GaussianMessage result(A.cols(), GaussianMessage::GAUSSIAN_PRECISION);
+        result.precision() = A.T() * precY * A;
+        result.mean() = pinv(result.precision()) * A.T() * precY * meanY;
+        return result;
     }
     else // if (msgY.type() == GaussianMessage::GAUSSIAN_VARIANCE)
     {
-        Matrix meanY(msgY.mean(), msgY.size(), 1);
-        Matrix varY(msgY.variance(), msgY.size(), msgY.size());
+        const Matrix &meanY = msgY.mean();
+        const Matrix &varY = msgY.variance();
 
         Matrix A = m_matrix;
         A.inv();
 
-        Matrix meanX = A * meanY;
-        Matrix varX = A * varY * A.T();
-        return GaussianMessage(meanX.data(), varX.data(), meanX.size(), GaussianMessage::GAUSSIAN_VARIANCE);
+        GaussianMessage result(A.rows(), GaussianMessage::GAUSSIAN_VARIANCE);
+
+        result.mean() = A * meanY;
+        result.variance() = A * varY * A.T();
+
+        return result;
     }
 }
 

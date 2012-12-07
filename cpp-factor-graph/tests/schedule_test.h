@@ -51,6 +51,9 @@ TEST(Schedule, Scalar) {
     GaussianMessage msg = makeGaussian({1 +  randn(generator)*sd},
                                         {sd2});
 
+
+
+
     xout->receive(msg);
 
     n->receive(makeGaussian({0}, {sd2}));

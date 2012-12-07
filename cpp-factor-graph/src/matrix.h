@@ -100,7 +100,6 @@ public:
         if (m_cols != other.m_rows)
             throw std::runtime_error("Matrix::operator*(): dimensionalities do not conform");
 
-
         Matrix result(rows(), other.cols());
         matrix_mult(rows(), other.cols(), cols(), data(), other.data(), result.data(), m_transposed, other.transposed());
         return result;
@@ -270,6 +269,11 @@ public:
     }
 
 
+    inline double operator[](size_t i) const
+    {
+        return m_data[i];
+    }
+
 };
 
 
@@ -300,6 +304,17 @@ inline Matrix pinv(const Matrix &mx)
     Matrix result(mx.data(), mx.cols(), mx.rows(), mx.transposed());
     matrix_pseudo_inverse(mx.data(), mx.rows(), mx.cols(), result.data());
     return result;
+}
+
+
+//! matrix multiplication
+inline void mult(const Matrix &a, const Matrix &b, Matrix &out, double alpha = 1.0, double beta = 0.0)
+{
+    matrix_mult(a.rows(), b.cols(), a.cols(),
+                a.data(), b.data(),
+                out.data(),
+                a.transposed(), b.transposed(),
+                alpha, beta);
 }
 
 

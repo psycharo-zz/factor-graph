@@ -10,6 +10,7 @@ classdef CppObject < matlab.System
     methods (Access = protected)
         function this = CppObject(type_name)
             % (ffg) basic constructor
+            % type_name - the name of the cpp type we are creating
             this.type_name = type_name;
             this.cpp_handle = mexfactorgraph('create', this.type_name);
         end

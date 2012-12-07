@@ -26,25 +26,13 @@ GaussianMessage EqualityNode::functionVariance(int to, const MessageBox &msgs)
 
     // TODO: assert on various sizes of messages
     size_t size = msgs.begin()->second.size();
-    size_t size2 = size * size;
 
     GaussianMessage result(size);
 
-    // m_j size
-    double *mean = result.mean();
-    // V_j size2
-    double *variance = result.variance();
+    Matrix &mean = result.mean();
+    Matrix &variance = result.variance();
 
-
-    // W_j m_j = W_1 m_1 + ... + W_n m_n
-    vector<double> tmp_sum(size, 0.0);
-
-    // to store temporary W_i
-    vector<double> tmp_precision(size2, 0.0);
-
-    // to store temporary W_i * m_i
-    vector<double> tmp_mul(size, 0.0);
-
+    Matrix sum(size, 1);
     for (MessageBox::const_iterator it = msgs.begin(); it != msgs.end(); ++it)
     {
         const int from = it->first;
@@ -54,28 +42,22 @@ GaussianMessage EqualityNode::functionVariance(int to, const MessageBox &msgs)
         if (from == to)
             continue;
 
-        // tmp = V
-        tmp_precision.assign(msg.variance(), msg.variance() + size2);
+        const Matrix &msgMean = msg.mean();
+        const Matrix &msgVar = msg.variance();
+
         // W_i = V^-1 = tmp^-1
-        matrix_inverse(tmp_precision.data(), size);
-
+        Matrix msgPrec = inv(msgVar);
         // W_j += W_i
-        transform(variance, variance + size2, tmp_precision.data(),
-                  variance, std::plus<double>());
-
-        // tmp = W * m
-        matrix_vector_mult(size, size, tmp_precision.data(), msg.mean(), tmp_mul.data());
-
+        variance += msgPrec;
         // tmp_sum += W_i m_i
-        transform(tmp_sum.begin(), tmp_sum.end(), tmp_mul.begin(),
-                  tmp_sum.begin(), std::plus<double>());
+        sum += msgPrec * msgMean;
     }
 
     // V_j = W_j^-1
-    matrix_inverse(variance, size);
+    variance.inv();
 
-    // m_j = V_j (W_1 m_1 + ... W_n m_n)
-    matrix_vector_mult(size, size, variance, tmp_sum.data(), mean);
+    // TODO: mult(variance, sum, out)
+    mean = variance * sum;
 
     return result;
 }
@@ -84,14 +66,11 @@ GaussianMessage EqualityNode::functionVariance(int to, const MessageBox &msgs)
 GaussianMessage EqualityNode::functionPrecision(int to, const MessageBox &msgs)
 {
     size_t size = msgs.begin()->second.size();
-    size_t size2 = size * size;
 
     GaussianMessage result(size, GaussianMessage::GAUSSIAN_PRECISION);
 
-//    Matrix resultMean(size, 1);
-//    Matrix resultPrec(size, size);
-    vector<double> mean(size, 0.0);
-    vector<double> MW(size, 0.0);
+    Matrix &mean = result.mean();
+    Matrix &prec = result.precision();
 
     for (MessageBox::const_iterator it = msgs.begin(); it != msgs.end(); ++it)
     {
@@ -101,26 +80,16 @@ GaussianMessage EqualityNode::functionPrecision(int to, const MessageBox &msgs)
         if (from == to)
             continue;
 
-        // Matrix W_i(msg.precision(), size, size);
-        // Matrix m_i(msg.mean(), size, 1);
-        // resultPrec += W_i;
-        // resultMean += (W_i * m_i);
+        const Matrix &msgMean = msg.mean();
+        const Matrix &msgPrec = msg.precision();
 
-        // W+...+W
-        std::transform(result.precision(), result.precision() + size2, msg.precision(),
-                       result.precision(), std::plus<double>());
-
-        matrix_vector_mult(size, size, msg.precision(), msg.mean(), MW.data());
-        // Wm
-        transform(mean.begin(), mean.end(), MW.begin(),
-                  mean.begin(), std::plus<double>());
+        prec += msgPrec;
+        mean += msgPrec * msgMean;
     }
 
 
-    // TODO: check if the normal inverse will work
-    Matrix tmp(result.precision(), size, size);
-    tmp.pinv();
-    matrix_vector_mult(size, size, tmp.data(), mean.data(), result.mean());
+    // TODO: mult(in1, in2, out)
+    mean = pinv(prec) * mean;
 
     return result;
 }

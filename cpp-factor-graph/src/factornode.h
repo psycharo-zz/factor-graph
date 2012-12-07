@@ -93,7 +93,7 @@ protected:
     inline void addMessage(int from, const GaussianMessage &msg)
     {
         if (!isSupported(msg.type()))
-            throw Exception("FactorNode::addMessage: unsupported message type");
+            throw std::runtime_error("FactorNode::addMessage: unsupported message type");
         std::pair<MessageBox::iterator, bool> res = m_messages.insert(std::make_pair(from, msg));
         if (!res.second)
             res.first->second = msg;

@@ -16,13 +16,12 @@ classdef FactorNode < ffg.CppObject
         
         
         function receive(this, message)
-            % (ffg) receive a single message
+            % (ffg) receive a single message, without propagating it further
             mexfactorgraph('receive', this.type_name, this.cpp_handle, message);
         end
         
         function result = messages(this)
-            % (ffg) get all the current messages of the node. mostly needed for
-            % debug purposes
+            % (ffg) get all the current incoming messages of the node. 
             result = mexfactorgraph('messages', this.type_name, this.cpp_handle);
         end
     end

@@ -69,12 +69,9 @@ inline FactorNode *arrayToNode(const mxArray *arr)
 
 inline Message::Type messageType(const mxArray *msg)
 {
-    std::string typeName = mxArrayToString(mxGetField(msg, 0, "type"));
-    if (typeName == Message::typeName(Message::GAUSSIAN_VARIANCE))
-        return Message::GAUSSIAN_VARIANCE;
-    else if (typeName == Message::typeName(Message::GAUSSIAN_PRECISION))
-        return Message::GAUSSIAN_PRECISION;
-    return Message::UNKNOWN;
+    // TODO: error checking?
+    std::string typeName = mxArrayToString(mxGetField(msg, 0, MEX_TYPE));
+    return Message::typeByName(typeName);
 }
 
 
@@ -125,16 +122,16 @@ inline mxArray *messageToStruct(const GaussianMessage &msg, int from = Message::
         result = mxCreateStructMatrix(1, 1, NUM_MEX_MSG_FIELDS, MSG_FIELDS_GAUSSIAN_VAR);
         mxSetField(result, 0, MEX_FROM, mxCreateDoubleScalar(from));
         mxSetField(result, 0, MEX_TYPE, mxCreateString(Message::typeName(msg.type()).c_str()));
-        mxSetField(result, 0, MEX_MEAN, arrayToMatrix(msg.mean(), 1, msg.size()));
-        mxSetField(result, 0, MEX_VAR, arrayToMatrix(msg.variance(), msg.size(), msg.size()));
+        mxSetField(result, 0, MEX_MEAN, arrayToMatrix(msg.mean().data(), 1, msg.size()));
+        mxSetField(result, 0, MEX_VAR, arrayToMatrix(msg.variance().data(), msg.size(), msg.size()));
     }
     else // if (msg.type() == GaussianMessage::)
     {
         result = mxCreateStructMatrix(1, 1, NUM_MEX_MSG_FIELDS, MSG_FIELDS_GAUSSIAN_PRECISION);
         mxSetField(result, 0, MEX_FROM, mxCreateDoubleScalar(from));
         mxSetField(result, 0, MEX_TYPE, mxCreateString(Message::typeName(msg.type()).c_str()));
-        mxSetField(result, 0, MEX_MEAN, arrayToMatrix(msg.mean(), 1, msg.size()));
-        mxSetField(result, 0, MEX_PRECISION, arrayToMatrix(msg.precision(), msg.size(), msg.size()));
+        mxSetField(result, 0, MEX_MEAN, arrayToMatrix(msg.mean().data(), 1, msg.size()));
+        mxSetField(result, 0, MEX_PRECISION, arrayToMatrix(msg.precision().data(), msg.size(), msg.size()));
     }
 
     return result;
@@ -159,7 +156,7 @@ inline mxArray *messagesToCellArray(const MessageBox &msgs)
 
 
 /**
- * @brief convert the map to an array of unified structs (mean, var)
+ * @brief convert the map to an array of unified matlab structs (mean, var)
  */
 inline mxArray *messagesToStructArray(const MessageBox &msgs)
 {
@@ -171,11 +168,11 @@ inline mxArray *messagesToStructArray(const MessageBox &msgs)
         const GaussianMessage &msg = it->second;
         mxSetField(result, i, MEX_FROM, mxCreateDoubleScalar(from));
         mxSetField(result, i, MEX_TYPE, mxCreateString(Message::typeName(msg.type()).c_str()));
-        mxSetField(result, i, MEX_MEAN, arrayToMatrix(msg.mean(), 1, msg.size()));
+        mxSetField(result, i, MEX_MEAN, arrayToMatrix(msg.mean().data(), 1, msg.size()));
         if (msg.type() == GaussianMessage::GAUSSIAN_VARIANCE)
-            mxSetField(result, i, MEX_VAR, arrayToMatrix(msg.variance(), msg.size(), msg.size()));
+            mxSetField(result, i, MEX_VAR, arrayToMatrix(msg.variance().data(), msg.size(), msg.size()));
         else // if (msg.type() == GaussianMessage::GAUSSIAN_PRECISION)
-            mxSetField(result, i, MEX_VAR, arrayToMatrix(msg.precision(), msg.size(), msg.size()));
+            mxSetField(result, i, MEX_VAR, arrayToMatrix(msg.precision().data(), msg.size(), msg.size()));
         ++it;
     }
 
@@ -183,6 +180,35 @@ inline mxArray *messagesToStructArray(const MessageBox &msgs)
 }
 
 
+/**
+ * @brief get the adjacency matrix as a matlab 2D array for the network
+ */
+inline mxArray *networkAdjacencyMatrix(const Network &nwk)
+{
+    mxArray *result = mxCreateDoubleMatrix(nwk.nodes().size(), nwk.nodes().size(), mxREAL);
+    if (nwk.nodes().empty())
+        return result;
+    double *data = mxGetPr(result);
+    // getting the smallest id in the network
+    int minId = nwk.nodes().begin()->first;
+    for (Network::AdjListIt it = nwk.adjList().begin(); it != nwk.adjList().end(); ++it)
+        data[(it->second - minId) * nwk.nodes().size() + (it->first - minId)] = 1.0;
+    return result;
+}
+
+
+/**
+ * @brief networks
+ */
+inline mxArray *networkNodes(const Network &nwk)
+{
+    mxArray *result = mxCreateDoubleMatrix(1, nwk.nodes().size(), mxREAL);
+    double *data = mxGetPr(result);
+    int i = 0;
+    for (std::map<int, FactorNode*>::const_iterator it = nwk.nodes().begin(); it != nwk.nodes().end(); ++it)
+        data[i++] = it->first;
+    return result;
+}
 
 
 

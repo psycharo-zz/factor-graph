@@ -37,20 +37,17 @@ function rlsExample()
     nwk.addEdge(add_W_c, y);
     nwk.addEdge(noise_W, add_W_c);
     
-    nwk.addEdgeTagged(A, a_equ, 'estimated', '');
+    nwk.addEdge(A, a_equ, 'estimated', '');
     nwk.addEdge(a_prev, a_equ);
     nwk.addEdge(a_equ, a_next);
            
     % RLS schedule
-    schedule = {};
-      
-    schedule = [schedule, {a_next, a_equ}, {a_prev, a_equ}, {a_equ, A}];
-    schedule = [schedule, {x_prev, A}, {A, add_A_b}, {noise_U, b}, {b, add_A_b}, {add_A_b, equMult}];
-%     schedule = [schedule, {y, equMult}];
-    schedule = [schedule, {y, add_W_c}, {noise_W, add_W_c}, {add_W_c, equMult}];
-    schedule = [schedule, {equMult, x_next}, {x_next, equMult}];
-    schedule = [schedule, {equMult, add_A_b},  {add_A_b, A}];
-    schedule = [schedule, {A, a_equ}, {a_prev, a_equ}, {a_equ, a_next}];
+    schedule = {a_next, a_equ;   a_prev, a_equ;   a_equ, A; ...
+                x_prev, A; A, add_A_b; noise_U, b; b, add_A_b; add_A_b, equMult;...
+                y, add_W_c; noise_W, add_W_c; add_W_c, equMult; ...
+                equMult, x_next; x_next, equMult; ...
+                equMult, add_A_b; add_A_b, A; ...
+                A, a_equ; a_prev, a_equ; a_equ, a_next};
 
     nwk.setSchedule(schedule);
  
@@ -67,7 +64,7 @@ function rlsExample()
     a_next.receive(ffg.gaussMessage(zeros(1,M), zeros(M, M), 'PRECISION'));
     
     % number of observations 
-    N_OBSERVATIONS = 1000;
+    N_OBSERVATIONS = 10000;
  
     b.setMatrix(eye(M, 1));
     equMult.setMatrix(eye(M, 1)');

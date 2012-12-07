@@ -36,6 +36,8 @@ TEST(Multiplication, IdentityForward) {
 
     GaussianMessage evidence = out.evidence();
 
+    EXPECT_EQ(evidence.size(), msg.size());
+
 
     for (size_t i = 0; i < msg.size(); i++)
         EXPECT_FLOAT_EQ(evidence.mean()[i], msg.mean()[i]);
@@ -69,6 +71,8 @@ TEST(Multiplication, IdentityBackward) {
     out.propagate(msg);
 
     GaussianMessage evidence = in.evidence();
+
+    EXPECT_EQ(evidence.size(), msg.size());
 
     for (size_t i = 0; i < msg.size(); i++)
         EXPECT_FLOAT_EQ(evidence.mean()[i], msg.mean()[i]);

@@ -51,11 +51,11 @@ GaussianMessage CustomNode::function(int to, const MessageBox &msgs)
         mxSetField(mexMsgs, i, MEX_FROM, mxCreateDoubleScalar(from));
         mxSetField(mexMsgs, i, MEX_TYPE, mxCreateString(Message::typeName(msg.type()).c_str()));
         mxSetField(mexMsgs, i, MEX_CONN, mxCreateString(connType.c_str()));
-        mxSetField(mexMsgs, i, MEX_MEAN, arrayToMatrix(msg.mean(), 1, msg.size()));
+        mxSetField(mexMsgs, i, MEX_MEAN, arrayToMatrix(msg.mean().data(), 1, msg.size()));
         if (msg.type() == GaussianMessage::GAUSSIAN_VARIANCE)
-            mxSetField(mexMsgs, i, MEX_VAR, arrayToMatrix(msg.variance(), msg.size(), msg.size()));
+            mxSetField(mexMsgs, i, MEX_VAR, arrayToMatrix(msg.variance().data(), msg.size(), msg.size()));
         else // if (msg.type() == GaussianMessage::GAUSSIAN_PRECISION)
-            mxSetField(mexMsgs, i, MEX_VAR, arrayToMatrix(msg.precision(), msg.size(), msg.size()));
+            mxSetField(mexMsgs, i, MEX_VAR, arrayToMatrix(msg.precision().data(), msg.size(), msg.size()));
 
         ++it;
     }

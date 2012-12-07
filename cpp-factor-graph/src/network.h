@@ -15,12 +15,24 @@ class Network
 {
 public:
 
-    virtual ~Network() {};
+    virtual ~Network() {}
     /**
-     * @brief Schedule type represents an update schedule
-     * TODO: maybe use nodes themselves (to avoid hacks etc)
+     * @brief the (ordered) list of message updates, where each pair is (receiver, sender)
      */
     typedef std::vector<std::pair<FactorNode*, FactorNode*> > Schedule;
+
+
+    /**
+     * @brief the adjacency list (id --> (id,...,id))
+     */
+    typedef std::multimap<int, int> AdjList;
+
+    /**
+     * @brief iterator
+     */
+    typedef AdjList::const_iterator AdjListIt;
+
+
 
     /**
      * @brief addEdge add
@@ -36,6 +48,9 @@ public:
 
         m_nodes.insert(std::make_pair(A->id(), A));
         m_nodes.insert(std::make_pair(B->id(), B));
+
+        // TODO: make several types of connections?
+        m_adjacency.insert(std::make_pair(A->id(), B->id()));
     }
 
 
@@ -62,9 +77,30 @@ public:
             it->first->send(it->second->id());
     }
 
+    /**
+     * @brief get the list of nodes
+     */
+    inline const std::map<int, FactorNode*> &nodes() const
+    {
+        return m_nodes;
+    }
+
+    /**
+     * @brief get the adjacency map (id --> id)
+     */
+    inline const AdjList &adjList() const
+    {
+        return m_adjacency;
+    }
 
 private:
+    //! the list of all nodes in the network
     std::map<int, FactorNode*> m_nodes;
+
+    //! adjacency list
+    AdjList m_adjacency;
+
+    //! the schedule
     Schedule m_schedule;
 };
 
