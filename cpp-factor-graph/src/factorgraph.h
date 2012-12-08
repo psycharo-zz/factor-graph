@@ -8,6 +8,7 @@
 #include "multiplicationnode.h"
 #include "estimatemultiplicationnode.h"
 #include "network.h"
+#include "dynamicnetwork.h"
 #include "equmultnode.h"
 
 

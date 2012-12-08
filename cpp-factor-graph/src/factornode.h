@@ -7,8 +7,11 @@
 #include <set>
 #include <string>
 #include <algorithm>
+#include <cstdlib>
 
 #include "message.h"
+
+
 
 
 /**
@@ -85,7 +88,10 @@ protected:
     //! get the message for the specified id
     inline const GaussianMessage &message(int node_id) const
     {
-        return m_messages.at(node_id);
+        MessageBox::const_iterator it = m_messages.find(node_id);
+        if (it == m_messages.end())
+            throw std::runtime_error("FactorNode(" + id_to_string(m_id) + ")::message: no message from node:" + id_to_string(node_id));
+        return it->second;
     }
 
 
@@ -93,7 +99,7 @@ protected:
     inline void addMessage(int from, const GaussianMessage &msg)
     {
         if (!isSupported(msg.type()))
-            throw std::runtime_error("FactorNode::addMessage: unsupported message type");
+            throw std::runtime_error("FactorNode(" + id_to_string(m_id) + ")::addMessage: unsupported message type");
         std::pair<MessageBox::iterator, bool> res = m_messages.insert(std::make_pair(from, msg));
         if (!res.second)
             res.first->second = msg;

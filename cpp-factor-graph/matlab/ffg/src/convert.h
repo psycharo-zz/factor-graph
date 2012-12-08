@@ -13,6 +13,9 @@
 #include <factorgraph.h>
 
 // TODO: make a template-based type caster
+static const char *MEX_ID = "id";
+static const char *MEX_MESSAGE = "message";
+
 static const char *MEX_FROM = "from";
 static const char *MEX_TYPE = "type";
 static const char *MEX_CONN = "connection";
@@ -183,34 +186,55 @@ inline mxArray *messagesToStructArray(const MessageBox &msgs)
 /**
  * @brief get the adjacency matrix as a matlab 2D array for the network
  */
-inline mxArray *networkAdjacencyMatrix(const Network &nwk)
+inline mxArray *networkAdjacencyMatrix(const Network::NodeList &nodes, const Network::AdjList &adjList)
 {
-    mxArray *result = mxCreateDoubleMatrix(nwk.nodes().size(), nwk.nodes().size(), mxREAL);
-    if (nwk.nodes().empty())
+    mxArray *result = mxCreateDoubleMatrix(nodes.size(), nodes.size(), mxREAL);
+    if (nodes.empty())
         return result;
+
     double *data = mxGetPr(result);
     // getting the smallest id in the network
-    int minId = nwk.nodes().begin()->first;
-    for (Network::AdjListIt it = nwk.adjList().begin(); it != nwk.adjList().end(); ++it)
-        data[(it->second - minId) * nwk.nodes().size() + (it->first - minId)] = 1.0;
+    int minId = nodes.begin()->first;
+    for (Network::AdjListIt it = adjList.begin(); it != adjList.end(); ++it)
+        data[(it->second - minId) * nodes.size() + (it->first - minId)] = 1.0;
     return result;
 }
 
 
 /**
- * @brief networks
+ * @brief convert nodes to the matlab representation
  */
-inline mxArray *networkNodes(const Network &nwk)
+inline mxArray *networkNodes(const Network::NodeList &nodes)
 {
-    mxArray *result = mxCreateDoubleMatrix(1, nwk.nodes().size(), mxREAL);
+    mxArray *result = mxCreateDoubleMatrix(1, nodes.size(), mxREAL);
     double *data = mxGetPr(result);
     int i = 0;
-    for (std::map<int, FactorNode*>::const_iterator it = nwk.nodes().begin(); it != nwk.nodes().end(); ++it)
+    for (std::map<int, FactorNode*>::const_iterator it = nodes.begin(); it != nodes.end(); ++it)
         data[i++] = it->first;
     return result;
 }
 
 
+inline std::vector<MessageBox> createMessageBoxArray(const mxArray *mx_data, const mxArray *mx_step)
+{
+    std::vector<MessageBox> result;
+    size_t totalCount = mxGetN(mx_data);
+    size_t step = arrayToInt(mx_step);
+    // assert(step != 0);
+
+    for (size_t i = 0; i < totalCount; i += step)
+    {
+        MessageBox box;
+        for (size_t j = 0; j < step; j++)
+        {
+            int id = arrayToInt(mxGetField(mx_data, i + j, MEX_ID));
+            GaussianMessage msg = createGaussianMessage(mxGetField(mx_data, i + j, MEX_MESSAGE));
+            box.insert(std::make_pair(id, msg));
+        }
+        result.push_back(box);
+    }
+    return result;
+}
 
 
 #endif // CONVERT_H

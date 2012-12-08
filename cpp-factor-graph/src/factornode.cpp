@@ -69,7 +69,7 @@ void FactorNode::receive(int from, const GaussianMessage &msg)
 void FactorNode::send(int to)
 {
     if (m_nodes.count(to) == 0)
-        throw std::runtime_error("FactorNode::send: unknown recipient");
+        throw std::runtime_error("FactorNode(" + id_to_string(m_id) + ")::send: unknown recipient");
 
     // have all the necessary messages
     if (m_messages.size() >= (m_incoming.size() + m_outgoing.size()) || // m_messages.size() > m_nodes.size() && m_messages.count(UNDEFINED_ID)??

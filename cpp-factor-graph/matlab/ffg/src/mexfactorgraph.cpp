@@ -76,14 +76,40 @@ void processNetwork(const string &function_name, int nlhs, mxArray *plhs[], int 
         else if (function_name == "step")
             network->step();
         else if (function_name == "adjacencyMatrix")
-            plhs[0] = networkAdjacencyMatrix(*network);
+            plhs[0] = networkAdjacencyMatrix(network->nodes(), network->adjList());
         else if (function_name == "nodes")
-            plhs[0] = networkNodes(*network);
+            plhs[0] = networkNodes(network->nodes());
         else if (function_name == "delete")
             delete network;
         else
             throw std::runtime_error("Network: unknown function or wrong number of parameters");
     }
+}
+
+void processDynamicNetwork(const string &function_name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    if (function_name == "create")
+        plhs[0] = pointerToArray(new DynamicNetwork);
+    else if (function_name == "addTemporalEdge" && nrhs == 5)
+    {
+        DynamicNetwork *network = *(static_cast<DynamicNetwork**>(mxGetData(prhs[POINTER_IDX])));
+        EvidenceNode *a = *(static_cast<EvidenceNode**>(mxGetData(prhs[POINTER_IDX+1])));
+        EvidenceNode *b = *(static_cast<EvidenceNode**>(mxGetData(prhs[POINTER_IDX+2])));
+        network->addTemporalEdge(a, b);
+    }
+    else if (function_name == "adjacencyMatrixTemporal")
+    {
+        DynamicNetwork *network = *(static_cast<DynamicNetwork**>(mxGetData(prhs[POINTER_IDX])));
+        plhs[0] = networkAdjacencyMatrix(network->nodes(), network->adjListTemporal());
+    }
+    else if (function_name == "step" && nrhs == 5)
+    {
+        DynamicNetwork *network = *(static_cast<DynamicNetwork**>(mxGetData(prhs[POINTER_IDX])));
+        network->step(createMessageBoxArray(prhs[POINTER_IDX+1], prhs[POINTER_IDX+2]));
+    }
+    else
+        processNetwork(function_name, nlhs, plhs, nrhs, prhs);
+
 }
 
 
@@ -213,6 +239,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
         if (type_name == "Network")
             processNetwork(function_name, nlhs, plhs, nrhs, prhs);
+        else if (type_name == "DynamicNetwork")
+            processDynamicNetwork(function_name, nlhs, plhs, nrhs, prhs);
         else if (function_name == "create")
             createNode(type_name, plhs, prhs);
         else if (nrhs >= 3)

@@ -28,9 +28,16 @@ public:
     typedef std::multimap<int, int> AdjList;
 
     /**
+     * @brief the list of nodes
+     */
+    typedef std::map<int, FactorNode*> NodeList;
+
+    /**
      * @brief iterator
      */
     typedef AdjList::const_iterator AdjListIt;
+
+
 
 
 
@@ -72,7 +79,7 @@ public:
      */
     inline void step()
     {
-        // TODO: make dummy messages?
+        // TODO: decent error reporting on message receiving
         for (Schedule::iterator it = m_schedule.begin(); it != m_schedule.end(); ++it)
             it->first->send(it->second->id());
     }
@@ -80,7 +87,7 @@ public:
     /**
      * @brief get the list of nodes
      */
-    inline const std::map<int, FactorNode*> &nodes() const
+    inline const NodeList &nodes() const
     {
         return m_nodes;
     }
@@ -93,7 +100,7 @@ public:
         return m_adjacency;
     }
 
-private:
+protected:
     //! the list of all nodes in the network
     std::map<int, FactorNode*> m_nodes;
 

@@ -41,9 +41,7 @@ function [ ] = kalman_example()
     % for gaussians only:
     % 'mean' - 1xN vector
     % 'var' - NxN matrix
-    msg = ffg.gaussMessage(1+randn()*sd, sd2, 'VARIANCE');
-
-    xout.propagate(msg);
+    xout.propagate(ffg.gaussMessage(1+randn()*sd, sd2, 'VARIANCE'));
     n.propagate(ffg.gaussMessage(0, sd2, 'VARIANCE'));
     u.propagate(ffg.gaussMessage(u_const, 0,'VARIANCE'));
 
@@ -53,6 +51,7 @@ function [ ] = kalman_example()
 
     result = zeros(N_ITERATIONS, 2);    
      
+    msg = ffg.gaussMessage(1+randn()*sd, sd2, 'VARIANCE');
     for i = 1:N_ITERATIONS
         xin.propagate(msg);
         samples(i,:) = i+randn()*sd;

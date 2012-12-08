@@ -9,6 +9,7 @@
 #include "tests/kalmanfilter_test.h"
 #include "tests/esitmatemultiplicationnode_test.h"
 #include "tests/ar_test.h"
+#include "tests/dynamicnetwork_test.h"
 
 #include "factorgraph.h"
 

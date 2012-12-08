@@ -78,7 +78,7 @@ for i=1:N,
     dy1 = sign.*wd(i,2).*sin(alpha);   dx1 = sign.*wd(i,1).*cos(alpha);
     dy2 = sign.*wd(k,2).*sin(alpha);   dx2 = sign.*wd(k,1).*cos(alpha);    
     if adj(k,i)==0, % if directed edge
-      arrow([x(i)+dx1 y(i)+dy1],[x(k)-dx2 y(k)-dy2]);
+      arrow('Start', [x(i)+dx1 y(i)+dy1],'Stop',[x(k)-dx2 y(k)-dy2], 'Length', 10);
     else	   
       line([x(i)+dx1 x(k)-dx2],[y(i)+dy1 y(k)-dy2],'color','k');
       adj(k,i)=-1; % Prevent drawing lines twice

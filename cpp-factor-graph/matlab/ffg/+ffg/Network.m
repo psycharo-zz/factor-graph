@@ -8,9 +8,11 @@ classdef Network < ffg.CppObject
 
     
     methods
-        function this = Network()
-            this = this@ffg.CppObject('Network');
-            % NOTE: this can't be codegened?
+        function this = Network(type)
+            if nargin == 0
+                type = 'Network';
+            end
+            this = this@ffg.CppObject(type);
             this.node_list = containers.Map('KeyType', 'int32', 'ValueType', 'any');
         end
         

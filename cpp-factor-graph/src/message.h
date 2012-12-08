@@ -60,6 +60,7 @@ public:
      */
     static const int UNDEFINED_ID;
 
+
     /**
      * @brief Message
      * @param type
@@ -300,6 +301,14 @@ typedef std::map<int, GaussianMessage> MessageBox;
  */
 std::ostream& operator <<(std::ostream &os, const GaussianMessage &msg);
 
+
+
+inline std::string id_to_string(int id)
+{
+    char buff[256];
+    sprintf(buff, "%d", id);
+    return buff;
+}
 
 
 

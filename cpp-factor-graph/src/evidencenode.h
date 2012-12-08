@@ -4,9 +4,8 @@
 #include "factornode.h"
 
 
-
 /**
- * @brief The EvidenceNode class is used simply to
+ * @brief this nodes imitates half-edge in the network
  */
 class EvidenceNode : public FactorNode
 {
@@ -81,6 +80,9 @@ public:
     }
 
 
+    /**
+     * @brief observe the evidence
+     */
     inline const GaussianMessage &evidence() const
     {
         return message(destination()->id());

@@ -66,8 +66,8 @@ if nargout>0, t = temp; end;
 function [ptc, wx, wy] = draw_oval(tx, x, y)
 % Draws an oval box around a tex object
       sz = get(tx,'Extent');
-      wy = sz(4);
-      wx = max(2/3*sz(3), wy); 
+      wy = 0.5 * sz(4);
+      wx = 0.5 * max(2/3*sz(3), wy); 
       ptc = ellipse(x, y, wx, wy);
       set(ptc, 'FaceColor','w');
 

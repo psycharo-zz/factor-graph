@@ -1,6 +1,5 @@
-function drawNetwork(network)
+function drawNetwork(network, numrep)
 %DRAWNETWORK draw the network graph
-%   network - ffg.Network do draw 
 % the following notations are used:
 %  "=" EqualityNode
 %  "+" AddNode
@@ -8,6 +7,9 @@ function drawNetwork(network)
 %  "X" EvidenceNode
 %  "*=" EquMultNode
 %  "*" EstimateMultiplicationNode
+% INPUTS:
+%   network - ffg.Network do draw 
+%   numrep - for dynamic networks only, the number of times to repeat
 
     nodes = network.nodes();
     labels = {};
@@ -28,8 +30,14 @@ function drawNetwork(network)
             labels{i} = nodes{i}.type_name;
         end
     end
-    
-    draw_layout(network.adjacencyMatrix(),  labels);
-    %draw_layout_dbn(network.adjacencyMatrix(),  zeros(length(nodes), length(nodes)), 0, 2, labels);
+
+    if strcmp(class(network), 'ffg.DynamicNetwork') && nargin == 2
+        draw_layout_dbn(network.adjacencyMatrix(),  network.adjacencyMatrixTemporal(), 0, numrep, labels);
+    elseif strcmp(class(network), 'ffg.DynamicNetwork')
+        draw_layout_dbn(network.adjacencyMatrix(),  network.adjacencyMatrixTemporal(), 0, 2, labels);
+    else
+        draw_layout(network.adjacencyMatrix(),  labels);
+    end
+    %
 end
 

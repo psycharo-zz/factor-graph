@@ -14,7 +14,7 @@ bool AddNode::isSupported(Message::Type type)
 void AddNode::addOutgoing(FactorNode *node)
 {
     if (m_outgoing.size() != 0)
-        throw std::runtime_error("AddNode::addOutgoing(): only one outgoing node is supported");
+        throw std::runtime_error("AddNode(" + id_to_string(id()) + ")::addOutgoing(): only one outgoing node is supported");
 
     FactorNode::addOutgoing(node);
 }
@@ -23,7 +23,7 @@ void AddNode::addOutgoing(FactorNode *node)
 GaussianMessage AddNode::function(int to, const MessageBox &msgs)
 {
     if (msgs.empty() || m_outgoing.size() != 1)
-        throw std::runtime_error("AddNode::function(): no messages or network not configured");
+        throw std::runtime_error("AddNode(" + id_to_string(id()) + ")::function(): no messages or network not configured");
     return isForward(to) ? forwardFunction(to, msgs) : backwardFunction(to, msgs);
 }
 
