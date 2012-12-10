@@ -5,12 +5,22 @@ set(CMAKE_CXX_FLAGS -std=gnu++0x)
 
 list(APPEND SRC_LIST
 tests/main.cpp
-matlab/ffg/src/customnode.cpp
-matlab/ffg/src/mexfactorgraph.cpp
-matlab/ffg/src/customnode.h
-matlab/ffg/src/convert.h
+addnode.cpp
+customnode.cpp
+dynamicnetwork.cpp
+equalitynode.cpp
+equmultnode.cpp
+estimatemultiplicationnode.cpp
+factornode.cpp
+message.cpp
+mexfactorgraph.cpp
+multiplicationnode.cpp
+network.cpp
+customnode.cpp
+mexfactorgraph.cpp
+customnode.h
+convert.h
 tests/*.h
-
 )
 
 

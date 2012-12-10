@@ -106,8 +106,8 @@ extern "C" {
                ptrdiff_t *incx);
 
     // SVD decomposition
-    void dgesvd(char *jobu, 
-                char *jobvt,
+    void dgesvd(const char *jobu,
+                const char *jobvt,
                 ptrdiff_t *m, 
                 ptrdiff_t *n,
                 const double *a, 
