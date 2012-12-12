@@ -25,7 +25,7 @@ function installFFG
     % core sources
     sources = cell2mat(arrayfun(@(x) struct('name', ['"' SRC_PATH filesep x.name '" ']), dir([SRC_PATH filesep '*.cpp']), 'UniformOutput', false));
     SOURCES_NAMES = [sources.name];
-    eval(['mex ' SOURCES_NAMES ' -I"' SRC_PATH '" ' MEXOPTS ' -output ' OUT_NAME]);
+    eval(['mex ' SOURCES_NAMES ' -I"' SRC_PATH '" ' MEXOPTS ' -output ' [APP_FULL_PATH filesep  OUT_NAME]]);
     
     disp('Done!');
     
