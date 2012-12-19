@@ -75,7 +75,8 @@ public:
      */
     inline FactorNode *destination() const
     {
-        assert(m_nodes.size() == 1);
+        if (m_nodes.size() != 1)
+            throw std::runtime_error("EvidenceNode(" + id_to_string(id()) + ")::destination(): no destination specified");
         return m_nodes.begin()->second;
     }
 

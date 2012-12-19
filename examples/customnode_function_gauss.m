@@ -2,9 +2,8 @@ function out_msg = customnode_function_gauss(from, to, msgs)
 % from - the sender of the message
 % to - the destination of the message
 % msgs - array of messages (struct)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-%%%%%%%%% specifying input types for gaussian (codegen) %%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% specifying input types for gaussian (codegen) 
     assert(isa(from, 'double'));
     assert(isa(to, 'double'));
     % messages
@@ -17,10 +16,7 @@ function out_msg = customnode_function_gauss(from, to, msgs)
     assert(isa(msgs(1).var, 'double') && size(msgs(1).var, 2) <= Inf);
    
    
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-%%%%%%%%%%%%%%%%%%%%%%%% your code here %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%% specifying custom code
     out_msg = struct('type', 'VARIANCE', 'mean',[], 'var',[]);
     isForward = 1;
     

@@ -58,6 +58,25 @@ function testAdjacencyMatrixKalmanFilter
     assertEqual(nwk.adjacencyMatrix(), EXPECTED_MATRIX);
 
 
-
+function testAdjacencyMatrixMult
+% test for multiplication node
+    nwk = ffg.Network;
+    
+    
+    xin = ffg.EvidenceNode;
+    mult = ffg.MultiplicationNode;
+    xout = ffg.EvidenceNode;
+    
+    nwk.addEdge(xin, mult);
+    nwk.addEdge(mult, xout);
+    
+    EXPECTED_MATRIX = zeros(3,3);
+    
+    EXPECTED_MATRIX(1,2) = 1;
+    EXPECTED_MATRIX(2,3) = 1;
+    
+    assertEqual(nwk.adjacencyMatrix(), EXPECTED_MATRIX);
+    
+    
 
 

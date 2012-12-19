@@ -36,6 +36,27 @@ classdef DynamicNetwork < ffg.Network
             end
         end
         
+        function draw(this, numrep)
+            %DRAWNETWORK draw the network graph
+            % the following notations are used:
+            %  "=" EqualityNode
+            %  "+" AddNode
+            %  "*" MultiplicationNode
+            %  "X" EvidenceNode
+            %  "*=" EquMultNode
+            %  "*" EstimateMultiplicationNode
+            % INPUTS:
+            %   network - ffg.Network do draw 
+            %   numrep - for dynamic networks only, the number of times to repeat
+
+            labels = this.labels();
+            if nargin == 2
+                draw_layout_dbn(this.adjacencyMatrix(),  this.adjacencyMatrixTemporal(), 0, numrep, labels);
+            else
+                draw_layout_dbn(this.adjacencyMatrix(),  this.adjacencyMatrixTemporal(), 0, 2, labels);
+            end
+        end        
+        
     end
     
 end

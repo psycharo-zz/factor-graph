@@ -61,7 +61,7 @@ GaussianMessage MultiplicationNode::backwardFunction(int to, const MessageBox &m
         const Matrix &varY = msgY.variance();
 
         Matrix A = m_matrix;
-        A.inv();
+        A.pinv();
 
         GaussianMessage result(A.rows(), GaussianMessage::GAUSSIAN_VARIANCE);
 

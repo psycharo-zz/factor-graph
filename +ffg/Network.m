@@ -7,6 +7,7 @@ classdef Network < ffg.CppObject
     end    
 
     
+   
     methods
         function this = Network(type)
             if nargin == 0
@@ -68,8 +69,50 @@ classdef Network < ffg.CppObject
             end
         end
         
-            
+        
+        
+        function draw(this)
+            %(ffg) DRAWNETWORK draw the network graph
+            % the following notations are used:
+            %  "=" EqualityNode
+            %  "+" AddNode
+            %  "*" MultiplicationNode
+            %  "X" EvidenceNode
+            %  "*=" EquMultNode
+            %  "*" EstimateMultiplicationNode
+            % INPUTS:
+            %   network - ffg.Network do draw 
+            draw_layout(this.adjacencyMatrix(),  this.labels());
+        end
     end
+    
+    methods (Hidden = true)
+        
+        function labels = labels(this)
+            %(ffg) LABELS get the labels of nodes
+            labels = {};
+            nodes = this.nodes();
+            
+            for i = 1:length(nodes)
+                if strcmp(nodes{i}.type_name, 'EqualityNode')
+                    labels{i} = sprintf('%d:=', nodes{i}.id);
+                elseif strcmp(nodes{i}.type_name, 'AddNode')
+                    labels{i} = sprintf('%d:+', nodes{i}.id);
+                elseif strcmp(nodes{i}.type_name, 'MultiplicationNode')
+                    labels{i} = sprintf('%d:*', nodes{i}.id);
+                elseif strcmp(nodes{i}.type_name, 'EvidenceNode')
+                    labels{i} = sprintf('%d:X', nodes{i}.id);
+                elseif strcmp(nodes{i}.type_name, 'EquMultNode')
+                    labels{i} = sprintf('%d:=*', nodes{i}.id);
+                elseif strcmp(nodes{i}.type_name, 'EstimateMultiplicationNode')
+                    labels{i} = sprintf('%d:*', nodes{i}.id);
+                else
+                    labels{i} = nodes{i}.type_name;
+                end
+            end
+        end
+    end
+
     
    
 end

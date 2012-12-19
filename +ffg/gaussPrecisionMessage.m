@@ -1,7 +1,7 @@
-function result = gaussianPrecisionMessage(mean, precision)
-%GAUSSIANPRECISIONMESSAGE create gaussian message with precision
+function result = gaussPrecisionMessage(mean, precision)
+%GAUSSPRECISIONMESSAGE create gaussian message with precision
     result.type = 'PRECISION';
     result.mean = mean;
-    result.var = precision;
+    result.precision = precision;
 end
 

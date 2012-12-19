@@ -55,7 +55,7 @@ public:
     void addIncoming(FactorNode *node)
     {
         if (m_incoming.size() != 0)
-            throw std::runtime_error("MultiplicationNode::addIncoming: already have an incoming node");
+            throw std::runtime_error("MultiplicationNode(" + id_to_string(id()) + ")::addIncoming: already have an incoming node");
         FactorNode::addIncoming(node);
     }
 
@@ -63,7 +63,7 @@ public:
     void addOutgoing(FactorNode *node)
     {
         if (m_outgoing.size() != 0)
-            throw std::runtime_error("MultiplicationNode::addOutgoing: already have an outgoing node");
+            throw std::runtime_error("MultiplicationNode(" + id_to_string(id()) + ")::addOutgoing: already have an outgoing node");
         FactorNode::addOutgoing(node);
     }
 

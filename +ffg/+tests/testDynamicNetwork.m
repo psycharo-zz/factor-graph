@@ -65,7 +65,7 @@ function testOverallKalmanFilter
     u.receive(ffg.gaussMessage(u_const, 0,'VARIANCE'));
     xin.receive(ffg.gaussMessage(1+randn()*sd, sd2, 'VARIANCE'));
 
-    ffg.drawNetwork(nwk, 3);
+    nwk.draw(3);
 
     NUM_ITERATIONS = 1000;
     results = struct('id', {}, 'message', {});

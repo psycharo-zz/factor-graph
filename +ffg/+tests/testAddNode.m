@@ -2,7 +2,6 @@ function test_suite = testAddNode()
 %TESTADDNODE testing ffg.AddNode
 initTestSuite;
 
-
 function testForward
 %TESTFORWARD case for forward message (the result knowing all summands)
 

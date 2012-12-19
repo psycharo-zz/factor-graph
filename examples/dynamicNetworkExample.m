@@ -1,56 +1,67 @@
-function dynamicNetworkExample
-%DYNAMICNETWORKEXAMPLE example of using DynamicNetwork for filtering
+%% example of using DynamicNetwork for filtering
 
-    xin = ffg.EvidenceNode;
-    xout = ffg.EvidenceNode;
-    n = ffg.EvidenceNode;
-    y = ffg.EvidenceNode;
-    e = ffg.EqualityNode;
-    a = ffg.AddNode;
-    u = ffg.EvidenceNode;
-    b = ffg.AddNode;
-    
-    nwk = ffg.DynamicNetwork;
-   
-    nwk.addEdge(xin, e);
-    nwk.addEdge(e, b);
-    nwk.addEdge(u, b);
-    nwk.addEdge(b, xout);
-    nwk.addEdge(e, a);
-    nwk.addEdge(a, y);
-    nwk.addEdge(n, a);
-    
-    nwk.addTemporalEdge(xout, xin);
-    
-    schedule = {xin, e; ...
-                n, a; ...
-                y, a; ...
-                a, e; ...
-                e, b; ...
-                u, b; ...
-                b, xout};
-    
-    nwk.setSchedule(schedule);
-    
-    sd = 10.0;
-    sd2 = sd*sd;
-    u_const = 1.0;
-    
-    xout.receive(ffg.gaussMessage(1+randn()*sd, sd2, 'VARIANCE'));
-    n.receive(ffg.gaussMessage(0, sd2, 'VARIANCE'));
-    u.receive(ffg.gaussMessage(u_const, 0,'VARIANCE'));
-    xin.receive(ffg.gaussMessage(1+randn()*sd, sd2, 'VARIANCE'));
+%% Creating network
 
-    ffg.drawNetwork(nwk, 3);
+nwk = ffg.DynamicNetwork;
 
-    results = struct('id', {}, 'message', {});
-    for i = 1:1000
-        results = [results struct('id', y.id, 'message', ffg.gaussMessage(i+randn()*sd, 0, 'VARIANCE'))];
-    end
-    nwk.makeStep(results, 1);
-    
-    xout.evidence()
-    
+%
+xin = ffg.EvidenceNode;
+xout = ffg.EvidenceNode;
+n = ffg.EvidenceNode;
+y = ffg.EvidenceNode;
+e = ffg.EqualityNode;
+a = ffg.AddNode;
+u = ffg.EvidenceNode;
+b = ffg.AddNode;
 
+
+
+nwk.addEdge(xin, e);
+nwk.addEdge(e, b);
+nwk.addEdge(u, b);
+nwk.addEdge(b, xout);
+nwk.addEdge(e, a);
+nwk.addEdge(a, y);
+nwk.addEdge(n, a);
+
+%% Creating temporal connections
+nwk.addTemporalEdge(xout, xin);
+
+%% Setting schedule
+schedule = {xin, e; ...
+            n, a; ...
+            y, a; ...
+            a, e; ...
+            e, b; ...
+            u, b; ...
+            b, xout};
+
+nwk.setSchedule(schedule);
+
+%% Initialisation with evidence
+sd = 10.0;
+sd2 = sd*sd;
+u_const = 1.0;
+
+xout.receive(ffg.gaussVarianceMessage(1+randn()*sd, sd2));
+n.receive(ffg.gaussVarianceMessage(0, sd2));
+u.receive(ffg.gaussVarianceMessage(u_const, 0));
+xin.receive(ffg.gaussVarianceMessage(1+randn()*sd, sd2));
+
+%% Drawing the network
+nwk.draw(3);
+
+%% Filling the input data
+results = repmat(struct('id', {}, 'message', {}), 1, 1000);
+for i = 1:1000
+    results(i) = struct('id', y.id, 'message', ffg.gaussVarianceMessage(i+randn()*sd, 0));
 end
+
+%% Running sum-propagation
+nwk.makeStep(results, 1);
+
+%% Getting the estimation on i-th step
+xout.evidence()
+
+
 
