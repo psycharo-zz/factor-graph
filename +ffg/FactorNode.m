@@ -2,8 +2,9 @@ classdef FactorNode < ffg.CppObject
     %FACTORNODE base class for all factor nodes
 
     methods (Access = protected)
-        function this = FactorNode(type_name)
-            this = this@ffg.CppObject(type_name);
+        function this = FactorNode(type_name, nwk)
+            cpp_handle = mexfactorgraph('create', type_name, nwk.cpp_handle);
+            this = this@ffg.CppObject(type_name, cpp_handle);
         end
     end
     

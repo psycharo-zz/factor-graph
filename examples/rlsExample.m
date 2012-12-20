@@ -1,3 +1,4 @@
+function rlsExample
 %% Example of autoregressive parameter estimation
 
 %% Creating the network
@@ -7,21 +8,21 @@
     
 nwk = ffg.Network;
 
-x_prev = ffg.EvidenceNode;          
-x_next = ffg.EvidenceNode; 
-y = ffg.EvidenceNode;      
-noise_U = ffg.EvidenceNode;
-noise_W = ffg.EvidenceNode;
-b = ffg.MultiplicationNode;
-A = ffg.EstimateMultiplicationNode;
-add_A_b = ffg.AddNode;   
-equMult = ffg.EquMultNode;
-a_equ = ffg.EqualityNode;
-add_W_c = ffg.AddNode;
+x_prev = ffg.EvidenceNode(nwk);          
+x_next = ffg.EvidenceNode(nwk); 
+y = ffg.EvidenceNode(nwk);      
+noise_U = ffg.EvidenceNode(nwk);
+noise_W = ffg.EvidenceNode(nwk);
+b = ffg.MultiplicationNode(nwk);
+A = ffg.EstimateMultiplicationNode(nwk);
+add_A_b = ffg.AddNode(nwk);   
+equMult = ffg.EquMultNode(nwk);
+a_equ = ffg.EqualityNode(nwk);
+add_W_c = ffg.AddNode(nwk);
 % in this case we need precision matrices (to avoid infinities)
 a_equ.setType('PRECISION');
-a_prev = ffg.EvidenceNode;
-a_next = ffg.EvidenceNode;
+a_prev = ffg.EvidenceNode(nwk);
+a_next = ffg.EvidenceNode(nwk);
 
 % the real A coefficients
 REAL_A = [1.51, -1.08, 0.47, -0.23, 0.91, -1.30, 0.86, -0.32];
@@ -77,8 +78,8 @@ REAL_varW = 0.001;
 
 
 % dummy messages for A
-a_prev.receive(ffg.gaussPrecisionMessage(eye(1,M), eye(M, M)));
-a_next.receive(ffg.gaussPrecisionMessage(zeros(1,M), zeros(M, M)));
+a_prev.receive(ffg.messages.gaussPrecision(eye(1,M), eye(M, M)));
+a_next.receive(ffg.messages.gaussPrecision(zeros(1,M), zeros(M, M)));
 
 % number of observations 
 N_OBSERVATIONS = 10000;
@@ -87,12 +88,12 @@ N_OBSERVATIONS = 10000;
 REAL_x = eye(1,M);
 
 % dummy message to start with
-msg = ffg.gaussVarianceMessage(REAL_x, eye(M, M) * REAL_varU);
+msg = ffg.messages.gaussVariance(REAL_x, eye(M, M) * REAL_varU);
 
 % initial message for noise U (of unobserved x)
-noise_U.receive(ffg.gaussVarianceMessage(0, REAL_varU));
+noise_U.receive(ffg.messages.gaussVariance(0, REAL_varU));
 % intitial message for the observation noise
-noise_W.receive(ffg.gaussVarianceMessage(0, REAL_varW));
+noise_W.receive(ffg.messages.gaussVariance(0, REAL_varW));
 
 %% Iterating through the observations
 for i = 1:N_OBSERVATIONS
@@ -101,7 +102,7 @@ for i = 1:N_OBSERVATIONS
     REAL_x = [x_new, REAL_x(1:end-1)];
     x_prev.receive(msg);
     % receiving the noisy observation
-    y.receive(ffg.gaussVarianceMessage(x_new + randn() * REAL_varW, 0));
+    y.receive(ffg.messages.gaussVariance(x_new + randn() * REAL_varW, 0));
     nwk.makeStep();         
     msg = x_next.evidence();
     a_prev.receive(a_next.evidence());
@@ -120,3 +121,4 @@ disp(sprintf('Relative error:%f', err));
 
 
 
+end

@@ -6,16 +6,16 @@ function testForward
 %TESTFORWARD case for forward message (the result knowing all summands)
 
     nwk = ffg.Network;
-    node = ffg.AddNode;
-    a = ffg.EvidenceNode;
-    b = ffg.EvidenceNode;
-    c = ffg.EvidenceNode;
+    node = ffg.AddNode(nwk);
+    a = ffg.EvidenceNode(nwk);
+    b = ffg.EvidenceNode(nwk);
+    c = ffg.EvidenceNode(nwk);
     nwk.addEdge(a, node);
     nwk.addEdge(b, node);
     nwk.addEdge(node, c);
     
-    msgA = ffg.gaussMessage(10, 5, 'VARIANCE');
-    msgB = ffg.gaussMessage(20, 4, 'VARIANCE');
+    msgA = ffg.messages.gaussVariance(10, 5);
+    msgB = ffg.messages.gaussVariance(20, 4);
     
     a.propagate(msgA);
     b.propagate(msgB);
@@ -34,17 +34,17 @@ function testBackward
 %TESTFORWARD case for backward message (one of the summands knowing result)
 
     nwk = ffg.Network;
-    node = ffg.AddNode;
-    a = ffg.EvidenceNode;
-    b = ffg.EvidenceNode;
-    c = ffg.EvidenceNode;
+    node = ffg.AddNode(nwk);
+    a = ffg.EvidenceNode(nwk);
+    b = ffg.EvidenceNode(nwk);
+    c = ffg.EvidenceNode(nwk);
     nwk.addEdge(a, node);
     nwk.addEdge(b, node);
     nwk.addEdge(node, c);
 
     
-    msgC = ffg.gaussMessage(10, 5, 'VARIANCE');
-    msgB = ffg.gaussMessage(20, 4, 'VARIANCE');
+    msgC = ffg.messages.gaussVariance(10, 5);
+    msgB = ffg.messages.gaussVariance(20, 4);
     
     c.propagate(msgC);
     b.propagate(msgB);

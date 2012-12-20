@@ -15,6 +15,8 @@ using namespace std;
 class DynamicNetwork : public Network
 {
 public:
+
+
     virtual ~DynamicNetwork() {}
 
     /**

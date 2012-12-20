@@ -12,6 +12,7 @@
 class EquMultNode : public FactorNode
 {
 public:
+    EquMultNode(Network *nwk);
 
     bool isSupported(Message::Type type);
 

@@ -13,10 +13,12 @@
 class MultiplicationNode : public FactorNode
 {
 public:
-    MultiplicationNode()
+    MultiplicationNode(Network *nwk):
+        FactorNode(nwk)
     {}
 
-    MultiplicationNode(const double *matrix, int nRows, int nCols):
+    MultiplicationNode(Network *nwk, const double *matrix, int nRows, int nCols):
+        FactorNode(nwk),
         m_matrix(matrix, nRows, nCols)
     {
     }

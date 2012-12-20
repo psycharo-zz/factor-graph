@@ -7,6 +7,10 @@
 class AddNode : public FactorNode
 {
 public:
+    AddNode(Network *nwk):
+        FactorNode(nwk)
+    {}
+
     //! @overload
     bool isSupported(Message::Type type);
 

@@ -22,20 +22,23 @@ static const size_t POINTER_IDX = 2;
 void createNode(const string &type_name, mxArray *plhs[], const mxArray *prhs[])
 {
     FactorNode *result = NULL;
+
+    Network *network = *(static_cast<Network**>(mxGetData(prhs[POINTER_IDX])));
+
     if (type_name == "EvidenceNode")
-        result = new EvidenceNode;
+        result = new EvidenceNode(network);
     else if (type_name == "AddNode")
-        result = new AddNode;
+        result = new AddNode(network);
     else if (type_name == "EqualityNode")
-        result = new EqualityNode;
+        result = new EqualityNode(network);
     else if (type_name == "CustomNode")
-        result = new CustomNode;
+        result = new CustomNode(network);
     else if (type_name == "MultiplicationNode")
-        result = new MultiplicationNode;
+        result = new MultiplicationNode(network);
     else if (type_name == "EstimateMultiplicationNode")
-        result = new EstimateMultiplicationNode;
+        result = new EstimateMultiplicationNode(network);
     else if (type_name == "EquMultNode")
-        result = new EquMultNode;
+        result = new EquMultNode(network);
     // saving the pointer
     plhs[0] = pointerToArray(result);
 }

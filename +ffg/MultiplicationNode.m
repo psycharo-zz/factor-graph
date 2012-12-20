@@ -2,8 +2,8 @@ classdef MultiplicationNode < ffg.FactorNode
     %MULTIPLICATIONNODE multiplication-by-matrix node. (Table 3, Loeliger 2007)
     
     methods
-        function this = MultiplicationNode()
-            this = this@ffg.FactorNode('MultiplicationNode');            
+        function this = MultiplicationNode(nwk)
+            this = this@ffg.FactorNode('MultiplicationNode', nwk);            
         end
 
         function setMatrix(this, matrix)

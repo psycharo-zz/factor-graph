@@ -4,8 +4,8 @@ classdef EvidenceNode < ffg.FactorNode
     %   non-loopy mode
    
     methods
-       function this = EvidenceNode()
-           this = this@ffg.FactorNode('EvidenceNode');
+       function this = EvidenceNode(nwk)
+           this = this@ffg.FactorNode('EvidenceNode', nwk);
        end
       
        function propagate(this, message)

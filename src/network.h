@@ -1,5 +1,6 @@
 #ifndef NETWORK_H
 #define NETWORK_H
+#include <mex.h>
 
 #include "factornode.h"
 
@@ -14,6 +15,10 @@
 class Network
 {
 public:
+
+    Network():
+        m_currId(0)
+    {}
 
     virtual ~Network() {}
     /**
@@ -38,6 +43,15 @@ public:
     typedef AdjList::const_iterator AdjListIt;
 
 
+    /**
+     * @brief addNode adding node to the network and assigning it an id
+     * @param node
+     */
+    inline int addNode(FactorNode *node)
+    {
+        m_nodes.insert(std::make_pair(++m_currId, node));
+        return m_currId;
+    }
 
 
 
@@ -101,6 +115,9 @@ public:
     }
 
 protected:
+    //! the counter
+    int m_currId;
+
     //! the list of all nodes in the network
     std::map<int, FactorNode*> m_nodes;
 

@@ -12,6 +12,10 @@ class EstimateMultiplicationNode : public MultiplicationNode
 public:
     static const char *ESTIMATED_TAG;
 
+    EstimateMultiplicationNode(Network *nwk):
+        MultiplicationNode(nwk)
+    {}
+
     virtual ~EstimateMultiplicationNode() {}
 
     inline void setParam(const double *v, int nSize)

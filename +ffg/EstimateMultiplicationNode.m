@@ -4,8 +4,8 @@ classdef EstimateMultiplicationNode < ffg.FactorNode
     % for 'estimate' tag see parameter estimation in (Korl 2004)
     
     methods
-        function this = EstimateMultiplicationNode()
-            this = this@ffg.FactorNode('EstimateMultiplicationNode');            
+        function this = EstimateMultiplicationNode(nwk)
+            this = this@ffg.FactorNode('EstimateMultiplicationNode', nwk);            
         end
 
         function setMatrix(this, matrix)

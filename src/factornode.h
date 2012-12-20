@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <cstdlib>
 
+class Network;
+
 #include "message.h"
 
 
@@ -20,7 +22,7 @@
 class FactorNode
 {
 public:
-    FactorNode();
+    FactorNode(Network *nwk);
 
     virtual ~FactorNode() {}
 
@@ -123,9 +125,6 @@ private:
 
     //! all incoming messages
     MessageBox m_messages;
-
-    //! the overall
-    static int s_idCounter;
 
 };
 

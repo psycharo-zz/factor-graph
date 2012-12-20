@@ -4,21 +4,23 @@ function test_suite = testEqualityNode
 initTestSuite;
 
 function testScalarGaussian
-    % simle 
-
-    node = ffg.EqualityNode;
-
-    a = ffg.EvidenceNode;
-    b = ffg.EvidenceNode;
-    c = ffg.EvidenceNode;
-
+    % simple scalar test
+    
     nwk = ffg.Network;
+
+    node = ffg.EqualityNode(nwk);
+
+    a = ffg.EvidenceNode(nwk);
+    b = ffg.EvidenceNode(nwk);
+    c = ffg.EvidenceNode(nwk);
+
+    
     nwk.addEdge(a, node);
     nwk.addEdge(b, node);
     nwk.addEdge(c, node);
 
-    msgA = ffg.gaussMessage(10, 5, 'VARIANCE');
-    msgB = ffg.gaussMessage(20, 4, 'VARIANCE');
+    msgA = ffg.messages.gaussVariance(10, 5);
+    msgB = ffg.messages.gaussVariance(20, 4);
     
     a.propagate(msgA);
     b.propagate(msgB);
@@ -43,19 +45,22 @@ function testMultivariateGaussian
    
     DIMENSIONALITY = 4;
 
-    node = ffg.EqualityNode;
-    a = ffg.EvidenceNode;
-    b = ffg.EvidenceNode;
-    c = ffg.EvidenceNode;
-
     nwk = ffg.Network;
+        
+    node = ffg.EqualityNode(nwk);
+    a = ffg.EvidenceNode(nwk);
+    b = ffg.EvidenceNode(nwk);
+    c = ffg.EvidenceNode(nwk);
+
     nwk.addEdge(a, node);
     nwk.addEdge(b, node);
     nwk.addEdge(c, node);
     
     % randomly generating
-    msgA = ffg.gaussMessage(randn(1, DIMENSIONALITY), randn(DIMENSIONALITY, DIMENSIONALITY), 'VARIANCE');
-    msgB = ffg.gaussMessage(randn(1, DIMENSIONALITY), randn(DIMENSIONALITY, DIMENSIONALITY), 'VARIANCE');
+    msgA = ffg.messages.gaussVariance(randn(1, DIMENSIONALITY), ...
+                                      randn(DIMENSIONALITY, DIMENSIONALITY));
+    msgB = ffg.messages.gaussVariance(randn(1, DIMENSIONALITY), ...
+                                      randn(DIMENSIONALITY, DIMENSIONALITY));
     
     a.propagate(msgA);
     b.propagate(msgB);
@@ -77,14 +82,16 @@ function testMultivariateGaussian
 function testNoInformation
     % testing whether the 0 precision will cause no problems
 
-    node = ffg.EqualityNode;
+    nwk = ffg.Network;
+    
+    node = ffg.EqualityNode(nwk);
     node.setType('PRECISION');
     
-    a = ffg.EvidenceNode;
-    b = ffg.EvidenceNode;
-    c = ffg.EvidenceNode;
+    a = ffg.EvidenceNode(nwk);
+    b = ffg.EvidenceNode(nwk);
+    c = ffg.EvidenceNode(nwk);
 
-    nwk = ffg.Network;
+    
     nwk.addEdge(a, node);
     nwk.addEdge(b, node);
     nwk.addEdge(c, node);
@@ -92,8 +99,8 @@ function testNoInformation
     % number of dimensions
     DIM = 3;
     
-    msgA = ffg.gaussMessage([1,2,3], eye(DIM, DIM), 'PRECISION');
-    msgB = ffg.gaussMessage(zeros(1,3), zeros(DIM, DIM), 'PRECISION');
+    msgA = ffg.messages.gaussPrecision([1,2,3], eye(DIM, DIM));
+    msgB = ffg.messages.gaussPrecision(zeros(1,3), zeros(DIM, DIM));
     a.propagate(msgA);
     b.propagate(msgB);
     

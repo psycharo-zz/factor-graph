@@ -1,8 +1,8 @@
 classdef EqualityNode < ffg.FactorNode
     %EQUALITYNODE Equality factor node. Gaussian messages only. (Table 2, Loeliger 2007)
     methods
-       function this = EqualityNode()
-           this = this@ffg.FactorNode('EqualityNode');
+       function this = EqualityNode(nwk)
+           this = this@ffg.FactorNode('EqualityNode', nwk);
        end
        
        

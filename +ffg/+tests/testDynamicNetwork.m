@@ -4,12 +4,12 @@ function test_suite = testDynamicNetwork
 
 function testAdjacencyTemporal
 
-    a = ffg.EvidenceNode;
-    b = ffg.EvidenceNode;
-    c = ffg.EvidenceNode;
-    node = ffg.AddNode;
-    
     nwk = ffg.DynamicNetwork;
+
+    a = ffg.EvidenceNode(nwk);
+    b = ffg.EvidenceNode(nwk);
+    c = ffg.EvidenceNode(nwk);
+    node = ffg.AddNode(nwk);
     
     nwk.addEdge(a, node);
     nwk.addEdge(b, node);
@@ -25,17 +25,17 @@ function testAdjacencyTemporal
 
 function testOverallKalmanFilter
 % testing whether the dynamic network works in general
-    xin = ffg.EvidenceNode;
-    xout = ffg.EvidenceNode;
-    n = ffg.EvidenceNode;
-    y = ffg.EvidenceNode;
-    e = ffg.EqualityNode;
-    a = ffg.AddNode;
-    u = ffg.EvidenceNode;
-    b = ffg.AddNode;
-    
     nwk = ffg.DynamicNetwork;
-   
+
+    xin = ffg.EvidenceNode(nwk);
+    xout = ffg.EvidenceNode(nwk);
+    n = ffg.EvidenceNode(nwk);
+    y = ffg.EvidenceNode(nwk);
+    e = ffg.EqualityNode(nwk);
+    a = ffg.AddNode(nwk);
+    u = ffg.EvidenceNode(nwk);
+    b = ffg.AddNode(nwk);
+    
     nwk.addEdge(xin, e);
     nwk.addEdge(e, b);
     nwk.addEdge(u, b);
@@ -60,17 +60,17 @@ function testOverallKalmanFilter
     sd2 = sd*sd;
     u_const = 1.0;
     
-    xout.receive(ffg.gaussMessage(1+randn()*sd, sd2, 'VARIANCE'));
-    n.receive(ffg.gaussMessage(0, sd2, 'VARIANCE'));
-    u.receive(ffg.gaussMessage(u_const, 0,'VARIANCE'));
-    xin.receive(ffg.gaussMessage(1+randn()*sd, sd2, 'VARIANCE'));
+    xout.receive(ffg.messages.gaussVariance(1+randn()*sd, sd2));
+    n.receive(ffg.messages.gaussVariance(0, sd2));
+    u.receive(ffg.messages.gaussVariance(u_const, 0));
+    xin.receive(ffg.messages.gaussVariance(1+randn()*sd, sd2));
 
     nwk.draw(3);
 
     NUM_ITERATIONS = 1000;
-    results = struct('id', {}, 'message', {});
+    results(1:NUM_ITERATIONS) = struct('id', [], 'message', []);
     for i = 1:NUM_ITERATIONS
-        results = [results struct('id', y.id, 'message', ffg.gaussMessage(i+randn()*sd, 0, 'VARIANCE'))];
+        results(i) = struct('id', y.id, 'message', ffg.messages.gaussVariance(i+randn()*sd, 0));
     end
     nwk.makeStep(results, 1);
     

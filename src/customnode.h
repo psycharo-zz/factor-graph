@@ -11,6 +11,11 @@
 class CustomNode : public FactorNode
 {
 public:
+
+    CustomNode(Network *nwk):
+        FactorNode(nwk)
+    {}
+
     /**
      * set the name of the function
      * @param _functionName the global name of the function to call

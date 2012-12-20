@@ -1,8 +1,5 @@
-function rlsCheck(  )
-
-    load('test_ar.mat');
-    
-    NOISE_U = INPUT_AR.noiseU;
+function rlsCheck
+% baseline for rlsExample.m
 
     N_OBSERVATIONS = 10000;
 
@@ -17,7 +14,7 @@ function rlsCheck(  )
     b = eye(M,1);
     
     REAL_x = eye(1,M);
-    msg = ffg.gaussMessage(REAL_x, eye(M, M) * REAL_varU, 'VARIANCE');
+    msg = ffg.messages.gaussVariance(REAL_x, eye(M, M) * REAL_varU);
     
     mean_a = REAL_A; % zeros(1,M);
     prec_a = eye(M,M);
@@ -25,7 +22,7 @@ function rlsCheck(  )
     x_next = msg;
    
     for i = 1:N_OBSERVATIONS
-         x_new = REAL_A * REAL_x' + NOISE_U(i) * REAL_varU;
+         x_new = REAL_A * REAL_x' + randn() * REAL_varU;
          REAL_x = [x_new, REAL_x(1:end-1)];
          
          %% observation
@@ -39,7 +36,7 @@ function rlsCheck(  )
          curr = multiplyForward(x_next, matrix_A);
          
          %% adding noise
-         noiseU = ffg.gaussMessage(zeros(1,M), b * REAL_varU * b', 'VARIANCE');
+         noiseU = ffg.messages.gaussVariance(zeros(1,M), b * REAL_varU * b');
          curr = addForward(curr, noiseU);
          
          %% the next message based on X_n-1 and Y

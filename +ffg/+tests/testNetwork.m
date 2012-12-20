@@ -5,12 +5,14 @@ function test_suite = testNetwork
     
 function testAdjacencyMatrix4Nodes
 % simple 4-node network
-    a = ffg.EvidenceNode;
-    b = ffg.EvidenceNode;
-    c = ffg.EvidenceNode;
-    node = ffg.AddNode;
-
     nwk = ffg.Network;
+
+    a = ffg.EvidenceNode(nwk);
+    b = ffg.EvidenceNode(nwk);
+    c = ffg.EvidenceNode(nwk);
+    node = ffg.AddNode(nwk);
+
+    
     nwk.addEdge(a, node);
     nwk.addEdge(b, node);
     nwk.addEdge(node, c);
@@ -26,16 +28,19 @@ function testAdjacencyMatrix4Nodes
     
 function testAdjacencyMatrixKalmanFilter
 % larger network (kalman filter)
-    xin = ffg.EvidenceNode; %1
-    xout = ffg.EvidenceNode;%2
-    n = ffg.EvidenceNode;%3
-    y = ffg.EvidenceNode;%4
-    e = ffg.EqualityNode;%5
-    a = ffg.AddNode;%6
-    u = ffg.EvidenceNode;%7
-    b = ffg.AddNode;%8
     
     nwk = ffg.Network;
+
+    xin = ffg.EvidenceNode(nwk); %1
+    xout = ffg.EvidenceNode(nwk);%2
+    n = ffg.EvidenceNode(nwk);%3
+    y = ffg.EvidenceNode(nwk);%4
+    e = ffg.EqualityNode(nwk);%5
+    a = ffg.AddNode(nwk);%6
+    u = ffg.EvidenceNode(nwk);%7
+    b = ffg.AddNode(nwk);%8
+    
+    
    
     nwk.addEdge(xin, e);
     nwk.addEdge(e, b);
@@ -63,9 +68,9 @@ function testAdjacencyMatrixMult
     nwk = ffg.Network;
     
     
-    xin = ffg.EvidenceNode;
-    mult = ffg.MultiplicationNode;
-    xout = ffg.EvidenceNode;
+    xin = ffg.EvidenceNode(nwk);
+    mult = ffg.MultiplicationNode(nwk);
+    xout = ffg.EvidenceNode(nwk);
     
     nwk.addEdge(xin, mult);
     nwk.addEdge(mult, xout);

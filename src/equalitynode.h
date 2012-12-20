@@ -12,8 +12,9 @@ public:
      * @brief EqualityNode
      * @param _type the default format of messages (TODO: use templates instead of parameters?)
      */
-    EqualityNode(GaussianMessage::Type _type = GaussianMessage::GAUSSIAN_VARIANCE)
-        :m_type(_type)
+    EqualityNode(Network *nwk, GaussianMessage::Type _type = GaussianMessage::GAUSSIAN_VARIANCE):
+        FactorNode(nwk),
+        m_type(_type)
     {}
 
 

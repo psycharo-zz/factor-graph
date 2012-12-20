@@ -6,18 +6,18 @@ function testForward
 DIM = 3;
 
 nwk = ffg.Network;
-x = ffg.EvidenceNode;
-y = ffg.EvidenceNode;
+x = ffg.EvidenceNode(nwk);
+y = ffg.EvidenceNode(nwk);
 
 MATRIX = randn(DIM, DIM);
-A = ffg.MultiplicationNode;
+A = ffg.MultiplicationNode(nwk);
 A.setMatrix(MATRIX);
 
 nwk.addEdge(x, A);
 nwk.addEdge(A, y);
 
 % input
-INPUT_MSG = ffg.gaussMessage(randn(1, DIM), randn(DIM, DIM), 'VARIANCE');
+INPUT_MSG = ffg.messages.gaussVariance(randn(1, DIM), randn(DIM, DIM));
 %
 
 x.propagate(INPUT_MSG);
@@ -36,18 +36,18 @@ function testBackward
 DIM = 3;
 
 nwk = ffg.Network;
-x = ffg.EvidenceNode;
-y = ffg.EvidenceNode;
+x = ffg.EvidenceNode(nwk);
+y = ffg.EvidenceNode(nwk);
 
 MATRIX = randn(DIM, DIM);
-A = ffg.MultiplicationNode;
+A = ffg.MultiplicationNode(nwk);
 A.setMatrix(MATRIX);
 
 nwk.addEdge(x, A);
 nwk.addEdge(A, y);
 
 % for now backward message only supports mean
-INPUT_MSG = ffg.gaussMessage(randn(1, DIM), randn(DIM, DIM), 'VARIANCE'); 
+INPUT_MSG = ffg.messages.gaussVariance(randn(1, DIM), randn(DIM, DIM)); 
 
 y.propagate(INPUT_MSG);
 

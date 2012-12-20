@@ -1,3 +1,4 @@
+function dynamicNetworkExample
 %% example of using DynamicNetwork for filtering
 
 %% Creating network
@@ -5,14 +6,14 @@
 nwk = ffg.DynamicNetwork;
 
 %
-xin = ffg.EvidenceNode;
-xout = ffg.EvidenceNode;
-n = ffg.EvidenceNode;
-y = ffg.EvidenceNode;
-e = ffg.EqualityNode;
-a = ffg.AddNode;
-u = ffg.EvidenceNode;
-b = ffg.AddNode;
+xin = ffg.EvidenceNode(nwk);
+xout = ffg.EvidenceNode(nwk);
+n = ffg.EvidenceNode(nwk);
+y = ffg.EvidenceNode(nwk);
+e = ffg.EqualityNode(nwk);
+a = ffg.AddNode(nwk);
+u = ffg.EvidenceNode(nwk);
+b = ffg.AddNode(nwk);
 
 
 
@@ -43,10 +44,10 @@ sd = 10.0;
 sd2 = sd*sd;
 u_const = 1.0;
 
-xout.receive(ffg.gaussVarianceMessage(1+randn()*sd, sd2));
-n.receive(ffg.gaussVarianceMessage(0, sd2));
-u.receive(ffg.gaussVarianceMessage(u_const, 0));
-xin.receive(ffg.gaussVarianceMessage(1+randn()*sd, sd2));
+xout.receive(ffg.messages.gaussVariance(1+randn()*sd, sd2));
+n.receive(ffg.messages.gaussVariance(0, sd2));
+u.receive(ffg.messages.gaussVariance(u_const, 0));
+xin.receive(ffg.messages.gaussVariance(1+randn()*sd, sd2));
 
 %% Drawing the network
 nwk.draw(3);
@@ -54,7 +55,7 @@ nwk.draw(3);
 %% Filling the input data
 results = repmat(struct('id', {}, 'message', {}), 1, 1000);
 for i = 1:1000
-    results(i) = struct('id', y.id, 'message', ffg.gaussVarianceMessage(i+randn()*sd, 0));
+    results(i) = struct('id', y.id, 'message', ffg.messages.gaussVariance(i+randn()*sd, 0));
 end
 
 %% Running sum-propagation
@@ -65,3 +66,4 @@ xout.evidence()
 
 
 
+end

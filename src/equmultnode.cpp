@@ -5,6 +5,9 @@
 
 using namespace std;
 
+EquMultNode::EquMultNode(Network *nwk):
+        FactorNode(nwk)
+{}
 
 
 bool EquMultNode::isSupported(Message::Type type)

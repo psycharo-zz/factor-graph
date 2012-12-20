@@ -23,6 +23,12 @@ protected:
 
 
 public:
+    EvidenceNode(Network *nwk):
+        FactorNode(nwk)
+    {}
+
+
+
     //! @overload
     void addIncoming(FactorNode *node)
     {

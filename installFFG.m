@@ -28,8 +28,8 @@ function installFFG
     eval(['mex ' SOURCES_NAMES ' -I"' SRC_PATH '" ' MEXOPTS ' -output ' [APP_FULL_PATH filesep  OUT_NAME]]);
     
     disp('Done!');
-    
+
+    % testing
     runtests ffg.tests;
     
-    % TODO: testing?
 end

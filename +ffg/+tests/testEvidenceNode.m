@@ -4,12 +4,12 @@ initTestSuite;
 function testScalar
 % the simplest test ever
 nwk = ffg.Network;
-node = ffg.EvidenceNode;
-dest = ffg.EvidenceNode;
+node = ffg.EvidenceNode(nwk);
+dest = ffg.EvidenceNode(nwk);
 nwk.addEdge(node, dest);
 
 % input
-msg = ffg.gaussMessage(2, 3, 'VARIANCE');
+msg = ffg.messages.gaussVariance(2, 3);
 %
 
 node.propagate(msg);

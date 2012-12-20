@@ -5,20 +5,20 @@ initTestSuite;
 
 function testAddForwardNode
     nwk = ffg.Network;
-    node = ffg.CustomNode;
+    node = ffg.CustomNode(nwk);
         
     node.setFunction('ffg.tests.customnode_function_gauss');
     
-    a = ffg.EvidenceNode;
-    b = ffg.EvidenceNode;
-    c = ffg.EvidenceNode;
+    a = ffg.EvidenceNode(nwk);
+    b = ffg.EvidenceNode(nwk);
+    c = ffg.EvidenceNode(nwk);
     nwk.addEdge(a, node);
     nwk.addEdge(b, node);
     nwk.addEdge(node, c);
     
     % input
-    msgA = ffg.gaussMessage(10, 5, 'VARIANCE');
-    msgB = ffg.gaussMessage(20, 4, 'VARIANCE');
+    msgA = ffg.messages.gaussVariance(10, 5);
+    msgB = ffg.messages.gaussVariance(20, 4);
     %
     
     a.propagate(msgA);
@@ -35,20 +35,20 @@ function testAddForwardNode
     
 function testAddBackwardNode
     nwk = ffg.Network;
-    node = ffg.CustomNode;
+    node = ffg.CustomNode(nwk);
     
     node.setFunction('ffg.tests.customnode_function_gauss');
     
-    a = ffg.EvidenceNode;
-    b = ffg.EvidenceNode;
-    c = ffg.EvidenceNode;
+    a = ffg.EvidenceNode(nwk);
+    b = ffg.EvidenceNode(nwk);
+    c = ffg.EvidenceNode(nwk);
     nwk.addEdge(a, node);
     nwk.addEdge(b, node);
     nwk.addEdge(node, c);
 
     % input
-    msgC = ffg.gaussMessage(10, 5, 'VARIANCE');
-    msgB = ffg.gaussMessage(20, 4, 'VARIANCE');
+    msgC = ffg.messages.gaussVariance(10, 5);
+    msgB = ffg.messages.gaussVariance(20, 4);
     %
     
     c.propagate(msgC);

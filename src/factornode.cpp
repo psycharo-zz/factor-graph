@@ -1,14 +1,15 @@
 #include "factornode.h"
 
+#include "network.h"
 
 using namespace std;
 
-int FactorNode::s_idCounter = 0;
 
 
-FactorNode::FactorNode():
-    m_id(s_idCounter++)
-{}
+FactorNode::FactorNode(Network *nwk)
+{
+    m_id = nwk->addNode(this);
+}
 
 
 void FactorNode::addIncoming(FactorNode *node)

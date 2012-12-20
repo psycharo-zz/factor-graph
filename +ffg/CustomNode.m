@@ -4,8 +4,8 @@ classdef CustomNode < ffg.FactorNode
     % see examples for function signature and description
     
     methods
-        function this = CustomNode()
-            this = this@ffg.FactorNode('CustomNode');            
+        function this = CustomNode(nwk)
+            this = this@ffg.FactorNode('CustomNode', nwk);            
         end
         
         function setFunction(this, functionName)

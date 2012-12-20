@@ -1,3 +1,4 @@
+function kalmanFilterExample
 %% Introduction
 % We will see now how one can define a factor graph model and run
 % sum-propagation algorithm in Matlab using the <matlab:doc('ffg') ffg framework>. We will
@@ -47,21 +48,21 @@ nwk = ffg.Network;
 % ffg.FactorNode. Let's first create the nodes themselves:
 
 % hidden variable, X_{t-1}
-xin = ffg.EvidenceNode;
+xin = ffg.EvidenceNode(nwk);
 % hidden variable, X_t
-xout = ffg.EvidenceNode;
+xout = ffg.EvidenceNode(nwk);
 % observation, corresponds to a half-edge y
-y = ffg.EvidenceNode;
+y = ffg.EvidenceNode(nwk);
 % equality node, connects a, b, xout
-e = ffg.EqualityNode;
+e = ffg.EqualityNode(nwk);
 % process noise, U_t
-u = ffg.EvidenceNode;
+u = ffg.EvidenceNode(nwk);
 % observation noise, W_t
-w = ffg.EvidenceNode;
+w = ffg.EvidenceNode(nwk);
 % zero-sum node, connects xin + u = e
-a = ffg.AddNode;
+a = ffg.AddNode(nwk);
 % zero-sum node, connects e + w = y
-b = ffg.AddNode; 
+b = ffg.AddNode(nwk); 
 %%%
 % Every node has a unique identifier assigned when it is created, its
 % value can be retrieved by the method |id()|.
@@ -80,7 +81,7 @@ nwk.addEdge(e, xout);
 nwk.addEdge(e, b);
 nwk.addEdge(w, b); 
 nwk.addEdge(b, y); 
-
+ 
 %%%
 % Some nodes, such as |ffg.EvidenceNode| and |ffg.EqualityNode| do not 
 % distinguish between incoming and outgoing connections, so, in this 
@@ -139,11 +140,11 @@ nwk.setSchedule({xin, a; ...
 sd = 10.0;
 sd2 = sd*sd;
 % initialising X_{t-1}
-xout.receive(ffg.gaussVarianceMessage(1+randn()*sd, sd2));
+xout.receive(ffg.messages.gaussVariance(1+randn()*sd, sd2));
 % process noise, setting it to constant
-u.receive(ffg.gaussVarianceMessage(1, 0));
+u.receive(ffg.messages.gaussVariance(1, 0));
 % observation noise
-w.receive(ffg.gaussVarianceMessage(0, sd2))
+w.receive(ffg.messages.gaussVariance(0, sd2));
 
 %%%    
 % To see the list of messages for a node, one can use a method |messages|, that returns
@@ -172,21 +173,24 @@ w.messages{1}
 % the number of timeslices to run
 N_ITERATIONS = 1000;
 % place to store results for each 
+
 result = zeros(N_ITERATIONS, 2);    
 samples = zeros(N_ITERATIONS, 1);
-msg = ffg.gaussVarianceMessage(randn()*sd, sd2);
+msg = ffg.messages.gaussVariance(randn()*sd, sd2);
 for i = 1:N_ITERATIONS
     samples(i) = i+randn()*sd;
 
     % setting X_{t-1} to the estimation on the previous step
     xin.receive(msg);
     % receiving subsequent observation
-    y.receive(ffg.gaussVarianceMessage(samples(i), 0));
+    y.receive(ffg.messages.gaussVariance(samples(i), 0));
     nwk.makeStep();         
     msg = xout.evidence();
 
     result(i,:) = [msg.mean, msg.var];
 end
+
+
     
 %%% displaying results    
 % plotting X estimations and the real 
@@ -202,3 +206,4 @@ plot(1:N_ITERATIONS,result(:,2));
 title('variance');
 
 
+end

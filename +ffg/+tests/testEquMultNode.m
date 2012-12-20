@@ -4,17 +4,17 @@ initTestSuite;
 function testForward
 
     nwk = ffg.Network;
-    x = ffg.EvidenceNode;
-    y = ffg.EvidenceNode;
-    z = ffg.EvidenceNode;
+    x = ffg.EvidenceNode(nwk);
+    y = ffg.EvidenceNode(nwk);
+    z = ffg.EvidenceNode(nwk);
 
     % input
     MATRIX = eye(1, 3);
-    INPUT_X = ffg.gaussMessage([1, 1, 1], eye(3,3), 'VARIANCE');
-    INPUT_Y = ffg.gaussMessage(0.5, 0, 'VARIANCE');
+    INPUT_X = ffg.messages.gaussVariance([1, 1, 1], eye(3,3));
+    INPUT_Y = ffg.messages.gaussVariance(0.5, 0);
     %
 
-    equMult = ffg.EquMultNode;
+    equMult = ffg.EquMultNode(nwk);
     equMult.setMatrix(MATRIX);
 
     % note that the direction is important here

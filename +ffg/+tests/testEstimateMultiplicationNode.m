@@ -3,24 +3,22 @@ initTestSuite;
 
 function testForward
 
-
+% setting the dimension
 DIM = 3;
 
 nwk = ffg.Network;
-x = ffg.EvidenceNode;
-y = ffg.EvidenceNode;
-
+x = ffg.EvidenceNode(nwk);
+y = ffg.EvidenceNode(nwk);
 
 MATRIX = randn(DIM, DIM);
 
-A = ffg.MultiplicationNode;
+A = ffg.MultiplicationNode(nwk);
 A.setMatrix(MATRIX);
 
 nwk.addEdge(x, A);
 nwk.addEdge(A, y);
 
-% msg = 
-INPUT_MSG = ffg.gaussMessage(randn(1, DIM), randn(DIM, DIM), 'VARIANCE');
+INPUT_MSG = ffg.messages.gaussVariance(randn(1, DIM), randn(DIM, DIM));
 
 x.propagate(INPUT_MSG);
 
@@ -39,18 +37,18 @@ DIM = 3;
 
 
 nwk = ffg.Network;
-x = ffg.EvidenceNode;
-y = ffg.EvidenceNode;
+x = ffg.EvidenceNode(nwk);
+y = ffg.EvidenceNode(nwk);
 
 MATRIX = randn(DIM, DIM);
-A = ffg.MultiplicationNode;
+A = ffg.MultiplicationNode(nwk);
 A.setMatrix(MATRIX);
 
 nwk.addEdge(x, A);
 nwk.addEdge(A, y);
 
 % msg = 
-INPUT_MSG = ffg.gaussMessage(randn(1, DIM), randn(DIM, DIM), 'VARIANCE');
+INPUT_MSG = ffg.messages.gaussVariance(randn(1, DIM), randn(DIM, DIM));
 
 % one propagation iteration
 y.propagate(INPUT_MSG);
@@ -65,13 +63,13 @@ assertElementsAlmostEqual(RESULT_MSG.var, VAR_EXPECTED);
 
 
 function testEstimateBackward
-
+% testing the connection that's in charge of estimation
 
 nwk = ffg.Network;
-x = ffg.EvidenceNode;
-y = ffg.EvidenceNode;
-estmt = ffg.EvidenceNode;
-A = ffg.EstimateMultiplicationNode;
+x = ffg.EvidenceNode(nwk);
+y = ffg.EvidenceNode(nwk);
+estmt = ffg.EvidenceNode(nwk);
+A = ffg.EstimateMultiplicationNode(nwk);
 
 
 nwk.addEdge(x, A);
@@ -81,9 +79,9 @@ nwk.addEdge(A, estmt, 'estimate', '');
 
 DIM = 4;
 
-INPUT_MSG_X = ffg.gaussMessage(randn(1, DIM), randn(DIM, DIM), 'VARIANCE');
+INPUT_MSG_X = ffg.messages.gaussVariance(randn(1, DIM), randn(DIM, DIM));
 MSG_SIZE = length(INPUT_MSG_X.mean);
-INPUT_MSG_Y = ffg.gaussMessage(eye(1, DIM), eye(DIM, DIM), 'VARIANCE');
+INPUT_MSG_Y = ffg.messages.gaussVariance(eye(1, DIM), eye(DIM, DIM));
 
 A.setMatrix(eye(MSG_SIZE, MSG_SIZE));
 
