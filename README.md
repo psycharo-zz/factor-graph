@@ -1,10 +1,19 @@
 # factor-graph 
 This project's goal is to create a MATLAB/C++ framework for inference on Forney-style factor graphs.
 
+The latest package can be downloaded [here](https://github.com/psycharo/factor-graph/archive/master.zip).
+
 Currently only gaussian distributions are supported.
 
+More in the [Wiki](https://github.com/psycharo/factor-graph/wiki)
 
-# Factor graphs
+
+# Installation
+
+Just unpack the .zip and run `installFFG.m`. This will build the framework and add `ffg` to matlab path. 
+Should work on Matlab 2012b under Windows and Linux.
+
+# Factor graphs intro
 
 Factor graph is a specific type of graphical model used to represent
 _factorizations_ of functions. They were originally developed to solve
@@ -124,8 +133,8 @@ as follows:
 We will see now how one can define a factor graph model and run
 sum-propagation algorithm in Matlab using the `ffg` framework. We will
 use a specific type of linear-space model, known as Kalman Filter as
-an example (full code available in
-[kalmanScheduleExample](examples/kalmanScheduleExample.m):
+an example (latest code for example is available in
+[kalmanScheduleExample](https://github.com/psycharo/factor-graph/blob/master/examples/kalmanFilterExample.m):
 
 ```
 X_t = X_{t-1} + U_t
@@ -140,11 +149,11 @@ timeslice `t`, letters are used to refer them in the code later):
 
 
 <pre>
-	  +---+ 
-	  |U_t| 
-	  +-+-+ 
-	    | 
-	    v 
+            +---+ 
+            |U_t| 
+            +-+-+ 
+              | 
+              v 
 +-------+   +---+    +---+    +---+
 |X_{t-1}+-->|+,a+--->|=,e+--->|X_t| 
 +-------+   +---+    +-+-+    +---+ 
@@ -329,68 +338,6 @@ for i = 1:N_ITERATIONS
 end
 ```
 
-
-
-
-
-# Extensions (MATLAB)
-The framework provides basic means for extension. If you want to define a custom node
-representing arbitrary table (for now only for Gaussian messages), you can use `ffg.CustomNode`.
-This class has method `setFunction`, that takes the name of the function implementing 
-your logic.
-
-The function should has three parameters: 
-* `from`- double - sender id
-* `to` - double - receiver id
-* `msgs` - array of structs with fields:
-    - `mean` - mean vector
-	- `var` - variance matrix
-	- `connection` - the type of connection 'INCOMING'|'OUTGOING'|'estimate'
-	- `from` - the sender of the message
-	- `type` - the type of the message 'VARIANCE'|'PRECISION'
-
-
-An example of such a function is `examples/customnode_function_gauss.m`
-
-# Development
-The major part of the C++ codebase has lots of comments. The examples of how to use it can be
-found [here](https://github.com/psycharo/factor-graph/tree/master/cpp-factor-graph/tests).
-
-The base class for nodes is `FactorNode`. You will probably need to use one of the following 
-fields to create your own nodes:
-```
-// the list of all nodes
-std::map<int, FactorNode*> m_nodes;
-// incoming connections
-std::set<int> m_incoming;
-// outgoing connections
-std::set<int> m_outgoing;
-// custom connections
-std::map<int, std::string> m_connections;
-```
-
-`m_nodes` is contains all the nodes indexed by their ids. Every node has its own unique id that is stored 
-in a static variable of `FactorNode`.
-
-`m_incoming` and `m_outgoing` for each node contain ids of the nodes that
-have an edge to the node with the corresponding direction; they are useful since most of the nodes
-have only two types of connections (e.g. for addition factor node summands will be incoming 
-connections, and the result will be an outgoing one). 
-
-For other types of connections, `m_connections` should be used. It contains a list of connection tags (strings) indexed
-by ids (the backward mapping (tag --> id) might be added later if necessary). An example of using
-this would be `EstimateMultiplicationNode`, where an additional type of connection is necessary (`ESTIMATED_TAG`).
-
-We did this so generic on purpose (and might generalize it a bit more). It allows nodes to be as independent as possible: nodes
-are not aware of other node's types.
-
-To create a node with custom behavior, one should provide own implementation of the node's function:
-```c++
-virtual GaussianMessage function(int to, const MessageBox &msgs) = 0;
-```
-
-It constructs a message to a specific node. To do that, we need only to know the receiver - `to` and 
-the messages that have been received from node's connections `msgs`, which underneath is a map (id --> message). 
 
 
 
