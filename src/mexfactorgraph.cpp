@@ -124,14 +124,14 @@ void processEvidenceNode(FactorNode *node, const string &function_name, int nlhs
     {
         // constructing gaussian message
         const int MESSAGE_IDX = 3;
-        GaussianMessage msg = createGaussianMessage(prhs[MESSAGE_IDX]);
+        GaussianMessage msg = structToMessage(prhs[MESSAGE_IDX]);
         evdNode->propagate(msg);
     }
     else if (function_name == "receive")
     {
         // constructing gaussian message
         const int MESSAGE_IDX = 3;
-        GaussianMessage msg = createGaussianMessage(prhs[MESSAGE_IDX]);
+        GaussianMessage msg = structToMessage(prhs[MESSAGE_IDX]);
         evdNode->receive(msg);
     }
     else if (function_name == "evidence")
@@ -180,6 +180,11 @@ void processMultiplicationNode(FactorNode *node, const string &function_name, in
         size_t rows = mxGetM(prhs[POINTER_IDX+1]);
         size_t cols = mxGetN(prhs[POINTER_IDX+1]);
         multNode->setMatrix(matrix, rows, cols);
+    }
+    else if (function_name == "matrix")
+    {
+        const double *matrix = multNode->matrix();
+        plhs[0] = arrayToMatrix(matrix, multNode->rows(), multNode->cols());
     }
 }
 
@@ -256,6 +261,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 plhs[0] = mxCreateDoubleScalar(node->id());
             else if (function_name == "messages")
                 plhs[0] = messagesToCellArray(node->messages());
+            else if (function_name == "message")
+            {
+                int from = arrayToInt(prhs[POINTER_IDX+1]);
+                plhs[0] = messageToStruct(node->message(from), from);
+            }
+            else if (function_name == "setMessage")
+            {
+                const mxArray *msg = prhs[POINTER_IDX+1];
+                node->setMessage(arrayToInt(mxGetField(msg, 0, MEX_FROM)),
+                                 structToMessage(msg));
+            }
             else if (type_name == "EvidenceNode")
                 processEvidenceNode(node, function_name, nlhs, plhs, nrhs, prhs);
             else if (type_name == "AddNode")

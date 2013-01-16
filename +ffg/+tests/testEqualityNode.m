@@ -81,6 +81,7 @@ function testMultivariateGaussian
     
 function testNoInformation
     % testing whether the 0 precision will cause no problems
+    % TODO: check how does the zero variance work
 
     nwk = ffg.Network;
     
@@ -109,8 +110,3 @@ function testNoInformation
     assertElementsAlmostEqual(EXPECTED_MESSAGE.mean, c.evidence().mean);
     assertElementsAlmostEqual(EXPECTED_MESSAGE.precision, c.evidence().precision);
     
-
-
-
-
-

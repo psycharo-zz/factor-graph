@@ -64,7 +64,7 @@ GaussianMessage CustomNode::function(int to, const MessageBox &msgs)
     for (int i = 0; i < NRHS; i++)
         mxDestroyArray(prhs[i]);
 
-    return createGaussianMessage(plhs);
+    return structToMessage(plhs);
 }
 
 

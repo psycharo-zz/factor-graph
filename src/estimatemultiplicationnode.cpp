@@ -26,7 +26,7 @@ void EstimateMultiplicationNode::receive(int from, const GaussianMessage &msg)
 
     if (isConnection(from, ESTIMATED_TAG))
     {
-        addMessage(from, msg);
+        setMessage(from, msg);
         // filling matrix like this:
         // [ a  ]
         // [ I 0]

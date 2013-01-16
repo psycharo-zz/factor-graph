@@ -82,8 +82,6 @@ public:
     inline void setSchedule(const Schedule &schedule)
     {
         m_schedule = schedule;
-        if (m_schedule.size() < m_nodes.size()-1)
-            throw std::runtime_error("Network::setSchedule()");
         // TODO: check the schedule?
     }
 

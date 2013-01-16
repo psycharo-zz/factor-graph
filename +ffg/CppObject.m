@@ -1,4 +1,4 @@
-classdef CppObject < matlab.System
+classdef CppObject 
     %OBJECT the base class for C++ wrappers
     % All the nodes in this framework should be sublclassed from this one
     

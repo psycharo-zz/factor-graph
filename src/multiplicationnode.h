@@ -39,6 +39,10 @@ public:
     }
 
 
+    /**
+     * @brief setMatrix set the matrix
+     * @param mx
+     */
     void setMatrix(const Matrix &mx)
     {
         m_matrix = mx;
@@ -52,6 +56,15 @@ public:
         return m_matrix.data();
     }
 
+    inline size_t rows() const
+    {
+        return m_matrix.rows();
+    }
+
+    inline size_t cols() const
+    {
+        return m_matrix.cols();
+    }
 
     //! @overload
     void addIncoming(FactorNode *node)

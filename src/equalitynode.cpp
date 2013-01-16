@@ -6,16 +6,17 @@ using namespace std;
 
 bool EqualityNode::isSupported(Message::Type type)
 {
-    return m_type == type;
+    return type == GaussianMessage::GAUSSIAN_VARIANCE ||
+           type == GaussianMessage::GAUSSIAN_PRECISION;
 
 }
 
 
 GaussianMessage EqualityNode::function(int to, const MessageBox &msgs)
 {
-
-    return (m_type == GaussianMessage::GAUSSIAN_VARIANCE) ? functionVariance(to, msgs)
-                                                          : functionPrecision(to, msgs);
+    GaussianMessage::Type msgType = msgs.begin()->second.type();
+    return (msgType == GaussianMessage::GAUSSIAN_VARIANCE) ? functionVariance(to, msgs)
+                                                           : functionPrecision(to, msgs);
 }
 
 

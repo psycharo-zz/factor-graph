@@ -79,7 +79,7 @@ inline Message::Type messageType(const mxArray *msg)
 
 
 
-inline GaussianMessage createGaussianMessage(const mxArray *msg)
+inline GaussianMessage structToMessage(const mxArray *msg)
 {
     Message::Type type = messageType(msg);
 
@@ -111,6 +111,9 @@ inline GaussianMessage createGaussianMessage(const mxArray *msg)
     else
         return GaussianMessage(0);
 }
+
+
+
 
 
 /**
@@ -228,7 +231,7 @@ inline std::vector<MessageBox> createMessageBoxArray(const mxArray *mx_data, con
         for (size_t j = 0; j < step; j++)
         {
             int id = arrayToInt(mxGetField(mx_data, i + j, MEX_ID));
-            GaussianMessage msg = createGaussianMessage(mxGetField(mx_data, i + j, MEX_MESSAGE));
+            GaussianMessage msg = structToMessage(mxGetField(mx_data, i + j, MEX_MESSAGE));
             box.insert(std::make_pair(id, msg));
         }
         result.push_back(box);

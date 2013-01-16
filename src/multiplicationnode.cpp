@@ -23,19 +23,34 @@ GaussianMessage MultiplicationNode::forwardFunction(int to, const MessageBox &ms
     // TODO: implement for precision
     const GaussianMessage &msgX = msgs.at(*m_incoming.begin());
 
-    const Matrix &meanX = msgX.mean();
-    const Matrix &varX = msgX.variance();
+    if (msgX.type() == GaussianMessage::GAUSSIAN_VARIANCE)
+    {
+        const Matrix &meanX = msgX.mean();
+        const Matrix &varX = msgX.variance();
 
-    const Matrix &A = m_matrix;
+        const Matrix &A = m_matrix;
+        GaussianMessage result(A.rows());
+        mult(A, meanX, result.mean());
+        // A * varX * A.T()
+        mult(A * varX, A.T(), result.variance());
 
-    GaussianMessage result(A.rows());
+        return result;
+    }
+    else if (msgX.type() == GaussianMessage::GAUSSIAN_PRECISION)
+    {
+        const Matrix &meanX = msgX.mean();
+        Matrix varX = inv(msgX.precision());
 
-    mult(A, meanX, result.mean());
+        const Matrix &A = m_matrix;
+        GaussianMessage result(A.rows(), GaussianMessage::GAUSSIAN_PRECISION);
+        mult(A, meanX, result.mean());
+        // A * varX * A.T()
+        mult(A * varX, A.T(), result.precision());
 
-    // A * varX * A.T()
-    mult(A * varX, A.T(), result.variance());
+        result.precision().inv();
 
-    return result;
+        return result;
+    }
 }
 
 
@@ -43,6 +58,7 @@ GaussianMessage MultiplicationNode::forwardFunction(int to, const MessageBox &ms
 GaussianMessage MultiplicationNode::backwardFunction(int to, const MessageBox &msgs)
 {
     const GaussianMessage &msgY = msgs.at(*m_outgoing.begin());
+
     if (msgY.type() == GaussianMessage::GAUSSIAN_PRECISION)
     {
         const Matrix &meanY = msgY.mean();
@@ -51,8 +67,8 @@ GaussianMessage MultiplicationNode::backwardFunction(int to, const MessageBox &m
         const Matrix &A = m_matrix;
 
         GaussianMessage result(A.cols(), GaussianMessage::GAUSSIAN_PRECISION);
-        result.precision() = A.T() * precY * A;
-        result.mean() = pinv(result.precision()) * A.T() * precY * meanY;
+        result.precision() = pinv(A) * precY * A;
+        result.mean() = pinv(result.precision()) * pinv(A) * precY * meanY;
         return result;
     }
     else // if (msgY.type() == GaussianMessage::GAUSSIAN_VARIANCE)

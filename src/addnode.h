@@ -20,8 +20,18 @@ public:
 protected:
     GaussianMessage function(int to, const MessageBox &msgs);
 
+    // z by x and y
     GaussianMessage forwardFunction(int to, const MessageBox &msgs);
+
+    GaussianMessage forwardFunctionVariance(int to, const MessageBox &msgs);
+    GaussianMessage forwardFunctionPrecision(int to, const MessageBox &msgs);
+
+
+    // x (or y) by z and y (or x)
     GaussianMessage backwardFunction(int to, const MessageBox &msgs);
+
+    GaussianMessage backwardFunctionVariance(int to, const MessageBox &msgs);
+    GaussianMessage backwardFunctionPrecision(int to, const MessageBox &msgs);
 
 };
 

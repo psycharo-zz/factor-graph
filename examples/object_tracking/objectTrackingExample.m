@@ -12,9 +12,9 @@ dt = 1;
 % Y_next = H * X_next + W
 
 % hidden variable, X_{t-1}
-X_prev = ffg.EvidenceNode;
+X_prev = ffg.EvidenceNode(nwk);
 % transition matrix node
-A = ffg.MultiplicationNode;
+A = ffg.MultiplicationNode(nwk);
 A.setMatrix([1 0 dt 0 0 0;...     % [x  ]            
      0 1 0 dt 0 0;...     % [y  ]
      0 0 1 0 dt 0;...     % [Vx]
@@ -23,24 +23,24 @@ A.setMatrix([1 0 dt 0 0 0;...     % [x  ]
      0 0 0 0 0 1 ]);      % [Ay]
 
 % U + X_prev
-add_X_U = ffg.AddNode;
+add_X_U = ffg.AddNode(nwk);
 % process noise
-U = ffg.EvidenceNode;
+U = ffg.EvidenceNode(nwk);
 % observation, corresponds to a half-edge y
-Y = ffg.EvidenceNode;
+Y = ffg.EvidenceNode(nwk);
 % hidden variable, X_t
-X_next = ffg.EvidenceNode;
-equ = ffg.EqualityNode;
+X_next = ffg.EvidenceNode(nwk);
+equ = ffg.EqualityNode(nwk);
 
 % observation noise, W_t
-W = ffg.EvidenceNode;
+W = ffg.EvidenceNode(nwk);
 
 % measurement matrix node
-H = ffg.MultiplicationNode;
+H = ffg.MultiplicationNode(nwk);
 H.setMatrix([ 1 0 0 0 0 0; 
               0 1 0 0 0 0 ]);
 % adding the noise
-add_H_W = ffg.AddNode;
+add_H_W = ffg.AddNode(nwk);
 
 %% Connecting nodes
 nwk.addEdge(X_prev, A);
@@ -57,20 +57,20 @@ nwk.addEdge(add_H_W, Y);
 
 
 %% Initialising network evidence
-U.propagate(ffg.gaussVarianceMessage(zeros(1,6), eye(6)));
-W.propagate(ffg.gaussVarianceMessage(zeros(1,2), 1./1000 * eye(2)));
+U.propagate(ffg.messages.gaussVariance(zeros(1,6), eye(6)));
+W.propagate(ffg.messages.gaussVariance(zeros(1,2), 1./1000 * eye(2)));
 
 NUM_SAMPLES = 300;
 results = zeros(2, NUM_SAMPLES);
 
-msg = ffg.gaussVarianceMessage(zeros(1,6), 1./1000 * eye(6,6));
+msg = ffg.messages.gaussVariance(zeros(1,6), 1./1000 * eye(6,6));
 
 %% Drawing
 figure;hold;grid;
 
 for i = 1:NUM_SAMPLES
     X_prev.propagate(msg);
-    observation = ffg.gaussVarianceMessage(position(:,i)', zeros(2,2));
+    observation = ffg.messages.gaussVariance(position(:,i)', zeros(2,2));
     Y.propagate(observation);
     msg = X_next.evidence();
     

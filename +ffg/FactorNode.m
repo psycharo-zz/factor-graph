@@ -15,15 +15,20 @@ classdef FactorNode < ffg.CppObject
             result = mexfactorgraph('id', this.type_name, this.cpp_handle);
         end
         
-        
-        function receive(this, message)
-            % (ffg) receive a single message, without propagating it further
-            mexfactorgraph('receive', this.type_name, this.cpp_handle, message);
-        end
-        
+      
         function result = messages(this)
             % (ffg) get all the current incoming messages of the node. 
             result = mexfactorgraph('messages', this.type_name, this.cpp_handle);
+        end
+        
+        function result = message(this, from)
+            % (ffg) get the message received from the specified node
+            result = mexfactorgraph('message', this.type_name, this.cpp_handle, from.id);
+        end
+        
+        function setMessage(this, message)
+            % (ffg) set the given message as if it was received by the node
+            mexfactorgraph('setMessage', this.type_name, this.cpp_handle, message);
         end
     end
     

@@ -1,4 +1,4 @@
-function result = gaussPrecision(mean, precision)
+function result = gaussPrecision(mean, precision, from)
 %GAUSSPRECISION create gaussian message with precision matrix
 % INPUT:
 % mean - mean array
@@ -7,5 +7,9 @@ function result = gaussPrecision(mean, precision)
     result.type = 'PRECISION';
     result.mean = mean;
     result.precision = precision;
+    
+    if nargin == 3
+        result.from = from;
+    end
 end
 

@@ -15,6 +15,11 @@ classdef EvidenceNode < ffg.FactorNode
            mexfactorgraph('propagate', this.type_name, this.cpp_handle, message);
        end
 
+       function receive(this, message)
+           % (ffg) receive a single message, without propagating it further
+           mexfactorgraph('receive', this.type_name, this.cpp_handle, message);
+       end
+
        function res = evidence(this)
            % (ffg) get the evidence received from 
            res = mexfactorgraph('evidence', this.type_name, this.cpp_handle);

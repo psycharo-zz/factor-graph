@@ -2,7 +2,7 @@
 function plot_trajectory(z,y,y_p)
 %#codegen
 eml.extrinsic('title','xlabel','ylabel','plot','axis','pause');
-title('Trajectory of object [blue] its Kalman estimate [green]');
+title('Trajectory of object [blue] its Kalman estimate [green, red]');
 xlabel('horizontal position');
 ylabel('vertical position');
 plot(z(1), z(2), 'bx-');

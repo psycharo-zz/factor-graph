@@ -34,6 +34,7 @@ void FactorNode::addConnection(FactorNode *node, const string &tag)
 
 
 
+
 //! a single update for messages
 void FactorNode::propagate(int from, const GaussianMessage &msg)
 {
@@ -58,13 +59,13 @@ void FactorNode::propagate(int from, const GaussianMessage &msg)
     }
 
     // adding in message after all iterations are finished
-    addMessage(from, msg);
+    setMessage(from, msg);
 }
 
 
 void FactorNode::receive(int from, const GaussianMessage &msg)
 {
-    addMessage(from, msg);
+    setMessage(from, msg);
 }
 
 void FactorNode::send(int to)

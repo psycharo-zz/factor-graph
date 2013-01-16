@@ -5,6 +5,7 @@
 #include "factornode.h"
 #include "matrixutil.h"
 
+
 class EqualityNode : public FactorNode
 {
 public:
@@ -18,6 +19,7 @@ public:
     {}
 
 
+    // TODO: eliminate this
     //! set the type of accepted messages
     void setType(GaussianMessage::Type _type = GaussianMessage::GAUSSIAN_VARIANCE)
     {

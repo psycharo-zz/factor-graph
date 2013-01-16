@@ -22,6 +22,10 @@ class Network;
 class FactorNode
 {
 public:
+    /**
+     * @brief FactorNode
+     * @param nwk the network containing this node
+     */
     FactorNode(Network *nwk);
 
     virtual ~FactorNode() {}
@@ -56,6 +60,25 @@ public:
         return m_messages;
     }
 
+    //! get the message for the specified id
+    inline const GaussianMessage &message(int node_id) const
+    {
+        MessageBox::const_iterator it = m_messages.find(node_id);
+        if (it == m_messages.end())
+            throw std::runtime_error("FactorNode(" + id_to_string(m_id) + ")::message: no message from node:" + id_to_string(node_id));
+        return it->second;
+    }
+
+    //! add an incoming message from the node with the specified id
+    inline void setMessage(int from, const GaussianMessage &msg)
+    {
+        if (!isSupported(msg.type()))
+            throw std::runtime_error("FactorNode(" + id_to_string(m_id) + ")::addMessage: unsupported message type");
+        std::pair<MessageBox::iterator, bool> res = m_messages.insert(std::make_pair(from, msg));
+        if (!res.second)
+            res.first->second = msg;
+    }
+
 
 protected:
     //! the action that this node is actually doing
@@ -87,25 +110,6 @@ protected:
         return m_messages.count(node_id) != 0;
     }
 
-    //! get the message for the specified id
-    inline const GaussianMessage &message(int node_id) const
-    {
-        MessageBox::const_iterator it = m_messages.find(node_id);
-        if (it == m_messages.end())
-            throw std::runtime_error("FactorNode(" + id_to_string(m_id) + ")::message: no message from node:" + id_to_string(node_id));
-        return it->second;
-    }
-
-
-    //! add an incoming message
-    inline void addMessage(int from, const GaussianMessage &msg)
-    {
-        if (!isSupported(msg.type()))
-            throw std::runtime_error("FactorNode(" + id_to_string(m_id) + ")::addMessage: unsupported message type");
-        std::pair<MessageBox::iterator, bool> res = m_messages.insert(std::make_pair(from, msg));
-        if (!res.second)
-            res.first->second = msg;
-    }
 
     //! the list of all nodes
     std::map<int, FactorNode*> m_nodes;

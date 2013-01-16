@@ -54,14 +54,14 @@ public:
     //! set the initial message
     void receive(const GaussianMessage &msg)
     {
-        addMessage(Message::UNDEFINED_ID, msg);
+        setMessage(Message::UNDEFINED_ID, msg);
     }
 
 
     //! start propagating with the initial message
     void propagate(const GaussianMessage &msg)
     {
-        addMessage(Message::UNDEFINED_ID, msg);
+        setMessage(Message::UNDEFINED_ID, msg);
         destination()->propagate(id(), msg);
     }
 
