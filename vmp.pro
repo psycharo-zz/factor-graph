@@ -4,23 +4,22 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += main.cpp \
-    factor.cpp \
-    sumfactor.cpp \
-    gaussianmixture.cpp \
-    network.cpp
+    network.cpp \
+    variable.cpp
 
 HEADERS += \
     variable.h \
     gaussian.h \
-    factor.h \
-    sumfactor.h \
-    gaussianmixture.h \
     network.h \
     gamma.h \
-    examples.h
+    mathutil.h
 
 OTHER_FILES += \
     TODO.md
+
+
+# TODO: matlab support
+LIBS += -lgsl -lblas
 
 
 

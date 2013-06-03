@@ -40,17 +40,17 @@ public:
     }
 
     template <typename T>
-    Variable *createVariable(double param1, double param2)
+    T *createVariable(double param1, double param2)
     {
-        Variable *var = new T(param1, param2);
+        T *var = new T(param1, param2);
         m_variables.push_back(var);
         return var;
     }
 
     template <typename T>
-    Variable *createVariable(Variable *param1, Variable *param2)
+    T *createVariable(Variable *param1, Variable *param2)
     {
-        Variable *var = new T(param1, param2);
+        T *var = new T(param1, param2);
         m_variables.push_back(var);
         return var;
     }

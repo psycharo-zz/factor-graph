@@ -12,58 +12,82 @@ namespace vmp
 {
 
 
+
+
+class Parameters
+{
+// TODO: introduce summation operator?
+public:
+    virtual ~Parameters() {}
+};
+
+
+class Moments
+{
+public:
+    virtual ~Moments() {}
+};
+
+
+
+
+
 class Variable
 {
 public:
     //! TODO: should it take a Network as a parameter?
     Variable():
-        m_observed(false)
+        m_observed(false),
+        m_id(++s_idCounter)
     {}
 
     virtual ~Variable() {};
 
-    virtual void observe(double value)
+    //! observe a scalar value TODO: make a template/vector version?
+    virtual void observe(double _value)
     {
-
+        m_observed = true;
+        m_value = _value;
     }
 
-    //! updating the posterior w.r.t to current messages
-    virtual void update()
-    {
-        // get a message from parents
+    //! check whether the variable is observed
+    inline bool isObserved() const { return m_observed; }
 
-        // and from children
+    //! get a unique id
+    inline size_t id() const { return m_id; }
 
-    }
+// TODO: template-based polymorphism? or via interfaces like CanHaveGaussianParent
+    virtual Moments *messageToChildren() const = 0;
+    virtual Parameters *messageToParent(Variable *parent) const = 0;
 
-    //! the part of the lower bound corresponding to this variable
-    virtual double logEvidence() { return 0.0; }
+    //! updating the posterior w.r.t to the current messages
+    virtual void updatePosterior() = 0;
 
+    //! compute the constitute to the lower bound on the log-evidence
+    virtual double logEvidenceLowerBound() const = 0;
 
-    bool isObserved() const { return m_observed; }
+    //! whether it has any parents (needed to determine whether the messages should be sent)
+    virtual bool hasParents() const = 0;
+
+    //! obtain a message from a parent
+    virtual void receiveFromParent(Moments *ms, Variable *parent) = 0;
+
+    //! obtain a message from a child
+    virtual void receiveFromChild(Parameters *ps, Variable *child) = 0;
 
 protected:
+    //! unique identifier
+    size_t m_id;
+
     //! flag whether the variable is observed or not
     bool m_observed;
 
+    //! stored value in case it is observed
+    double m_value;
+
 private:
-    vector<Variable*> m_parents;
-    vector<Variable*> m_children;
-
+    static size_t s_idCounter;
 };
-
-
-
-class ConstantVariable
-{
-public:
-
-};
-
-
-
-
-
 
 
 
@@ -84,19 +108,9 @@ public:
 
 private:
     vector<double> m_values;
-
-
 };
 
 
-typedef pair<double, double> Message;
-
-
-// scalar message
-struct ScalarMessage
-{
-
-};
 
 
 
