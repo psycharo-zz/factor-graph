@@ -11,23 +11,31 @@ using namespace std;
 namespace vmp
 {
 
+class Gamma;
+
 /**
  * @brief The GammaParameters - stores Gamma distribution (natural) parameters
  * Typically is used to propagate updates from children to parents
  */
-class GammaParameters : public Parameters
+template <>
+class Parameters<Gamma>
 {
 public:
-    GammaParameters()
+    Parameters()
     {}
 
-    GammaParameters(double _shape, double _rate):
+    Parameters(double _shape, double _rate):
         shape(_shape),
         rate(_rate)
     {}
 
     double rate;
     double shape;
+
+    Parameters operator+(const Parameters &other)
+    {
+        return Parameters(shape + other.shape, rate + other.rate);
+    }
 };
 
 
@@ -42,13 +50,13 @@ public:
  * more-or-less artificial, simply because in the framework it only is used as a prior
  * for the gaussian precision.
  */
-class GammaMoments : public Moments
+template<>
+class Moments<Gamma>
 {
 public:
-    GammaMoments()
-    {}
+    Moments() {}
 
-    GammaMoments(double _precision, double _logPrecision):
+    Moments(double _precision, double _logPrecision):
         precision(_precision),
         logPrecision(_logPrecision)
     {}
@@ -65,7 +73,8 @@ public:
  * univariate gamma distribution.
  * TODO: add references to all the distributions (e.g. paper/wikipedia article)
  */
-class Gamma: public Variable
+class Gamma: public Variable,
+             public HasForm<Gamma>
 {
 public:
     Gamma(double shape, double rate):
@@ -74,78 +83,33 @@ public:
     {}
 
 
-    // in our implementation gamma variable can't have non-fixed prior distributions (only consts)
-    bool hasParents() const
-    {
-        return false;
-    }
-
-    //!
-    Moments *messageToChildren() const
-    {
-        return new GammaMoments(moments());
-    }
-
-
-    //! there is no supported priors for the gamma distribution so far
-    Parameters *messageToParent(Variable *parent) const
-    {
-        throw std::runtime_error("Gamma::messageToParent(Variable*): not supported");
-    }
-
-    //! updating the posterior w.r.t to the current messages
-    // TODO: make a template-based function or a virtual one
-    void updatePosterior()
-    {
-        m_params = GammaParameters(m_shapeMsg, m_rateMsg);
-        for (map<size_t, GammaParameters>::iterator it = m_childMsgs.begin();
-                                                       it != m_childMsgs.end(); ++it)
-        {
-            const GammaParameters &msg = it->second;
-            m_params.shape += msg.shape;
-            m_params.rate += msg.rate;
-        }
-    }
-
     //! compute the constitute to the lower bound on the log-evidence
     double logEvidenceLowerBound() const
     {
         throw std::runtime_error("Gamma::logEvidenceLowerBound(): not implemented");
     }
 
-    //! unsupported for gamma
-    void receiveFromParent(Moments *moments, Variable *parent)
+
+    //! [a/b, (ln(Gamma(a)))' - log(b)]
+    inline Moments<Gamma> moments() const
     {
-        throw std::runtime_error("Gamma::receiveFromParent(Moments*,Variable*): not supported");
+        return Moments<Gamma>(m_params.shape / m_params.rate,
+                              digamma(m_params.shape) - log(m_params.rate));
     }
 
-    //! obtain a message from one of the children
-    void receiveFromChild(Parameters *params, Variable *child)
+    //! simply a constant for gamma distribution
+    Parameters<Gamma> parametersFromParents() const
     {
-        GammaParameters msg = *static_cast<GammaParameters*>(params);
-        pair<map<size_t, GammaParameters>::iterator, bool> res = m_childMsgs.insert(std::make_pair(child->id(), msg));
-        if (!res.second)
-            res.first->second = msg;
+        return Parameters<Gamma>(m_shapeMsg, m_rateMsg);
     }
 
-    GammaMoments moments() const
-    {
-        double precision = m_params.shape / m_params.rate;
-        double logPrecision = digamma(m_params.shape) - log(m_params.rate);
-        return GammaMoments(precision, logPrecision);
-    }
+    //! no distributions allowed for gamma
+    inline bool hasParents() const { return false; }
 
 private:
-    //! current parameters of the approximate posterior
-    GammaParameters m_params;
-
     // current messages received from both parents
     double m_shapeMsg;
     double m_rateMsg;
-
-    // messages received for each children
-    map<size_t, GammaParameters> m_childMsgs;
-
 };
 
 

@@ -2,6 +2,7 @@
 #define VARIABLE_H
 
 #include <vector>
+#include <map>
 #include <stdexcept>
 using namespace std;
 
@@ -13,7 +14,7 @@ namespace vmp
 
 
 
-
+template <typename T>
 class Parameters
 {
 // TODO: introduce summation operator?
@@ -22,15 +23,12 @@ public:
 };
 
 
+template <typename T>
 class Moments
 {
 public:
     virtual ~Moments() {}
 };
-
-
-
-
 
 class Variable
 {
@@ -56,24 +54,11 @@ public:
     //! get a unique id
     inline size_t id() const { return m_id; }
 
-// TODO: template-based polymorphism? or via interfaces like CanHaveGaussianParent
-    virtual Moments *messageToChildren() const = 0;
-    virtual Parameters *messageToParent(Variable *parent) const = 0;
-
-    //! updating the posterior w.r.t to the current messages
-    virtual void updatePosterior() = 0;
+    //! check whether any parents are non-constant
+    virtual bool hasParents() const = 0;
 
     //! compute the constitute to the lower bound on the log-evidence
     virtual double logEvidenceLowerBound() const = 0;
-
-    //! whether it has any parents (needed to determine whether the messages should be sent)
-    virtual bool hasParents() const = 0;
-
-    //! obtain a message from a parent
-    virtual void receiveFromParent(Moments *ms, Variable *parent) = 0;
-
-    //! obtain a message from a child
-    virtual void receiveFromChild(Parameters *ps, Variable *child) = 0;
 
 protected:
     //! unique identifier
@@ -90,24 +75,57 @@ private:
 };
 
 
-
-/**
- * @brief The VariableArray class defines an array of random variables
- */
-class VariableArray : public Variable
+template <typename ParentType>
+class HasParent
 {
 public:
-    VariableArray() {}
+    virtual void receiveFromParent(const Moments<ParentType> &ms, ParentType *parent) = 0;
+    virtual Parameters<ParentType> messageToParent(ParentType *parent) const = 0;
+
+};
 
 
-    void observe(const vector<double> &vals)
+/**
+ * interface that specifies the form of the distribution
+ */
+template <typename MomentType>
+class HasForm
+{
+public:
+    //! get the message to all the children
+    virtual Moments<MomentType> messageToChildren() const { return moments(); }
+
+    //! obtain a message from a child
+    virtual void receiveFromChild(const Parameters<MomentType> &msg, Variable *child)
     {
-        m_observed = true;
-        m_values = vals;
+        pair<ChildIter, bool> res = m_childMsgs.insert(make_pair(child->id(), msg));
+        if (!res.second)
+            res.first->second = msg;
     }
 
-private:
-    vector<double> m_values;
+    //! get the moments TODO: the same as message to children
+    virtual Moments<MomentType> moments() const = 0;
+
+    //! get the parameters
+    virtual Parameters<MomentType> parametersFromParents() const = 0;
+
+    //! updating the posterior w.r.t to the current messages
+    void updatePosterior()
+    {
+        // for all the children,
+        m_params = parametersFromParents();
+        for (ChildIter it = m_childMsgs.begin(); it != m_childMsgs.end(); ++it)
+            m_params = m_params + it->second;
+    }
+
+protected:
+    //! current parameters of the approximate posterior
+    Parameters<MomentType> m_params;
+
+    // messages received from children
+    std::map<size_t, Parameters<MomentType> > m_childMsgs;
+    typedef typename map<size_t, Parameters<MomentType> >::iterator ChildIter;
+
 };
 
 

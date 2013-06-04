@@ -4,6 +4,8 @@
 #include <variable.h>
 
 #include <vector>
+#include <map>
+#include <memory>
 
 using namespace std;
 
@@ -15,12 +17,7 @@ public:
     Network()
     {}
 
-    virtual ~Network()
-    {
-        for (size_t i = 0; i < m_variables.size(); ++i)
-            delete m_variables[i];
-        m_variables.clear();
-    }
+    virtual ~Network() {}
 
     /**
      * @brief runInference
@@ -29,41 +26,20 @@ public:
      */
     double runInference(int maxIterations)
     {
-        double lb = 0.0;
-
-        for (size_t i = 0; i < maxIterations; ++i)
-        {
-
-        }
-
-        return lb;
+        std::runtime_error("Network::runInference(int): not implemented");
     }
 
-    template <typename T>
-    T *createVariable(double param1, double param2)
-    {
-        T *var = new T(param1, param2);
-        m_variables.push_back(var);
-        return var;
-    }
-
-    template <typename T>
-    T *createVariable(Variable *param1, Variable *param2)
-    {
-        T *var = new T(param1, param2);
-        m_variables.push_back(var);
-        return var;
-    }
-
-
-    // TODO: createArray?
 
 
 private:
     // TODO: smart pointers
     // TODO: separate thing for array?
-    vector<Variable*> m_variables;
+    map<size_t, auto_ptr<Variable> > m_variables;
 
+    //! indexed children (id -> children[])
+    multimap<size_t, size_t> m_children;
+    //! indexed parents (id -> parents[])
+    multimap<size_t, size_t> m_parents;
 };
 
 }

@@ -13,25 +13,35 @@ using namespace std;
 namespace vmp
 {
 
+
+class Gaussian;
+
 /**
  * @brief The GaussianParameters - represents parameters of a univariate
  * Gaussian distribution.
  * Typically used to propagate updates from children
  */
-class GaussianParameters : public Parameters
+template <>
+class Parameters<Gaussian>
 {
 public:
+    Parameters() {};
     // TODO: this constructor should not be necessary?
-    GaussianParameters()
-    {}
-
-    GaussianParameters(double mp, double p):
+    Parameters(double mp, double p):
         meanPrecision(mp),
         precision(p)
     {}
 
     double meanPrecision;
     double precision;
+
+    Parameters operator+(const Parameters &other)
+    {
+        return Parameters(meanPrecision + other.meanPrecision,
+                          precision + other.precision);
+    }
+
+
 };
 
 
@@ -40,14 +50,15 @@ public:
  * @brief The GaussianMoments - stores expectation of the natural statistics vector
  * Typically used to propagate updates from parents to the children.
  */
-class GaussianMoments : public Moments
+template <>
+class Moments<Gaussian>
 {
 public:
     // TODO: is this constructor necessary?
-    GaussianMoments()
+    Moments<Gaussian>()
     {}
 
-    GaussianMoments(double _mean, double _mean2):
+    Moments<Gaussian>(double _mean, double _mean2):
         mean(_mean),
         mean2(_mean2)
     {}
@@ -57,12 +68,12 @@ public:
 };
 
 
-
-// TODO: this can be moved to the factor so that network manages all this
-class Gaussian: public Variable
+class Gaussian: public Variable,
+                public HasParent<Gaussian>,
+                public HasParent<Gamma>,
+                public HasForm<Gaussian>
 {
 public:
-
     Gaussian(double _mean, double _prec):
         m_meanPar(NULL),
         m_precPar(NULL),
@@ -70,16 +81,10 @@ public:
         m_precMsg(_prec, log(_prec))
     {}
 
-    Gaussian(Variable *_meanParent, Variable *_precParent):
+    Gaussian(Gaussian *_meanParent, Gamma *_precParent):
         m_meanPar(_meanParent),
         m_precPar(_precParent)
-    {
-//        cout << id() << "Gaussian(" << _meanParent << "," << _precParent << ")" << endl;
-    }
-
-
-    virtual ~Gaussian() {}
-
+    {}
 
     //! check if there are any non-constant parents
     bool hasParents() const
@@ -89,54 +94,58 @@ public:
         return (m_meanPar != NULL) && (m_precPar != NULL);
     }
 
+    //! get message from mean parent
+    void receiveFromParent(const Moments<Gaussian> &msg, Gaussian *parent)
+    {
+        m_meanMsg = msg;
+    }
+
+    //! message to mean parent
+    Parameters<Gaussian> messageToParent(Gaussian *parent) const
+    {
+        double meanPrec = moments().mean * m_precMsg.precision;
+        double prec = m_precMsg.precision;
+        // TODO: check the sign here
+        return Parameters<Gaussian>(meanPrec, prec);
+    }
+
+    //! get message from the gamma parent
+    void receiveFromParent(const Moments<Gamma> &msg, Gamma *parent)
+    {
+        m_precMsg = msg;
+    }
+
+    //! message to the gamma parent
+    Parameters<Gamma> messageToParent(Gamma *parent) const
+    {
+        // for array it would look as follows
+        // a'_m = a_m + 1/2 * \sum_i q_{im}
+        // b'_, = b + 1/2 * \sum_i q_{im} (x_i^2 - 2x_i <mu_m> + <mu2_m>)
+        double shape = 0.5;
+        double rate = 0.5 * (moments().mean2 - 2 * moments().mean * m_meanMsg.mean + m_meanMsg.mean2);
+        return Parameters<Gamma>(shape, rate);
+    }
+
     //! <u> = [<mean>, <mean>^2 + 1./<precision>], expectations are based on the current
-    Moments *messageToChildren() const
+    inline Moments<Gaussian> moments() const
     {
-        return new GaussianMoments(moments());
-    }
-
-
-    Parameters *messageToParent(Variable *parent) const
-    {
-        GaussianMoments u = moments();
-
-        // <phi> = []
-        if (parent == m_meanPar)
+        if (isObserved())
+            return Moments<Gaussian>(m_value, sqr(m_value));
+        else
         {
-            double meanPrec = u.mean * m_precMsg.precision;
-            double prec = m_precMsg.precision;
-            // TODO: check the sign here
-            return new GaussianParameters(meanPrec, prec);
-        }
-        else if (parent == m_precPar)
-        {
-            // for array it would look as follows
-            // a'_m = a_m + 1/2 * \sum_i q_{im}
-            // b'_, = b + 1/2 * \sum_i q_{im} (x_i^2 - 2x_i <mu_m> + <mu2_m>)
-            // TODO: check the sign here
-            double shape = 0.5;
-            double rate = 0.5 * (u.mean2 - 2 * u.mean * m_meanMsg.mean + m_meanMsg.mean2);
-            return new GammaParameters(shape, rate);
-        }
-
-        throw std::runtime_error("Gaussian::messageToParent(Variable*): unknown parent");
-    }
-
-    //! updating the posterior w.r.t to the current messages
-    void updatePosterior()
-    {
-        // for all the children,
-        m_params.meanPrecision = m_meanMsg.mean * m_precMsg.precision;
-        m_params.precision = m_precMsg.precision;
-
-        for (map<size_t, GaussianParameters>::iterator it = m_childMsgs.begin();
-                                                       it != m_childMsgs.end(); ++it)
-        {
-            const GaussianParameters &msg = it->second;
-            m_params.meanPrecision += msg.meanPrecision;
-            m_params.precision += msg.precision;
+            double mean = m_params.meanPrecision / m_params.precision;
+            double var = 1.0 / m_params.precision;
+            return Moments<Gaussian>(mean, sqr(mean) + var);
         }
     }
+
+    //! compute parameters from parents
+    Parameters<Gaussian> parametersFromParents() const
+    {
+        return Parameters<Gaussian>(m_meanMsg.mean * m_precMsg.precision,
+                                    m_precMsg.precision);
+    }
+
 
     //! compute the constitute to the lower bound on the log-evidence
     double logEvidenceLowerBound() const
@@ -145,68 +154,16 @@ public:
     }
 
 
-    //! receive a message from parents
-    void receiveFromParent(Moments *msg, Variable *parent)
-    {
-        if (parent == m_meanPar)
-            m_meanMsg = *static_cast<GaussianMoments*>(msg);
-        else if (parent == m_precPar)
-            m_precMsg = *static_cast<GammaMoments*>(msg);
-        else
-            throw std::runtime_error("Gaussian::receiveFromParent(Moments*,Variable*): unknown parent");
-    }
 
-    //! receive a message from child
-    void receiveFromChild(Parameters *params, Variable *child)
-    {
-        GaussianParameters msg = *static_cast<GaussianParameters*>(params);
-        pair<map<size_t, GaussianParameters>::iterator, bool> res = m_childMsgs.insert(std::make_pair(child->id(), msg));
-        if (!res.second)
-            res.first->second = msg;
-    }
-
-
-    //! get the current posterior parameters
-    inline const GaussianParameters &parameters() const { return m_params; }
-
-    //! computing the moments w.r.t. current posterior
-    GaussianMoments moments() const
-    {
-        if (isObserved())
-            return GaussianMoments(m_value, sqr(m_value));
-        else
-        {
-            double mean = m_params.meanPrecision / m_params.precision;
-            double var = 1.0 / m_params.precision;
-            return GaussianMoments(mean, sqr(mean) + var);
-        }
-    }
-
-
-protected:
-
-    //! computing the natural parameter vector from the parent nodes
-    GaussianParameters paramsFromParents() const
-    {
-        return GaussianParameters(m_meanMsg.mean * m_precMsg.precision,
-                                  m_precMsg.precision);
-    }
-
-    //! current parameters of the approximate posterior
-    GaussianParameters m_params;
-
+private:
     // parents
-    Variable *m_meanPar;
-    Variable *m_precPar;
+    Gaussian *m_meanPar;
+    Gamma *m_precPar;
 
     // current messages received from both parents
-    GaussianMoments m_meanMsg;
-    GammaMoments m_precMsg;
-
-    // message received for each children
-    map<size_t, GaussianParameters> m_childMsgs;
+    Moments<Gaussian> m_meanMsg;
+    Moments<Gamma> m_precMsg;
 };
-
 
 
 }
