@@ -12,7 +12,10 @@ HEADERS += \
     gaussian.h \
     network.h \
     gamma.h \
-    mathutil.h
+    mathutil.h \
+    dirichlet.h \
+    discrete.h \
+    mixture.h
 
 OTHER_FILES += \
     TODO.md

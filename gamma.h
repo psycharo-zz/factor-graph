@@ -6,6 +6,7 @@
 
 
 #include <map>
+#include <stdexcept>
 using namespace std;
 
 namespace vmp
@@ -29,14 +30,19 @@ public:
         rate(_rate)
     {}
 
-    double rate;
-    double shape;
 
-    Parameters operator+(const Parameters &other)
+    double shape;
+    double rate;
+
+    Parameters &operator+=(const Parameters &other)
     {
-        return Parameters(shape + other.shape, rate + other.rate);
+        shape += other.shape;
+        rate += other.rate;
+        return *this;
     }
 };
+
+typedef Parameters<Gamma> GammaParameters;
 
 
 
@@ -65,6 +71,8 @@ public:
     double logPrecision;
 };
 
+typedef Moments<Gamma> GammaMoments;
+
 
 
 
@@ -73,7 +81,7 @@ public:
  * univariate gamma distribution.
  * TODO: add references to all the distributions (e.g. paper/wikipedia article)
  */
-class Gamma: public Variable,
+class Gamma: public ContinuousVariable,
              public HasForm<Gamma>
 {
 public:
@@ -82,29 +90,27 @@ public:
         m_rateMsg(rate)
     {}
 
+    //! override Variable
+    inline bool hasParents() const { return false; }
 
-    //! compute the constitute to the lower bound on the log-evidence
+    //! override Variable
     double logEvidenceLowerBound() const
     {
         throw std::runtime_error("Gamma::logEvidenceLowerBound(): not implemented");
     }
 
-
-    //! [a/b, (ln(Gamma(a)))' - log(b)]
+    //! override HasForm<Gamma>. [a/b, (ln(Gamma(a)))' - log(b)]
     inline Moments<Gamma> moments() const
     {
         return Moments<Gamma>(m_params.shape / m_params.rate,
                               digamma(m_params.shape) - log(m_params.rate));
     }
 
-    //! simply a constant for gamma distribution
+    //! override HasForm<Gamma>. simply a constant for gamma distribution
     Parameters<Gamma> parametersFromParents() const
     {
         return Parameters<Gamma>(m_shapeMsg, m_rateMsg);
     }
-
-    //! no distributions allowed for gamma
-    inline bool hasParents() const { return false; }
 
 private:
     // current messages received from both parents

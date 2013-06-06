@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <stdexcept>
 
 using namespace std;
 
@@ -24,11 +25,11 @@ public:
      * @param maxIterations
      * @return
      */
-    double runInference(int maxIterations)
+    double runInference(int )
     {
         std::runtime_error("Network::runInference(int): not implemented");
+        return 0;
     }
-
 
 
 private:

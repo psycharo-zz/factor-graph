@@ -1,9 +1,17 @@
 # Global TODO
-* Learn univariate gaussians
-* Learn multivariate gaussians
-* Learn mixture models VMP-style
-* Algonquin implementation
+* Learn univariate gaussians: DONE
+* Create a separate branch in the factor-graph repo
+* Learn univariate mixture models: IN PROGRESS
+
+* Algonquin implementation: based on univariate mixtures
+
+* Learn multivariate gaussians: NOT NECESSARY?
+* Learn multivariate mixture models: NOT NECESSARY?
+
+* Automatical inference code generation
 * Matlab Bindings (priority)
+
+
 
 
 # Current TODO

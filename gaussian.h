@@ -17,8 +17,7 @@ namespace vmp
 class Gaussian;
 
 /**
- * @brief The GaussianParameters - represents parameters of a univariate
- * Gaussian distribution.
+ * represents parameters of a univariate Gaussian distribution.
  * Typically used to propagate updates from children
  */
 template <>
@@ -35,19 +34,20 @@ public:
     double meanPrecision;
     double precision;
 
-    Parameters operator+(const Parameters &other)
+    Parameters &operator+=(const Parameters &other)
     {
-        return Parameters(meanPrecision + other.meanPrecision,
-                          precision + other.precision);
+        meanPrecision += other.meanPrecision;
+        precision += other.precision;
+        return *this;
     }
-
-
 };
+
+typedef Parameters<Gaussian> GaussianParameters;
 
 
 
 /**
- * @brief The GaussianMoments - stores expectation of the natural statistics vector
+ * stores expectation of the natural statistics vector
  * Typically used to propagate updates from parents to the children.
  */
 template <>
@@ -67,8 +67,10 @@ public:
     double mean2;
 };
 
+typedef Moments<Gaussian> GaussianMoments;
 
-class Gaussian: public Variable,
+
+class Gaussian: public ContinuousVariable,
                 public HasParent<Gaussian>,
                 public HasParent<Gamma>,
                 public HasForm<Gaussian>
@@ -95,13 +97,13 @@ public:
     }
 
     //! get message from mean parent
-    void receiveFromParent(const Moments<Gaussian> &msg, Gaussian *parent)
+    void receiveFromParent(const Moments<Gaussian> &msg, Gaussian */*parent*/)
     {
         m_meanMsg = msg;
     }
 
     //! message to mean parent
-    Parameters<Gaussian> messageToParent(Gaussian *parent) const
+    Parameters<Gaussian> messageToParent(Gaussian */*parent*/) const
     {
         double meanPrec = moments().mean * m_precMsg.precision;
         double prec = m_precMsg.precision;
@@ -110,13 +112,13 @@ public:
     }
 
     //! get message from the gamma parent
-    void receiveFromParent(const Moments<Gamma> &msg, Gamma *parent)
+    void receiveFromParent(const Moments<Gamma> &msg, Gamma */*parent*/)
     {
         m_precMsg = msg;
     }
 
     //! message to the gamma parent
-    Parameters<Gamma> messageToParent(Gamma *parent) const
+    Parameters<Gamma> messageToParent(Gamma */*parent*/) const
     {
         // for array it would look as follows
         // a'_m = a_m + 1/2 * \sum_i q_{im}
