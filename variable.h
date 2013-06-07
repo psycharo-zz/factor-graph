@@ -6,6 +6,9 @@
 using namespace std;
 
 
+#include <util.h>
+
+
 // TODO: create a separate implementation file?
 
 namespace vmp
@@ -82,14 +85,13 @@ public:
     // add a method to derive random samples
     // virtual double sample() = 0;
 
+    //! compute the pdf value fpor the given value
+    virtual double logProbabilityDensity(double value) const = 0;
+
 protected:
     //! stored value in case it is observed
     double m_value;
 };
-
-
-
-
 
 
 
@@ -133,9 +135,7 @@ public:
     //! obtain a message from a child
     virtual void receiveFromChild(const Parameters<DistributionType> &msg, Variable *child)
     {
-        pair<ChildIter, bool> res = m_childMsgs.insert(make_pair(child->id(), msg));
-        if (!res.second)
-            res.first->second = msg;
+        map_insert(m_childMsgs, make_pair(child->id(), msg));
     }
 
     //! updating the posterior w.r.t to the current messages

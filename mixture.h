@@ -3,6 +3,7 @@
 
 
 #include <vector>
+#include <cassert>
 using namespace std;
 
 
@@ -15,108 +16,135 @@ namespace vmp
 {
 
 
-class Mixture;
-
-
-template<>
-class Parameters<Mixture>
-{
-public:
-    Parameters &operator+=(const Parameters &other)
-    {
-        throw std::runtime_error("Parameters<Mixture>::operator+=(): not implemented");
-    }
-
-    vector<double> weights;
-    vector<GaussianParameters> mixtures;
-
-};
-
-
-template<>
-class Moments<Mixture>
-{
-public:
-
-};
-
-
-
-
-
-
 /**
- * variable distributed as a mixture of (univariate gaussian) distributions
+ * base abstract class to implement mixture models
+ * TBase - the type
  */
-class Mixture : public ContinuousVariable,
-                public HasForm<Mixture>,
-                public HasParent<Discrete>,
-                public HasParent<Gaussian>
+template <typename TBase>
+class IsMixture : public ContinuousVariable,
+                  public HasParent<Discrete>,
+                  public HasForm<TBase>
 {
 public:
-    Mixture(const vector<Gaussian*> &_elements, Discrete *_weight):
-        m_elements(_elements),
-        m_weight(_weight)
+    IsMixture(Discrete *_discrete):
+        m_components(_discrete->dims(), NULL),
+        m_weightMsg(_discrete->dims()),
+        m_discrete(_discrete)
     {}
 
+    //! get the number of mixtures
+    inline size_t numComponents() const { return m_components.size(); }
 
-    //! override Variable. in the current distribution
+    //! get the weight of the specified mixture component
+    inline double componentWeight(size_t idx) { return m_weightMsg.probs[idx]; }
+
+    //! get mixture component by its index
+    inline TBase *component(size_t idx) { return m_components[idx]; }
+
+    //! override Variable. in mixture we always have parents
     inline bool hasParents() const { return true; }
 
     //! override Variable
-    double logEvidenceLowerBound() const
+    virtual double logEvidenceLowerBound() const
     {
         throw std::runtime_error("Mixture::logEvidenceLowerBound(): not implemented");
     }
 
-    //! override HasForm<Mixture>
-    Moments<Mixture> moments() const
+    //! override ContinuousVariable
+    virtual double logProbabilityDensity(double /*value*/) const
     {
-        throw std::runtime_error("Mixture::moments(): not implemented");
-    }
-
-    //! override HasForm<Mixture>
-    Parameters<Mixture> parametersFromParents() const
-    {
-        throw std::runtime_error("Mixture::parametersFromParents(): not implemented");
+        throw std::runtime_error("IsMixture:;logProbabilityDensity(double): not implemented");
     }
 
 
-    //! override HasForm<Mixture>
-    void updatePosterior()
+    //! override HasParent<Discrete>
+    void receiveFromParent(const Moments<Discrete> &msg, Discrete *parent)
     {
-        throw std::runtime_error("Mixture::updatePosterior(): not implemented");
+        m_weightMsg = msg;
     }
 
     //! override HasParent<Discrete>
-    void receiveFromParent(const Moments<Discrete> &ms, Discrete *parent) = 0;
-
-    //! override HasParent<Discrete>
-    Parameters<Discrete> messageToParent(Discrete *parent) const = 0;
-
-    //! override HasParent<Gaussian>
-    void receiveFromParent(const Moments<Gaussian> &ms, Gaussian *parent) = 0;
-
-    //! override HasParent<Gaussian>
-    Parameters<Gaussian> messageToParent(Gaussian *parent) const = 0;
-
-
+    Parameters<Discrete> messageToParent(Discrete *parent) const
+    {
+        DiscreteParameters params(numComponents());
+        double value = isObserved() ? m_value :
+                                      throw std::runtime_error("Mixture::messageToParent(): non-observed not supported yet");
+        // TODO: when non-observed it actually might depend on mean AND mean2, not only on the value itself
+        for (size_t m = 0; m < numComponents(); ++m)
+           params.logProb[m] = m_components[m]->logProbabilityDensity(value);
+        return params;
+    }
 
 
-private:
-    //! the mixture distributions themselves
-    // TODO: make a map instead of vector?
-    vector<Gaussian*> m_elements;
-    //! the weight prior
-    Discrete *m_weight;
+    //! override HasForm<TBase>
+    virtual Moments<TBase> moments() const
+    {
+        throw std::runtime_error("IsMixture::moments(): not implemented");
+    }
+
+    //! override HasForm<TBase>
+    virtual Parameters<TBase> parametersFromParents() const
+    {
+        throw std::runtime_error("IsMixture::parametersFromParents(): not implemented");
+    }
 
 
+public:
+    //! components
+    vector<TBase*> m_components;
+    //! the discrete distribution
+    Discrete *m_discrete;
     //! message from the discrete parent
-
-
-    //! all the messages from the
+    DiscreteMoments m_weightMsg;
 };
 
+template <typename TBase, typename TParent>
+class HasMixtureParent : public virtual IsMixture<TBase>
+{
+public:
+    HasMixtureParent<TBase, TParent>(Discrete *_discrete):
+        IsMixture<TBase>(_discrete)
+    {}
+
+    void receiveFromParent(size_t idx, const Moments<TParent> &ms, TParent *parent)
+    {
+        this->component(idx)->receiveFromParent(ms, parent);
+    }
+
+    Parameters<TParent> messageToParent(size_t idx, TParent *parent) const
+    {
+        return this->componentWeight(idx) * this->component(idx)->messageToParent(parent);
+    }
+
+};
+
+
+class MoG : public HasMixtureParent<Gaussian, Gaussian>,
+            public HasMixtureParent<Gaussian, Gamma>
+{
+public:
+    MoG(const vector<Gaussian*> &_meanPars,
+        const vector<Gamma*> &_precPars,
+        Discrete *_discr):
+        IsMixture(_discr),
+        HasMixtureParent<Gaussian, Gaussian>(_discr),
+        HasMixtureParent<Gaussian, Gamma>(_discr)
+    {
+        for (size_t m = 0; m < numComponents(); ++m)
+            m_components[m] = new Gaussian(_meanPars[m], _precPars[m]);
+    }
+
+    using IsMixture<Gaussian>::receiveFromParent;
+    using HasMixtureParent<Gaussian, Gaussian>::receiveFromParent;
+    using HasMixtureParent<Gaussian, Gamma>::receiveFromParent;
+
+    virtual ~MoG()
+    {
+        for (size_t m = 0; m < numComponents(); ++m)
+            delete m_components[m];
+    }
+
+};
 
 
 

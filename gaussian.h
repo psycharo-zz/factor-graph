@@ -88,8 +88,10 @@ public:
         m_precPar(_precParent)
     {}
 
+    virtual ~Gaussian() {}
+
     //! check if there are any non-constant parents
-    bool hasParents() const
+    virtual bool hasParents() const
     {
         // TODO: maybe introduce a separate flag variable or even ask
         // whether a particular parent is present or not
@@ -97,13 +99,13 @@ public:
     }
 
     //! get message from mean parent
-    void receiveFromParent(const Moments<Gaussian> &msg, Gaussian */*parent*/)
+    virtual void receiveFromParent(const Moments<Gaussian> &msg, Gaussian */*parent*/)
     {
         m_meanMsg = msg;
     }
 
     //! message to mean parent
-    Parameters<Gaussian> messageToParent(Gaussian */*parent*/) const
+    virtual Parameters<Gaussian> messageToParent(Gaussian */*parent*/) const
     {
         double meanPrec = moments().mean * m_precMsg.precision;
         double prec = m_precMsg.precision;
@@ -112,7 +114,7 @@ public:
     }
 
     //! get message from the gamma parent
-    void receiveFromParent(const Moments<Gamma> &msg, Gamma */*parent*/)
+    virtual void receiveFromParent(const Moments<Gamma> &msg, Gamma */*parent*/)
     {
         m_precMsg = msg;
     }
@@ -150,11 +152,19 @@ public:
 
 
     //! compute the constitute to the lower bound on the log-evidence
-    double logEvidenceLowerBound() const
+    virtual double logEvidenceLowerBound() const
     {
         throw std::runtime_error("Gamma::logEvidenceLowerBound(): not implemented");
     }
 
+    //! compute the log-probability value of the provided value given the current natural parameters
+    // TODO: put this into ContinuousVariable?
+    virtual double logProbabilityDensity(double value) const
+    {
+        return 0.5 * (m_precMsg.logPrecision -
+                      m_precMsg.precision * (sqr(value) - 2 * value * m_meanMsg.mean + m_meanMsg.mean2)
+                      -log(2*M_PI));
+    }
 
 
 private:

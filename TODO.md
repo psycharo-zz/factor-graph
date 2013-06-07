@@ -7,6 +7,11 @@
 
 * Learn multivariate gaussians: NOT NECESSARY?
 * Learn multivariate mixture models: NOT NECESSARY?
+* Check how current implementation of mixtures correspond to the gates [Minka'200x]
+* Check how the current implementation correspond to the message passing on FACTOR GRAPHS
+  * ?? the difference is that in factor graphs factors can be NOT ONLY DISTRIBUTIONS
+       but also deterministic functions
+
 
 * Automatical inference code generation
 * Matlab Bindings (priority)

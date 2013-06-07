@@ -6,6 +6,7 @@ using namespace std;
 #include <variable.h>
 #include <gaussian.h>
 #include <gamma.h>
+#include <mixture.h>
 #include <network.h>
 #include <discrete.h>
 #include <ostream>
@@ -22,19 +23,19 @@ const size_t SIZE = sizeof(DATA) / sizeof(double);
 
 void trainUnivariateGaussian()
 {
-    Gaussian *mu = new Gaussian(0, 1e-2);
-    mu->updatePosterior();
-    Gamma *gamma = new Gamma(1e-3, 1e-3);
-    gamma->updatePosterior();
+    Gaussian mu(0, 1e-2);
+    mu.updatePosterior();
+    Gamma gamma(1e-3, 1e-3);
+    gamma.updatePosterior();
 
-    vector<Gaussian*> x;
+    vector<Gaussian> x;
     // TODO: try for various parameters
 
     vector<double> v(DATA, DATA + SIZE);
     for (size_t i = 0; i < SIZE; ++i)
     {
-        x.push_back(new Gaussian(mu, gamma));
-        x[i]->observe(DATA[i]);
+        x.push_back(Gaussian(&mu, &gamma));
+        x[i].observe(DATA[i]);
     }
 
     // doing the updates
@@ -44,22 +45,22 @@ void trainUnivariateGaussian()
         for (size_t t = 0; t < x.size(); ++t)
         {
             // send messages from gamma to all x
-            x[t]->receiveFromParent(gamma->messageToChildren(), gamma);
+            x[t].receiveFromParent(gamma.messageToChildren(), &gamma);
             // send messages from all x to mu
-            mu->receiveFromChild(x[t]->messageToParent(mu), x[t]);
+            mu.receiveFromChild(x[t].messageToParent(&mu), &x[t]);
         }
-        mu->updatePosterior();
+        mu.updatePosterior();
 
         for (size_t t = 0; t < x.size(); ++t)
         {
             // send messages from mu to all x
-            x[t]->receiveFromParent(mu->messageToChildren(), mu);
+            x[t].receiveFromParent(mu.messageToChildren(), &mu);
             // send messages from x to all gamma
-            gamma->receiveFromChild(x[t]->messageToParent(gamma), x[t]);
+            gamma.receiveFromChild(x[t].messageToParent(&gamma), &x[t]);
         }
-        gamma->updatePosterior();
+        gamma.updatePosterior();
     }
-    cout << "mean,prec:" << mu->moments().mean << " " << gamma->moments().precision << endl;
+    cout << "mean,prec:" << mu.moments().mean << " " << gamma.moments().precision << endl;
 
 }
 
@@ -76,7 +77,6 @@ void trainDirichlet()
 {
     const size_t DIMS = 5;
     Dirichlet dir(vector<double>(DIMS, 20));
-
     vector<Discrete> lambda;
     for (size_t i = 0; i < 100; ++i)
     {
@@ -96,17 +96,43 @@ void trainDirichlet()
 }
 
 
-
+void testGaussianPDF()
+{
+    Gaussian mu(10, 1);
+    for (double x = 5; x < 16; ++x)
+        cout << exp(mu.logProbabilityDensity(x)) << endl;
+}
 
 void trainMixtureOfUnivariateGaussians()
 {
-
+//    Mixture m;
 }
 
 
 int main()
 {
-    trainDirichlet();
+    const size_t DIMS = 5;
+    Dirichlet dir(vector<double>(DIMS, 20));
+
+    vector<Gaussian*> means;
+    vector<Gamma*> precs;
+
+    for (size_t m = 0; m < DIMS; ++m)
+    {
+        means.push_back(new Gaussian(0, 1));
+        precs.push_back(new Gamma(1e-3, 1e-3));
+    }
+
+    Discrete discr(&dir);
+    discr.updatePosterior();
+
+
+    MoG g(means, precs, &discr);
+
+    g.receiveFromParent(discr.messageToChildren(), &discr);
+
+    cout << g.componentWeight(1) << endl;
+
 
     return 0;
 }

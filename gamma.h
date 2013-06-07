@@ -60,9 +60,9 @@ template<>
 class Moments<Gamma>
 {
 public:
-    Moments() {}
+    Moments<Gamma>() {}
 
-    Moments(double _precision, double _logPrecision):
+    Moments<Gamma>(double _precision, double _logPrecision):
         precision(_precision),
         logPrecision(_logPrecision)
     {}
@@ -97,6 +97,12 @@ public:
     double logEvidenceLowerBound() const
     {
         throw std::runtime_error("Gamma::logEvidenceLowerBound(): not implemented");
+    }
+
+    //! override ContinuousVariable
+    double logProbabilityDensity(double /*value*/) const
+    {
+        throw std::runtime_error("Gamma:;logProbabilityDensity(double): not implemented");
     }
 
     //! override HasForm<Gamma>. [a/b, (ln(Gamma(a)))' - log(b)]

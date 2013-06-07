@@ -15,7 +15,9 @@ HEADERS += \
     mathutil.h \
     dirichlet.h \
     discrete.h \
-    mixture.h
+    mixture.h \
+    util.h \
+    gaussianmixture.h
 
 OTHER_FILES += \
     TODO.md

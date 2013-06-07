@@ -3,6 +3,8 @@
 
 #include <cmath>
 #include <vector>
+#include <map>
+
 #include <numeric>
 #include <functional>
 #include <algorithm>
@@ -56,7 +58,6 @@ inline vector<T> operator+(const vector<T> &a, const vector<T> &b)
     result += b;
     return result;
 }
-
 
 
 
