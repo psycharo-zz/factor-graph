@@ -42,6 +42,14 @@ public:
     }
 };
 
+
+inline Parameters<Gaussian> operator*(const Parameters<Gaussian> &params, double val)
+{
+    return Parameters<Gaussian>(params.meanPrecision * val,
+                                params.precision * val);
+}
+
+
 typedef Parameters<Gaussian> GaussianParameters;
 
 
@@ -167,7 +175,7 @@ public:
     }
 
 
-private:
+//private:
     // parents
     Gaussian *m_meanPar;
     Gamma *m_precPar;

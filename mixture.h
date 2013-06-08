@@ -30,16 +30,29 @@ public:
         m_components(_discrete->dims(), NULL),
         m_weightMsg(_discrete->dims()),
         m_discrete(_discrete)
-    {}
+    {
+        assert(m_components.size() == _discrete->dims());
+    }
 
     //! get the number of mixtures
     inline size_t numComponents() const { return m_components.size(); }
 
     //! get the weight of the specified mixture component
-    inline double componentWeight(size_t idx) { return m_weightMsg.probs[idx]; }
+    inline double componentWeight(size_t idx) const { return m_weightMsg.probs[idx]; }
 
     //! get mixture component by its index
-    inline TBase *component(size_t idx) { return m_components[idx]; }
+    inline TBase *component(size_t idx) const { return m_components[idx]; }
+
+
+    //! override ContinuousVariable
+    inline void observe(double _value)
+    {
+        for (size_t m = 0; m < numComponents(); ++m)
+            m_components[m]->observe(_value);
+        m_observed = true;
+        m_value = _value;
+    }
+
 
     //! override Variable. in mixture we always have parents
     inline bool hasParents() const { return true; }
@@ -79,15 +92,18 @@ public:
     //! override HasForm<TBase>
     virtual Moments<TBase> moments() const
     {
+
+
         throw std::runtime_error("IsMixture::moments(): not implemented");
     }
 
     //! override HasForm<TBase>
     virtual Parameters<TBase> parametersFromParents() const
     {
+        //
+
         throw std::runtime_error("IsMixture::parametersFromParents(): not implemented");
     }
-
 
 public:
     //! components
@@ -102,8 +118,8 @@ template <typename TBase, typename TParent>
 class HasMixtureParent : public virtual IsMixture<TBase>
 {
 public:
-    HasMixtureParent<TBase, TParent>(Discrete *_discrete):
-        IsMixture<TBase>(_discrete)
+    HasMixtureParent<TBase, TParent>(Discrete *_discr):
+        IsMixture<TBase>(_discr)
     {}
 
     void receiveFromParent(size_t idx, const Moments<TParent> &ms, TParent *parent)
@@ -113,7 +129,7 @@ public:
 
     Parameters<TParent> messageToParent(size_t idx, TParent *parent) const
     {
-        return this->componentWeight(idx) * this->component(idx)->messageToParent(parent);
+        return this->component(idx)->messageToParent(parent) * this->componentWeight(idx);
     }
 
 };
@@ -123,8 +139,8 @@ class MoG : public HasMixtureParent<Gaussian, Gaussian>,
             public HasMixtureParent<Gaussian, Gamma>
 {
 public:
-    MoG(const vector<Gaussian*> &_meanPars,
-        const vector<Gamma*> &_precPars,
+    MoG(const vector<Gaussian*> _meanPars,
+        const vector<Gamma*> _precPars,
         Discrete *_discr):
         IsMixture(_discr),
         HasMixtureParent<Gaussian, Gaussian>(_discr),
@@ -132,11 +148,20 @@ public:
     {
         for (size_t m = 0; m < numComponents(); ++m)
             m_components[m] = new Gaussian(_meanPars[m], _precPars[m]);
+
+
     }
+
+    using IsMixture<Gaussian>::m_components;
 
     using IsMixture<Gaussian>::receiveFromParent;
     using HasMixtureParent<Gaussian, Gaussian>::receiveFromParent;
     using HasMixtureParent<Gaussian, Gamma>::receiveFromParent;
+
+    using IsMixture<Gaussian>::messageToParent;
+    using HasMixtureParent<Gaussian, Gaussian>::messageToParent;
+    using HasMixtureParent<Gaussian, Gamma>::messageToParent;
+
 
     virtual ~MoG()
     {

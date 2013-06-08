@@ -42,6 +42,12 @@ public:
     }
 };
 
+inline Parameters<Gamma> operator*(const Parameters<Gamma> &params, double val)
+{
+    return Parameters<Gamma>(params.shape * val, params.rate * val);
+}
+
+
 typedef Parameters<Gamma> GammaParameters;
 
 
@@ -118,7 +124,7 @@ public:
         return Parameters<Gamma>(m_shapeMsg, m_rateMsg);
     }
 
-private:
+//private:
     // current messages received from both parents
     double m_shapeMsg;
     double m_rateMsg;

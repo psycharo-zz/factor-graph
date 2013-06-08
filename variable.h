@@ -133,6 +133,7 @@ public:
     Moments<DistributionType> messageToChildren() const { return moments(); }
 
     //! obtain a message from a child
+    // TODO: make a check that there is indeed such a child
     virtual void receiveFromChild(const Parameters<DistributionType> &msg, Variable *child)
     {
         map_insert(m_childMsgs, make_pair(child->id(), msg));
@@ -147,7 +148,7 @@ public:
             m_params += it->second;
     }
 
-protected:
+//protected:
     //! current parameters of the approximate posterior
     Parameters<DistributionType> m_params;
 

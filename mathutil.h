@@ -50,6 +50,12 @@ inline vector<T> &operator+=(vector<T> &a, const vector<T> &other)
     return a;
 }
 
+template <typename T>
+inline vector<T> &operator-=(vector<T> &a, const vector<T> &other)
+{
+    transform(a.begin(), a.end(), other.begin(), a.begin(), std::minus<double>());
+    return a;
+}
 
 template <typename T>
 inline vector<T> operator+(const vector<T> &a, const vector<T> &b)
@@ -58,6 +64,34 @@ inline vector<T> operator+(const vector<T> &a, const vector<T> &b)
     result += b;
     return result;
 }
+
+template <typename T>
+inline vector<T> operator-(const vector<T> &a, const vector<T> &b)
+{
+    vector<T> result(a);
+    result -= b;
+    return result;
+}
+
+template <typename T>
+inline vector<T> operator+(const vector<T> &a, T b)
+{
+    vector<T> result(a);
+    for (size_t i = 0; i < result.size(); ++i)
+        result[i] = a[i] + b;
+    return result;
+}
+
+template <typename T>
+inline vector<T> operator-(const vector<T> &a, T b)
+{
+    vector<T> result(a);
+    for (size_t i = 0; i < result.size(); ++i)
+        result[i] = a[i] - b;
+    return result;
+}
+
+
 
 
 
