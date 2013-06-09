@@ -9,6 +9,7 @@ using namespace std;
 #include <util.h>
 
 
+
 // TODO: create a separate implementation file?
 
 namespace vmp
@@ -88,7 +89,8 @@ public:
     //! compute the pdf value fpor the given value
     virtual double logProbabilityDensity(double value) const = 0;
 
-protected:
+// DEBUG
+//protected:
     //! stored value in case it is observed
     double m_value;
 };
@@ -147,7 +149,7 @@ public:
         for (ChildIter it = m_childMsgs.begin(); it != m_childMsgs.end(); ++it)
             m_params += it->second;
     }
-
+// DEBUG
 //protected:
     //! current parameters of the approximate posterior
     Parameters<DistributionType> m_params;

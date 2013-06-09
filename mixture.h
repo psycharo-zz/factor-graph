@@ -79,12 +79,15 @@ public:
     //! override HasParent<Discrete>
     Parameters<Discrete> messageToParent(Discrete *parent) const
     {
+        assert(m_discrete == parent);
+
         DiscreteParameters params(numComponents());
         double value = isObserved() ? m_value :
                                       throw std::runtime_error("Mixture::messageToParent(): non-observed not supported yet");
         // TODO: when non-observed it actually might depend on mean AND mean2, not only on the value itself
         for (size_t m = 0; m < numComponents(); ++m)
            params.logProb[m] = m_components[m]->logProbabilityDensity(value);
+
         return params;
     }
 

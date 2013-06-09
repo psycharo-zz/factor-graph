@@ -15,6 +15,7 @@
 
 * Automatical inference code generation
 * Matlab Bindings (priority)
+* Tests for messages (depending on current messages from parents|observed / non-observed)
 
 
 

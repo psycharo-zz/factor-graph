@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <map>
-
+#include <cassert>
 using namespace std;
 
 #include <variable.h>
@@ -107,14 +107,18 @@ public:
     }
 
     //! get message from mean parent
-    virtual void receiveFromParent(const Moments<Gaussian> &msg, Gaussian */*parent*/)
+    virtual void receiveFromParent(const Moments<Gaussian> &msg, Gaussian *parent)
     {
+        assert(m_meanPar == parent);
+
         m_meanMsg = msg;
     }
 
     //! message to mean parent
-    virtual Parameters<Gaussian> messageToParent(Gaussian */*parent*/) const
+    virtual Parameters<Gaussian> messageToParent(Gaussian *parent) const
     {
+        assert(parent == m_meanPar);
+
         double meanPrec = moments().mean * m_precMsg.precision;
         double prec = m_precMsg.precision;
         // TODO: check the sign here
@@ -122,14 +126,17 @@ public:
     }
 
     //! get message from the gamma parent
-    virtual void receiveFromParent(const Moments<Gamma> &msg, Gamma */*parent*/)
+    virtual void receiveFromParent(const Moments<Gamma> &msg, Gamma *parent)
     {
+        assert(parent == m_precPar);
         m_precMsg = msg;
     }
 
     //! message to the gamma parent
-    Parameters<Gamma> messageToParent(Gamma */*parent*/) const
+    Parameters<Gamma> messageToParent(Gamma *parent) const
     {
+        assert(parent == m_precPar);
+
         // for array it would look as follows
         // a'_m = a_m + 1/2 * \sum_i q_{im}
         // b'_, = b + 1/2 * \sum_i q_{im} (x_i^2 - 2x_i <mu_m> + <mu2_m>)
