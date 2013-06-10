@@ -86,7 +86,8 @@ typedef Moments<Discrete> DiscreteMoments;
 inline double operator*(const Parameters<Discrete> &params,
                         const Moments<Discrete> &moments)
 {
-    throw std::runtime_error("double operator*(const Parameters<Discrete> &,const Moments<Discrete> &): not implemented");
+    assert(params.logProb.size() == moments.probs.size());
+    return std::inner_product(params.logProb.begin(), params.logProb.end(), moments.probs.begin(), 0.0);
 }
 
 
@@ -130,18 +131,10 @@ public:
     inline bool hasParents() const { return m_parent != NULL; }
 
     //! override Variable
-    double logNormalization() const
-    {
-        throw std::runtime_error("Discrete::logNormalization(): not implemented");
-    }
+    double logNormalization() const { return 0.0; }
 
     //! override Variable
-    double logNormalizationParents() const
-    {
-        throw std::runtime_error("Discrete::logNormalization(): not implemented");
-    }
-
-
+    double logNormalizationParents() const { return 0.0; }
 
     //! override HasForm<Discrete>
     Moments<Discrete> moments() const
@@ -177,11 +170,9 @@ public:
         return Parameters<Dirichlet>(moments().probs);
     }
 
-
     //! override HasForm<Discrete>
     virtual void updatePosterior()
     {
-        m_observed = false;
         Variable<Discrete>::updatePosterior();
         double norm = sumv(expv(m_params.logProb));
         m_params.logProb = m_params.logProb - log(norm);
@@ -189,20 +180,6 @@ public:
 
 
 protected:
-    //! override Variable
-    virtual double logEvidenceLowerBoundObserved() const
-    {
-        throw std::runtime_error("Discrete::logEvidenceLowerBoundObserved(): not implemented");
-    }
-
-    //! override Variable
-    virtual double logEvidenceLowerBoundHidden() const
-    {
-        throw std::runtime_error("Discrete::logEvidenceLowerBoundHidden(): not implemented");
-    }
-
-
-
     //! check whether the value is within the limits TODO: rename the function
     inline bool validate(size_t _value) { return _value < m_dims; }
 

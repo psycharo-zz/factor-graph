@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <map>
+
 using namespace std;
 
 
@@ -108,7 +109,7 @@ public:
     //! compute LB in case the variable is hidden
     double logEvidenceLowerBoundHidden() const
     {
-        return (parametersFromParents() - parameters()) * moments()
+        return parametersFromParents() * moments() - parameters() * moments()
                + logNormalizationParents()
                - logNormalization();
     }
@@ -130,12 +131,15 @@ public:
     // TODO: make a check that there is indeed such a child
     virtual void receiveFromChild(const Parameters<TDistribution> &msg, BaseVariable *child)
     {
+        // TODO: check if this is correct
+        m_observed = false;
         map_insert(m_childMsgs, make_pair(child->id(), msg));
     }
 
     //! updating the posterior w.r.t to the current messages
     virtual void updatePosterior()
     {
+        assert(!isObserved());
         // for all the children,
         m_params = parametersFromParents();
         for (ChildIter it = m_childMsgs.begin(); it != m_childMsgs.end(); ++it)

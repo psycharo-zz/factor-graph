@@ -29,12 +29,28 @@ inline double digamma(double x)
 }
 
 
+//! vector digamma
+inline vector<double> digammav(const vector<double> &v)
+{
+    vector<double> result(v.size(), 0);
+    transform(v.begin(), v.end(), result.begin(), digamma);
+    return result;
+}
+
+
 //! scalar gamma function ln(Gamma(x))
 inline double lngamma(double x)
 {
     return gsl_sf_lngamma(x);
 }
 
+
+inline vector<double> lngammav(const vector<double> &v)
+{
+    vector<double> result(v.size(), 0);
+    transform(v.begin(), v.end(), result.begin(), lngamma);
+    return result;
+}
 
 inline double sumv(const vector<double> &v)
 {

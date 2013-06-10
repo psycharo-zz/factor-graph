@@ -41,14 +41,14 @@ public:
 };
 
 
-Parameters<Dirichlet> operator+(const Parameters<Dirichlet> &a,
-                                const Parameters<Dirichlet> &b)
+inline Parameters<Dirichlet> operator+(const Parameters<Dirichlet> &a,
+                                       const Parameters<Dirichlet> &b)
 {
     return Parameters<Dirichlet>(a.U + b.U);
 }
 
-Parameters<Dirichlet> operator-(const Parameters<Dirichlet> &a,
-                                const Parameters<Dirichlet> &b)
+inline Parameters<Dirichlet> operator-(const Parameters<Dirichlet> &a,
+                                       const Parameters<Dirichlet> &b)
 {
     return Parameters<Dirichlet>(a.U - b.U);
 }
@@ -68,10 +68,14 @@ public:
 
 
 // dot product
-double operator*(const Parameters<Dirichlet> &params,
-                 const Moments<Dirichlet> &moments)
+inline double operator*(const Parameters<Dirichlet> &params,
+                        const Moments<Dirichlet> &moments)
 {
-    throw std::runtime_error("double operator*(const Parameters<Dirichlet> &,const Moments<Dirichlet> &): not implemented");
+    assert(params.U.size() == moments.logProb.size());
+    double result = 0;
+    for (size_t i = 0; i < params.U.size(); ++i)
+        result += (params.U[i] - 1) * moments.logProb[i];
+    return result;
 }
 
 
@@ -98,25 +102,26 @@ public:
     inline bool hasParents() const { return false; }
 
     //! override Variable
-    double logNormalization() const
+    inline double logNormalization() const
     {
-        throw std::runtime_error("Dirichlet::logNormalization():not implemented");
+        return lngamma(sumv(m_params.U)) - sumv(lngammav(m_params.U));
     }
 
     //! override Variable
-    double logNormalizationParents() const
+    inline double logNormalizationParents() const
     {
-        throw std::runtime_error("Dirichlet::logNormalization():not implemented");
+        Parameters<Dirichlet> params = parametersFromParents();
+        return lngamma(sumv(params.U)) - sumv(lngammav(params.U));
     }
 
 
     //! override HasForm<Dirichlet>
     inline Moments<Dirichlet> moments() const
     {
-        Moments<Dirichlet> result(m_dims);
+        Moments<Dirichlet> result(dims());
         // lambda functions/matrices?
         double dgSumU = digamma(sumv(m_params.U));
-        for (size_t i = 0; i < m_dims; ++i)
+        for (size_t i = 0; i < dims(); ++i)
             result.logProb[i] = digamma(m_params.U[i]) - dgSumU;
         return result;
     }

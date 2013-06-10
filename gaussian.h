@@ -24,7 +24,8 @@ template <>
 class Parameters<Gaussian>
 {
 public:
-    Parameters() {};
+    Parameters() {}
+
     // TODO: this constructor should not be necessary?
     Parameters(double mp, double p):
         meanPrecision(mp),
@@ -88,8 +89,7 @@ public:
 typedef Moments<Gaussian> GaussianMoments;
 
 
-
-
+// dot product
 inline double operator*(const Parameters<Gaussian> &params,
                         const Moments<Gaussian> &moments)
 {
@@ -99,10 +99,8 @@ inline double operator*(const Parameters<Gaussian> &params,
 
 
 
-
-
 /**
- * @brief The Gaussian class
+ * gaussian distributed variable
  */
 class Gaussian: public ContinuousVariable<Gaussian>,
                 public HasParent<Gaussian>,
@@ -205,6 +203,7 @@ public:
     //! override Variable
     inline double logNormalization() const
     {
+        // TODO: shouldn't this be from parents
         const double mean2 = sqr(m_params.meanPrecision / m_params.precision);
         const double precision = m_params.precision;
         const double logPrecision = log(precision);
@@ -218,7 +217,6 @@ public:
         return 0.5 * (m_precMsg.logPrecision - m_precMsg.precision * m_meanMsg.mean2 - LN_2PI);
     }
 
-
     // parents
     Gaussian *m_meanPar;
     Gamma *m_precPar;
@@ -226,25 +224,6 @@ public:
     // current messages received from both parents
     Moments<Gaussian> m_meanMsg;
     Moments<Gamma> m_precMsg;
-
-
-//    //! override Variable. <\eta(parents)>^T * u(V) + f(V) + g(<\eta(parents)>)
-//    inline double logEvidenceLowerBoundObserved() const
-//    {
-//        return m_precMsg.precision * m_meanMsg.mean
-//               - 0.5 * m_precMsg.precision * m_meanMsg.mean2
-//               + logNormalizationParents();
-//    }
-
-//    //! override Variable. (<\eta(parents)> - \eta^*)^T  u(V) + g(<\eta(parents)>) - g()
-//    inline double logEvidenceLowerBoundHidden() const
-//    {
-//        Parameters<Gaussian> params = parametersFromParents() - m_params;
-//        return params.meanPrecision * moments().mean
-//               - 0.5 * params.precision  * moments().mean2
-//               + logNormalizationParents() - logNormalization();
-//    }
-
 };
 
 
