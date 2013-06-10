@@ -21,15 +21,14 @@ namespace vmp
  * TBase - the type
  */
 template <typename TBase>
-class IsMixture : public ContinuousVariable,
-                  public HasParent<Discrete>,
-                  public HasForm<TBase>
+class IsMixture : public ContinuousVariable<TBase>,
+                  public HasParent<Discrete>
 {
 public:
     IsMixture(Discrete *_discrete):
         m_components(_discrete->dims(), NULL),
-        m_weightMsg(_discrete->dims()),
-        m_discrete(_discrete)
+        m_discretePar(_discrete),
+        m_weightMsg(_discrete->dims())
     {
         assert(m_components.size() == _discrete->dims());
     }
@@ -49,8 +48,8 @@ public:
     {
         for (size_t m = 0; m < numComponents(); ++m)
             m_components[m]->observe(_value);
-        m_observed = true;
-        m_value = _value;
+        this->m_observed = true;
+        this->m_value = _value;
     }
 
 
@@ -58,10 +57,17 @@ public:
     inline bool hasParents() const { return true; }
 
     //! override Variable
-    virtual double logEvidenceLowerBound() const
+    double logNormalization() const
     {
-        throw std::runtime_error("Mixture::logEvidenceLowerBound(): not implemented");
+        throw std::runtime_error("Mixture::logNormalization(): not implemented");
     }
+
+    //! override Variable
+    double logNormalizationParents() const
+    {
+        throw std::runtime_error("Mixture::logNormalization(): not implemented");
+    }
+
 
     //! override ContinuousVariable
     virtual double logProbabilityDensity(double /*value*/) const
@@ -69,21 +75,21 @@ public:
         throw std::runtime_error("IsMixture:;logProbabilityDensity(double): not implemented");
     }
 
-
     //! override HasParent<Discrete>
     void receiveFromParent(const Moments<Discrete> &msg, Discrete *parent)
     {
+        assert(m_discretePar == parent);
         m_weightMsg = msg;
     }
 
     //! override HasParent<Discrete>
     Parameters<Discrete> messageToParent(Discrete *parent) const
     {
-        assert(m_discrete == parent);
+        assert(m_discretePar == parent);
 
         DiscreteParameters params(numComponents());
-        double value = isObserved() ? m_value :
-                                      throw std::runtime_error("Mixture::messageToParent(): non-observed not supported yet");
+        double value = this->isObserved() ? this->m_value :
+                                            throw std::runtime_error("Mixture::messageToParent(): non-observed not supported yet");
         // TODO: when non-observed it actually might depend on mean AND mean2, not only on the value itself
         for (size_t m = 0; m < numComponents(); ++m)
            params.logProb[m] = m_components[m]->logProbabilityDensity(value);
@@ -91,30 +97,29 @@ public:
         return params;
     }
 
-
     //! override HasForm<TBase>
     virtual Moments<TBase> moments() const
     {
-
-
         throw std::runtime_error("IsMixture::moments(): not implemented");
     }
 
     //! override HasForm<TBase>
     virtual Parameters<TBase> parametersFromParents() const
     {
-        //
-
         throw std::runtime_error("IsMixture::parametersFromParents(): not implemented");
     }
 
-public:
+
+// DEBUG
+//private:
     //! components
     vector<TBase*> m_components;
     //! the discrete distribution
-    Discrete *m_discrete;
+    Discrete *m_discretePar;
     //! message from the discrete parent
     DiscreteMoments m_weightMsg;
+
+
 };
 
 template <typename TBase, typename TParent>

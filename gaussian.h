@@ -41,6 +41,7 @@ public:
         return *this;
     }
 };
+typedef Parameters<Gaussian> GaussianParameters;
 
 
 inline Parameters<Gaussian> operator*(const Parameters<Gaussian> &params, double val)
@@ -49,8 +50,18 @@ inline Parameters<Gaussian> operator*(const Parameters<Gaussian> &params, double
                                 params.precision * val);
 }
 
+inline Parameters<Gaussian> operator+(const Parameters<Gaussian> &a,
+                                      const Parameters<Gaussian> &b)
+{
+    return Parameters<Gaussian>(a.meanPrecision + b.meanPrecision, a.precision + b.precision);
+}
 
-typedef Parameters<Gaussian> GaussianParameters;
+
+inline Parameters<Gaussian> operator-(const Parameters<Gaussian> &a,
+                                      const Parameters<Gaussian> &b)
+{
+    return Parameters<Gaussian>(a.meanPrecision - b.meanPrecision, a.precision - b.precision);
+}
 
 
 
@@ -74,14 +85,28 @@ public:
     double mean;
     double mean2;
 };
-
 typedef Moments<Gaussian> GaussianMoments;
 
 
-class Gaussian: public ContinuousVariable,
+
+
+inline double operator*(const Parameters<Gaussian> &params,
+                        const Moments<Gaussian> &moments)
+{
+    return params.meanPrecision * moments.mean
+           - 0.5 * params.precision * moments.mean2;
+}
+
+
+
+
+
+/**
+ * @brief The Gaussian class
+ */
+class Gaussian: public ContinuousVariable<Gaussian>,
                 public HasParent<Gaussian>,
-                public HasParent<Gamma>,
-                public HasForm<Gaussian>
+                public HasParent<Gamma>
 {
 public:
     Gaussian(double _mean, double _prec):
@@ -148,6 +173,7 @@ public:
     //! <u> = [<mean>, <mean>^2 + 1./<precision>], expectations are based on the current
     inline Moments<Gaussian> moments() const
     {
+        // TODO: update this at the same time with the posterior?
         if (isObserved())
             return Moments<Gaussian>(m_value, sqr(m_value));
         else
@@ -166,12 +192,6 @@ public:
     }
 
 
-    //! compute the constitute to the lower bound on the log-evidence
-    virtual double logEvidenceLowerBound() const
-    {
-        throw std::runtime_error("Gamma::logEvidenceLowerBound(): not implemented");
-    }
-
     //! compute the log-probability value of the provided value given the current natural parameters
     // TODO: put this into ContinuousVariable?
     virtual double logProbabilityDensity(double value) const
@@ -182,7 +202,23 @@ public:
     }
 
 
-//private:
+    //! override Variable
+    inline double logNormalization() const
+    {
+        const double mean2 = sqr(m_params.meanPrecision / m_params.precision);
+        const double precision = m_params.precision;
+        const double logPrecision = log(precision);
+        return 0.5 * (logPrecision - precision * mean2 - LN_2PI);
+    }
+
+    //! override Variable
+    inline double logNormalizationParents() const
+    {
+        // 0.5 (<log(\gamma)> - <\gamma> * <\mean^2> - ln(2*PI))
+        return 0.5 * (m_precMsg.logPrecision - m_precMsg.precision * m_meanMsg.mean2 - LN_2PI);
+    }
+
+
     // parents
     Gaussian *m_meanPar;
     Gamma *m_precPar;
@@ -190,6 +226,25 @@ public:
     // current messages received from both parents
     Moments<Gaussian> m_meanMsg;
     Moments<Gamma> m_precMsg;
+
+
+//    //! override Variable. <\eta(parents)>^T * u(V) + f(V) + g(<\eta(parents)>)
+//    inline double logEvidenceLowerBoundObserved() const
+//    {
+//        return m_precMsg.precision * m_meanMsg.mean
+//               - 0.5 * m_precMsg.precision * m_meanMsg.mean2
+//               + logNormalizationParents();
+//    }
+
+//    //! override Variable. (<\eta(parents)> - \eta^*)^T  u(V) + g(<\eta(parents)>) - g()
+//    inline double logEvidenceLowerBoundHidden() const
+//    {
+//        Parameters<Gaussian> params = parametersFromParents() - m_params;
+//        return params.meanPrecision * moments().mean
+//               - 0.5 * params.precision  * moments().mean2
+//               + logNormalizationParents() - logNormalization();
+//    }
+
 };
 
 

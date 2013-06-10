@@ -41,6 +41,19 @@ public:
 };
 
 
+Parameters<Dirichlet> operator+(const Parameters<Dirichlet> &a,
+                                const Parameters<Dirichlet> &b)
+{
+    return Parameters<Dirichlet>(a.U + b.U);
+}
+
+Parameters<Dirichlet> operator-(const Parameters<Dirichlet> &a,
+                                const Parameters<Dirichlet> &b)
+{
+    return Parameters<Dirichlet>(a.U - b.U);
+}
+
+
 template<>
 class Moments<Dirichlet>
 {
@@ -54,20 +67,26 @@ public:
 };
 
 
+// dot product
+double operator*(const Parameters<Dirichlet> &params,
+                 const Moments<Dirichlet> &moments)
+{
+    throw std::runtime_error("double operator*(const Parameters<Dirichlet> &,const Moments<Dirichlet> &): not implemented");
+}
+
+
 
 /**
  * dirichlet-distributed simplex
  */
-class Dirichlet : public Variable,
-                  public HasForm<Dirichlet>
-
+class Dirichlet : public Variable<Dirichlet>
 {
 public:
     /**
      * @param _dims the dimensionality
      */
     Dirichlet(const vector<double> &u):
-        HasForm(Parameters<Dirichlet>(u)),
+        Variable(Parameters<Dirichlet>(u)),
         m_priorU(u),
         m_dims(u.size())
     {}
@@ -76,16 +95,23 @@ public:
     inline size_t dims() const { return m_dims; }
 
     //! override Variable. TODO: in current implementation cannot have a
-    virtual bool hasParents() const { return false; }
+    inline bool hasParents() const { return false; }
 
-    //! override Variable. compute the constitute to the lower bound on the log-evidence
-    virtual double logEvidenceLowerBound() const
+    //! override Variable
+    double logNormalization() const
     {
-        throw std::runtime_error("Dirichlet::logEvidenceLowerBound(): not implemented");
+        throw std::runtime_error("Dirichlet::logNormalization():not implemented");
     }
 
-    //! get the moments TODO: the same as message to children
-    virtual Moments<Dirichlet> moments() const
+    //! override Variable
+    double logNormalizationParents() const
+    {
+        throw std::runtime_error("Dirichlet::logNormalization():not implemented");
+    }
+
+
+    //! override HasForm<Dirichlet>
+    inline Moments<Dirichlet> moments() const
     {
         Moments<Dirichlet> result(m_dims);
         // lambda functions/matrices?
@@ -95,11 +121,13 @@ public:
         return result;
     }
 
-    //! get the parameters
-    virtual Parameters<Dirichlet> parametersFromParents() const
+    //! override HasForm<Dirichlet>
+    inline Parameters<Dirichlet> parametersFromParents() const
     {
         return Parameters<Dirichlet>(m_priorU);
     }
+
+
 private:
     //! the prior parameter vector
     const vector<double> m_priorU;

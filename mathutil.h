@@ -9,6 +9,7 @@
 #include <functional>
 #include <algorithm>
 using namespace std;
+#include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_sf_psi.h>
 
 namespace vmp
@@ -21,10 +22,17 @@ inline T sqr(T x) { return x*x; }
 
 // TODO: matlab support?
 
-// scalar digamma function d(ln(Gamma(x)))/dx
+//! scalar digamma function d(ln(Gamma(x)))/dx
 inline double digamma(double x)
 {
     return gsl_sf_psi(x);
+}
+
+
+//! scalar gamma function ln(Gamma(x))
+inline double lngamma(double x)
+{
+    return gsl_sf_lngamma(x);
 }
 
 
@@ -91,6 +99,9 @@ inline vector<T> operator-(const vector<T> &a, T b)
     return result;
 }
 
+
+// ln(2*PI)
+const double LN_2PI = 1.837877066409345;
 
 
 

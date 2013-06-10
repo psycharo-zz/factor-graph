@@ -15,6 +15,7 @@
 
 * Automatical inference code generation
 * Matlab Bindings (priority)
+
 * Tests for messages (depending on current messages from parents|observed / non-observed)
 
 
@@ -56,6 +57,21 @@
   4. `double logEvidenceLowerBound()`
      * computes the part of the lower bound on the log-evidence that the
        node constitutes
+
+     * in fact, this function relies on two other methods:
+     `double logEvidenceLowerBoundObserved()` and `double logEvidenceLoweboundHidden()`
+     that compute the lower bound on the log-evidence if the variable is observed and
+     hidden correspondingly. Note that this means that we actually model the network
+     as a bayesian network instead of a factor graph.
+
+  5. `double logNormalization()`
+     * computes the 'g()' function of the distribution
+     * the problem is that for constant parents it is not clear how it should be computed
+       (since the constant parents do not provide messages). one solution is to create a
+       ConstantGaussian distribution that provides constants as the output and does not
+       update its parameters.
+
+
 
 
 # Questions

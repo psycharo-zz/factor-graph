@@ -1,5 +1,3 @@
 #include <variable.h>
 
-#include <gaussian.h>
-
-size_t vmp::Variable::s_idCounter = 0;
+size_t vmp::BaseVariable::s_idCounter = 0;

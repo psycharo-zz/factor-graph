@@ -30,7 +30,6 @@ public:
         rate(_rate)
     {}
 
-
     double shape;
     double rate;
 
@@ -46,6 +45,20 @@ inline Parameters<Gamma> operator*(const Parameters<Gamma> &params, double val)
 {
     return Parameters<Gamma>(params.shape * val, params.rate * val);
 }
+
+
+inline Parameters<Gamma> operator+(const Parameters<Gamma> &a,
+                                   const Parameters<Gamma> &b)
+{
+    return Parameters<Gamma>(a.shape + b.shape, b.rate + b.rate);
+}
+
+inline Parameters<Gamma> operator-(const Parameters<Gamma> &a,
+                                   const Parameters<Gamma> &b)
+{
+    return Parameters<Gamma>(a.shape - b.shape, b.rate - b.rate);
+}
+
 
 
 typedef Parameters<Gamma> GammaParameters;
@@ -80,6 +93,16 @@ public:
 typedef Moments<Gamma> GammaMoments;
 
 
+// dot product
+inline double operator*(const Parameters<Gamma> &params,
+                        const Moments<Gamma> &moments)
+{
+    return -params.rate * moments.precision
+           +(params.shape - 1) * moments.logPrecision;
+}
+
+
+
 
 
 /**
@@ -87,8 +110,7 @@ typedef Moments<Gamma> GammaMoments;
  * univariate gamma distribution.
  * TODO: add references to all the distributions (e.g. paper/wikipedia article)
  */
-class Gamma: public ContinuousVariable,
-             public HasForm<Gamma>
+class Gamma: public ContinuousVariable<Gamma>
 {
 public:
     Gamma(double shape, double rate):
@@ -99,19 +121,26 @@ public:
     //! override Variable
     inline bool hasParents() const { return false; }
 
+
     //! override Variable
-    double logEvidenceLowerBound() const
+    double logNormalization() const
     {
-        throw std::runtime_error("Gamma::logEvidenceLowerBound(): not implemented");
+        return m_params.shape * log(m_params.rate) - lngamma(m_params.shape);
+    }
+
+    //! override Variable
+    double logNormalizationParents() const
+    {
+        return m_shapeMsg * log(m_rateMsg) - lngamma(m_shapeMsg);
     }
 
     //! override ContinuousVariable
     double logProbabilityDensity(double /*value*/) const
     {
-        throw std::runtime_error("Gamma:;logProbabilityDensity(double): not implemented");
+        throw std::runtime_error("Gamma::logProbabilityDensity(double): not implemented");
     }
 
-    //! override HasForm<Gamma>. [a/b, (ln(Gamma(a)))' - log(b)]
+    //! override Variable. [a/b, (ln(Gamma(a)))' - log(b)]
     inline Moments<Gamma> moments() const
     {
         return Moments<Gamma>(m_params.shape / m_params.rate,
@@ -124,10 +153,12 @@ public:
         return Parameters<Gamma>(m_shapeMsg, m_rateMsg);
     }
 
-//private:
+private:
     // current messages received from both parents
-    double m_shapeMsg;
-    double m_rateMsg;
+    const double m_shapeMsg;
+    const double m_rateMsg;
+
+
 };
 
 
