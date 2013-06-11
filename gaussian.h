@@ -176,8 +176,8 @@ public:
             return Moments<Gaussian>(m_value, sqr(m_value));
         else
         {
-            double mean = m_params.meanPrecision / m_params.precision;
-            double var = 1.0 / m_params.precision;
+            double mean = parameters().meanPrecision / parameters().precision;
+            double var = 1.0 / parameters().precision;
             return Moments<Gaussian>(mean, sqr(mean) + var);
         }
     }
@@ -204,8 +204,8 @@ public:
     inline double logNormalization() const
     {
         // TODO: shouldn't this be from parents
-        const double mean2 = sqr(m_params.meanPrecision / m_params.precision);
-        const double precision = m_params.precision;
+        const double mean2 = sqr(parameters().meanPrecision / parameters().precision);
+        const double precision = parameters().precision;
         const double logPrecision = log(precision);
         return 0.5 * (logPrecision - precision * mean2 - LN_2PI);
     }
@@ -214,6 +214,7 @@ public:
     inline double logNormalizationParents() const
     {
         // 0.5 (<log(\gamma)> - <\gamma> * <\mean^2> - ln(2*PI))
+        // HOW TO COMPUTE THIS FROM parametersFromParents() ??
         return 0.5 * (m_precMsg.logPrecision - m_precMsg.precision * m_meanMsg.mean2 - LN_2PI);
     }
 

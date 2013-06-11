@@ -33,6 +33,7 @@ public:
 
     Parameters &operator+=(const Parameters &other)
     {
+        throw std::runtime_error("Parameters<Discrete>::operator+=()");
         logProb += other.logProb;
         return *this;
     }
@@ -71,6 +72,7 @@ public:
         probs(_p)
     {}
 
+    // TODO: unnormalized distribution, not cool
     Moments(size_t _size):
         probs(_size)
     {}
@@ -89,9 +91,6 @@ inline double operator*(const Parameters<Discrete> &params,
     assert(params.logProb.size() == moments.probs.size());
     return std::inner_product(params.logProb.begin(), params.logProb.end(), moments.probs.begin(), 0.0);
 }
-
-
-
 
 
 
@@ -131,12 +130,15 @@ public:
     inline bool hasParents() const { return m_parent != NULL; }
 
     //! override Variable
-    double logNormalization() const { return 0.0; }
+    double logNormalization() const
+    {
+        return vmp::lognorm(parameters().logProb);
+    }
 
     //! override Variable
     double logNormalizationParents() const { return 0.0; }
 
-    //! override HasForm<Discrete>
+    //! override Variable
     Moments<Discrete> moments() const
     {
         if (isObserved())
@@ -146,7 +148,8 @@ public:
             return Moments<Discrete>(probs);
         }
         else
-            return Moments<Discrete>(expv(m_params.logProb));
+            // TODO: update these quantities when updating the posterior
+            return Moments<Discrete>(expv(parameters().logProb - lognorm(parameters().logProb)));
     }
 
     //! override HasForm<Discrete>
@@ -170,12 +173,14 @@ public:
         return Parameters<Dirichlet>(moments().probs);
     }
 
-    //! override HasForm<Discrete>
-    virtual void updatePosterior()
+    void updatePosterior()
     {
-        Variable<Discrete>::updatePosterior();
-        double norm = sumv(expv(m_params.logProb));
-        m_params.logProb = m_params.logProb - log(norm);
+        assert(!isObserved());
+        // for all the children,
+        m_params = parametersFromParents();
+        for (ChildIter it = m_childMsgs.begin(); it != m_childMsgs.end(); ++it)
+            m_params = m_params + it->second;
+        cout << "SIZE:" << m_childMsgs.size() << endl;
     }
 
 

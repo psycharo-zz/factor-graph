@@ -30,7 +30,7 @@ void trainDirichlet(const size_t maxNumIters)
     }
 
 
-    cout << dir->logEvidenceLowerBound() << endl;
+    double lbPrev = std::numeric_limits<double>::lowest();
 
     for (size_t iter = 0; iter < maxNumIters; ++iter)
     {
@@ -47,12 +47,15 @@ void trainDirichlet(const size_t maxNumIters)
         for (size_t p = 0; p < lambda.size(); ++p)
             lbData += lambda[p]->logEvidenceLowerBound();
 
-        cout << dir->logEvidenceLowerBound() << endl;
+        double lbCurr = dir->logEvidenceLowerBound() +  lbData;
 
-//        cout <<  << endl;
-//        cout << dir->logEvidenceLowerBound() << endl;
-
-//        cout << expv(dir->moments().logProb) << endl;
+        if (lbCurr - lbPrev < 1e-3)
+        {
+            cout << "finished at: " << iter << " iterations "
+                 << "with lb=" << lbCurr << endl;
+            break;
+        }
+        lbPrev = lbCurr;
     }
 
     // sanity check
@@ -65,7 +68,7 @@ void trainDirichlet(const size_t maxNumIters)
 
 
 
-void trainUnivariateGaussian()
+void trainUnivariateGaussian(const size_t maxNumIters)
 {
     Gaussian mu(0, 1e-3);
     mu.updatePosterior();
@@ -85,10 +88,9 @@ void trainUnivariateGaussian()
     cout << NUM_POINTS << endl;
 
 
-    double lbPrev = numeric_limits<double>::min();
+    double lbPrev = numeric_limits<double>::lowest();
 
     // doing the updates
-    size_t maxNumIters = 10;
     for (size_t iter = 0; iter < maxNumIters; ++iter)
     {
         for (size_t p = 0; p < x.size(); ++p)
@@ -109,15 +111,11 @@ void trainUnivariateGaussian()
         }
         gamma.updatePosterior();
 
-        double lbCurr = mu.logEvidenceLowerBound() + gamma.logEvidenceLowerBound();
-
-        cout << lbCurr << endl;
-
         double lbData = 0;
         for (size_t p = 0; p < x.size(); ++p)
             lbData += x[p].logEvidenceLowerBound();
 
-        lbCurr = lbData;
+        double lbCurr = lbData + mu.logEvidenceLowerBound() + gamma.logEvidenceLowerBound();
 
         if (fabs(lbCurr - lbPrev) < 1e-4)
         {
@@ -142,10 +140,7 @@ void trainUnivariateGaussian()
 
 
 
-
-
-
-void trainMixtureOfUnivariateGaussians()
+void trainMixtureOfUnivariateGaussians(const size_t maxNumIters)
 {
 
     const size_t DIMS = 4;
@@ -171,20 +166,23 @@ void trainMixtureOfUnivariateGaussians()
     for (size_t p = 0; p < MIX_NUM_POINTS; ++p)
     {
         discr[p] = new Discrete(dir);
-        discr[p]->observe(INIT_DISCRETE[p]-1);
         data[p] = new MoG(mean, prec, discr[p]);
+
+        // TODO: using the message passing instead of observing directly
+        vector<double> logProb(DIMS, -1);
+        logProb[INIT_DISCRETE[p]-1] = 0;
+
+        discr[p]->receiveFromParent(dir->messageToChildren(), dir);
+        discr[p]->receiveFromChild(Parameters<Discrete>(logProb), data[p]);
+        discr[p]->updatePosterior();
+
         data[p]->observe(MIX_DATA[p]);
         data[p]->receiveFromParent(discr[p]->messageToChildren(), discr[p]);
-
-        // needs a message from a parent TODO: arrays are indeed necessary
-        for (size_t m = 0; m < DIMS; ++m)
-            data[p]->receiveFromParent(m, prec[m]->messageToChildren(), prec[m]);
     }
 
 
     // doing the inference
-    const size_t numIters = 100;
-    for (size_t iter = 0; iter < numIters; ++iter)
+    for (size_t iter = 0; iter < maxNumIters; ++iter)
     {
         // for each
 
@@ -219,11 +217,18 @@ void trainMixtureOfUnivariateGaussians()
         }
 
         // updating the discrete distributions
+        auto parent = dir->messageToChildren().logProb;
+
         for (size_t p = 0; p < MIX_NUM_POINTS; ++p)
         {
             discr[p]->receiveFromParent(dir->messageToChildren(), dir);
             discr[p]->receiveFromChild(data[p]->messageToParent(discr[p]), data[p]);
+
+            auto msg = data[p]->messageToParent(discr[p]).logProb;
+
             discr[p]->updatePosterior();
+
+            cout << (discr[p]->parameters().logProb - (parent + msg)) << endl;
         }
 
         // updating the dirichlet
@@ -232,12 +237,26 @@ void trainMixtureOfUnivariateGaussians()
         dir->updatePosterior();
 
         for (size_t p = 0; p < MIX_NUM_POINTS; ++p)
-        {
-            discr[p]->receiveFromParent(dir->messageToChildren(), dir);
-            discr[p]->updatePosterior();
             // updating the data
             data[p]->receiveFromParent(discr[p]->messageToChildren(), discr[p]);
+
+        // computing the lower bound
+        double lbMean = 0;
+        double lbPrec = 0;
+        for (size_t m = 0; m < DIMS; ++m)
+        {
+            lbMean += mean[m]->logEvidenceLowerBound();
+            lbPrec += prec[m]->logEvidenceLowerBound();
         }
+
+//        for (size_t p = 0; p < NUM_POINTS; ++p)
+//        {
+////            cout << discr[p]->logEvidenceLowerBoundHidden() << endl;
+//            cout << expv(discr[p]->parametersFromParents().logProb) << endl;
+//            cout << expv(discr[p]->parameters().logProb) << endl;
+//            cout << discr[p]->moments().
+//        }
+
     }
 
 

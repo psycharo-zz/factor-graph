@@ -104,7 +104,7 @@ public:
     //! override Variable
     inline double logNormalization() const
     {
-        return lngamma(sumv(m_params.U)) - sumv(lngammav(m_params.U));
+        return lngamma(sumv(parameters().U)) - sumv(lngammav(parameters().U));
     }
 
     //! override Variable
@@ -120,9 +120,10 @@ public:
     {
         Moments<Dirichlet> result(dims());
         // lambda functions/matrices?
-        double dgSumU = digamma(sumv(m_params.U));
+        double dgSumU = digamma(sumv(parameters().U));
         for (size_t i = 0; i < dims(); ++i)
-            result.logProb[i] = digamma(m_params.U[i]) - dgSumU;
+            result.logProb[i] = digamma(parameters().U[i]) - dgSumU;
+        // TODO: is normalization required here?
         return result;
     }
 

@@ -125,7 +125,7 @@ public:
     //! override Variable
     double logNormalization() const
     {
-        return m_params.shape * log(m_params.rate) - lngamma(m_params.shape);
+        return parameters().shape * log(parameters().rate) - lngamma(parameters().shape);
     }
 
     //! override Variable
@@ -144,8 +144,8 @@ public:
     //! override Variable. [a/b, (ln(Gamma(a)))' - log(b)]
     inline Moments<Gamma> moments() const
     {
-        return Moments<Gamma>(m_params.shape / m_params.rate,
-                              digamma(m_params.shape) - log(m_params.rate));
+        return Moments<Gamma>(parameters().shape / parameters().rate,
+                              digamma(parameters().shape) - log(parameters().rate));
     }
 
     //! override HasForm<Gamma>. simply a constant for gamma distribution

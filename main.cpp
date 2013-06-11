@@ -20,9 +20,9 @@ using namespace vmp;
 
 int main()
 {
-//    trainUnivariateGaussian();
-//   trainMixtureOfUnivariateGaussians();
-    trainDirichlet(50);
+//    trainUnivariateGaussian(10);
+   trainMixtureOfUnivariateGaussians(120);
+//    trainDirichlet(50);
 
     return 0;
 }

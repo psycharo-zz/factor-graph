@@ -89,7 +89,11 @@ public:
     virtual Parameters<TDistribution> parametersFromParents() const = 0;
 
     //! posterior parameters of the distribution
-    inline virtual const Parameters<TDistribution> &parameters() const { return m_params; }
+    inline virtual const Parameters<TDistribution> &parameters() const
+    {
+        assert(!isObserved());
+        return m_params;
+    }
 
 
     //! compute the constitute to the lower bound on the log-evidence
@@ -102,7 +106,8 @@ public:
     //! compute LB in case the variable is observed
     double logEvidenceLowerBoundObserved() const
     {
-        return parameters() * moments()
+        // TODO: m_params SHOULD NOT BE USED for the observed variables!
+        return parametersFromParents() * moments()
              + logNormalizationParents();
     }
 
@@ -134,6 +139,12 @@ public:
         // TODO: check if this is correct
         m_observed = false;
         map_insert(m_childMsgs, make_pair(child->id(), msg));
+    }
+
+
+    Parameters<TDistribution> messageFromChild(BaseVariable *child)
+    {
+        return m_childMsgs[child->id()];
     }
 
     //! updating the posterior w.r.t to the current messages

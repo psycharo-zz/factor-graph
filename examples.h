@@ -50,9 +50,9 @@ const double INIT_DIRICHLET[] = {1.0940674616885, 1.83176174760137,1.42667755173
 
 void trainDirichlet(const size_t maxNumIters);
 
-void trainUnivariateGaussian();
+void trainUnivariateGaussian(const size_t maxNumIters);
 
-void trainMixtureOfUnivariateGaussians();
+void trainMixtureOfUnivariateGaussians(const size_t maxNumIters);
 
 
 

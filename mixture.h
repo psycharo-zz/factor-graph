@@ -18,10 +18,10 @@ namespace vmp
 
 /**
  * base abstract class to implement mixture models
- * TBase - the type
+ * TDistribution - the type
  */
-template <typename TBase>
-class IsMixture : public ContinuousVariable<TBase>,
+template <typename TDistribution>
+class IsMixture : public ContinuousVariable<TDistribution>,
                   public HasParent<Discrete>
 {
 public:
@@ -30,6 +30,7 @@ public:
         m_discretePar(_discrete),
         m_weightMsg(_discrete->dims())
     {
+        assert(_discrete->dims() > 0);
         assert(m_components.size() == _discrete->dims());
     }
 
@@ -40,7 +41,7 @@ public:
     inline double componentWeight(size_t idx) const { return m_weightMsg.probs[idx]; }
 
     //! get mixture component by its index
-    inline TBase *component(size_t idx) const { return m_components[idx]; }
+    inline TDistribution *component(size_t idx) const { return m_components[idx]; }
 
 
     //! override ContinuousVariable
@@ -57,13 +58,13 @@ public:
     inline bool hasParents() const { return true; }
 
     //! override Variable
-    double logNormalization() const
+    virtual double logNormalization() const
     {
         throw std::runtime_error("Mixture::logNormalization(): not implemented");
     }
 
     //! override Variable
-    double logNormalizationParents() const
+    virtual double logNormalizationParents() const
     {
         throw std::runtime_error("Mixture::logNormalization(): not implemented");
     }
@@ -93,27 +94,34 @@ public:
         // TODO: when non-observed it actually might depend on mean AND mean2, not only on the value itself
         for (size_t m = 0; m < numComponents(); ++m)
            params.logProb[m] = m_components[m]->logProbabilityDensity(value);
+        params.logProb -= lognorm(params.logProb);
 
         return params;
     }
 
-    //! override HasForm<TBase>
-    virtual Moments<TBase> moments() const
+    //! override Variable
+    virtual Moments<TDistribution> moments() const
     {
+        // TODO: FIXME
         throw std::runtime_error("IsMixture::moments(): not implemented");
     }
 
-    //! override HasForm<TBase>
-    virtual Parameters<TBase> parametersFromParents() const
+    //! override Variable
+    Parameters<TDistribution> parametersFromParents() const
     {
-        throw std::runtime_error("IsMixture::parametersFromParents(): not implemented");
+        // TODO: FIXME
+        Parameters<TDistribution> params;
+
+        for (size_t m = 0; m < numComponents(); ++m)
+            params += m_components[m]->parametersFromParents() * componentWeight(m);
+
+//        throw std::runtime_error("IsMixture::parametersFromParents(): not implemented");
+        return params;
     }
 
-
-// DEBUG
-//private:
+protected:
     //! components
-    vector<TBase*> m_components;
+    vector<TDistribution*> m_components;
     //! the discrete distribution
     Discrete *m_discretePar;
     //! message from the discrete parent
@@ -122,12 +130,12 @@ public:
 
 };
 
-template <typename TBase, typename TParent>
-class HasMixtureParent : public virtual IsMixture<TBase>
+template <typename TDistribution, typename TParent>
+class HasMixtureParent : public virtual IsMixture<TDistribution>
 {
 public:
-    HasMixtureParent<TBase, TParent>(Discrete *_discr):
-        IsMixture<TBase>(_discr)
+    HasMixtureParent<TDistribution, TParent>(Discrete *_discr):
+        IsMixture<TDistribution>(_discr)
     {}
 
     void receiveFromParent(size_t idx, const Moments<TParent> &ms, TParent *parent)
@@ -156,8 +164,6 @@ public:
     {
         for (size_t m = 0; m < numComponents(); ++m)
             m_components[m] = new Gaussian(_meanPars[m], _precPars[m]);
-
-
     }
 
     using IsMixture<Gaussian>::m_components;
@@ -169,6 +175,31 @@ public:
     using IsMixture<Gaussian>::messageToParent;
     using HasMixtureParent<Gaussian, Gaussian>::messageToParent;
     using HasMixtureParent<Gaussian, Gamma>::messageToParent;
+
+
+    //! override Variable
+    Moments<Gaussian> moments() const
+    {
+        return Moments<Gaussian>(this->m_value, sqr(this->m_value));
+    }
+
+
+    //! override Variable
+    double logNormalization() const
+    {
+        throw std::runtime_error("MoG::logNormalization(): not implemented");
+    }
+
+    //! override Variable
+    double logNormalizationParents() const
+    {
+        Parameters<Gaussian> params = parametersFromParents();
+        double mean2 = sqr(params.meanPrecision / params.precision);
+        double precision = params.precision;
+        double logPrecision = log(params.precision);
+
+        return 0.5 * (logPrecision - precision * mean2 - LN_2PI);
+    }
 
 
     virtual ~MoG()

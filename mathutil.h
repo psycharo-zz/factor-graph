@@ -67,6 +67,25 @@ inline vector<double> expv(const vector<double> &v)
 }
 
 
+
+//! normalize the vector to sum up to one
+inline void normalize(vector<double> &v)
+{
+    double norm = sumv(v);
+    for (vector<double>::iterator it = v.begin(); it != v.end(); ++it)
+        *it /= norm;
+}
+
+//! get the normalization factor (summand) for the vector in log-domain
+inline double lognorm(const vector<double> &v)
+{
+    double result = 0.0;
+    for (vector<double>::const_iterator it = v.begin(); it != v.end(); ++it)
+        result += exp(*it);
+    return log(result);
+}
+
+
 template <typename T>
 inline vector<T> &operator+=(vector<T> &a, const vector<T> &other)
 {
@@ -74,12 +93,48 @@ inline vector<T> &operator+=(vector<T> &a, const vector<T> &other)
     return a;
 }
 
+
 template <typename T>
 inline vector<T> &operator-=(vector<T> &a, const vector<T> &other)
 {
     transform(a.begin(), a.end(), other.begin(), a.begin(), std::minus<double>());
     return a;
 }
+
+
+template <typename T>
+inline vector<T> &operator+=(vector<T> &v, T val)
+{
+    for (vector<double>::iterator it = v.begin(); it != v.end(); ++it)
+        *it += val;
+    return v;
+}
+
+template <typename T>
+inline vector<T> &operator-=(vector<T> &v, T val)
+{
+    for (vector<double>::iterator it = v.begin(); it != v.end(); ++it)
+        *it -= val;
+    return v;
+}
+
+
+template <typename T>
+inline vector<T> &operator*=(vector<T> &v, T val)
+{
+    for (vector<double>::iterator it = v.begin(); it != v.end(); ++it)
+        *it *= val;
+    return v;
+}
+
+template <typename T>
+inline vector<T> &operator/=(vector<T> &v, T val)
+{
+    for (vector<double>::iterator it = v.begin(); it != v.end(); ++it)
+        *it /= val;
+    return v;
+}
+
 
 template <typename T>
 inline vector<T> operator+(const vector<T> &a, const vector<T> &b)
@@ -114,6 +169,10 @@ inline vector<T> operator-(const vector<T> &a, T b)
         result[i] = a[i] - b;
     return result;
 }
+
+
+
+
 
 
 // ln(2*PI)
