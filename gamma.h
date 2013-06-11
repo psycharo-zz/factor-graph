@@ -131,8 +131,8 @@ public:
     //! override Variable
     double logNormalizationParents() const
     {
-        Parameters<Gamma> params = parametersFromParents();
-        return params.shape * log(params.rate) - lngamma(params.rate);
+//        Parameters<Gamma> params = parametersFromParents();
+        return m_shapeMsg * log(m_rateMsg) - lngamma(m_shapeMsg);
     }
 
     //! override ContinuousVariable

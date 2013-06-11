@@ -169,6 +169,7 @@ public:
     }
 
     //! <u> = [<mean>, <mean>^2 + 1./<precision>], expectations are based on the current
+    // TODO: this should only be updated when parameters are updated
     inline Moments<Gaussian> moments() const
     {
         // TODO: update this at the same time with the posterior?
@@ -215,7 +216,7 @@ public:
     {
         // 0.5 (<log(\gamma)> - <\gamma> * <\mean^2> - ln(2*PI))
         // HOW TO COMPUTE THIS FROM parametersFromParents() ??
-        return 0.5 * (m_precMsg.logPrecision - m_precMsg.precision * m_meanMsg.mean2 - LN_2PI);
+        return 0.5 * (m_precMsg.logPrecision - m_precMsg.precision * m_meanMsg.mean2 - log(2 * M_PI));
     }
 
     // parents

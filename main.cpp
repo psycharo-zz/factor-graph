@@ -21,8 +21,7 @@ using namespace vmp;
 int main()
 {
 //    trainUnivariateGaussian(10);
-   trainMixtureOfUnivariateGaussians(120);
-//    trainDirichlet(50);
+    trainMixtureOfUnivariateGaussians(120);
 
     return 0;
 }

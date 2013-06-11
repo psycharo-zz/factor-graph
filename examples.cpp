@@ -58,6 +58,8 @@ void trainDirichlet(const size_t maxNumIters)
         lbPrev = lbCurr;
     }
 
+    cout << expv(dir->moments().logProb) << endl;
+
     // sanity check
     cout << sumv(expv(dir->moments().logProb)) << endl;
 
@@ -136,10 +138,6 @@ void trainUnivariateGaussian(const size_t maxNumIters)
 
 
 
-
-
-
-
 void trainMixtureOfUnivariateGaussians(const size_t maxNumIters)
 {
 
@@ -180,6 +178,7 @@ void trainMixtureOfUnivariateGaussians(const size_t maxNumIters)
         data[p]->receiveFromParent(discr[p]->messageToChildren(), discr[p]);
     }
 
+    double lbPrev = std::numeric_limits<double>::lowest();
 
     // doing the inference
     for (size_t iter = 0; iter < maxNumIters; ++iter)
@@ -217,22 +216,12 @@ void trainMixtureOfUnivariateGaussians(const size_t maxNumIters)
         }
 
         // updating the discrete distributions
-        auto parent = dir->messageToChildren().logProb;
-
         for (size_t p = 0; p < MIX_NUM_POINTS; ++p)
         {
             discr[p]->receiveFromParent(dir->messageToChildren(), dir);
             discr[p]->receiveFromChild(data[p]->messageToParent(discr[p]), data[p]);
             discr[p]->updatePosterior();
-
-            cout << discr[p]->logEvidenceLowerBound() << endl;
-
-
-//            cout << discr[p]->logNormalization() << "\t"
-//                 << discr[p]->logNormalizationParents() << endl;
         }
-
-
 
         // updating the dirichlet
         for (size_t p = 0; p < MIX_NUM_POINTS; ++p)
@@ -251,6 +240,27 @@ void trainMixtureOfUnivariateGaussians(const size_t maxNumIters)
             lbMean += mean[m]->logEvidenceLowerBound();
             lbPrec += prec[m]->logEvidenceLowerBound();
         }
+
+        double lbDiscr = 0;
+        for (size_t p = 0; p < MIX_NUM_POINTS; ++p)
+            lbDiscr += discr[p]->logEvidenceLowerBound();
+
+        double lbData = 0;
+        for (size_t p = 0; p < MIX_NUM_POINTS; ++p)
+            lbData += data[p]->logEvidenceLowerBound();
+
+        double lbCurr = 0;
+        lbCurr += lbData + lbDiscr + lbMean + lbPrec;
+
+        if (fabs(lbCurr - lbPrev) < 1e-4)
+        {
+            cout << "stopped at:" << iter << " iterations"
+                 << endl
+                 << "lb=" << lbCurr
+                 << endl;
+            break;
+        }
+        lbPrev = lbCurr;
 
     }
 

@@ -99,26 +99,6 @@ public:
         return params;
     }
 
-    //! override Variable
-    virtual Moments<TDistribution> moments() const
-    {
-        // TODO: FIXME
-        throw std::runtime_error("IsMixture::moments(): not implemented");
-    }
-
-    //! override Variable
-    Parameters<TDistribution> parametersFromParents() const
-    {
-        // TODO: FIXME
-        Parameters<TDistribution> params;
-
-        for (size_t m = 0; m < numComponents(); ++m)
-            params += m_components[m]->parametersFromParents() * componentWeight(m);
-
-//        throw std::runtime_error("IsMixture::parametersFromParents(): not implemented");
-        return params;
-    }
-
 protected:
     //! components
     vector<TDistribution*> m_components;
@@ -183,6 +163,15 @@ public:
         return Moments<Gaussian>(this->m_value, sqr(this->m_value));
     }
 
+    //! override Variable
+    Parameters<Gaussian> parametersFromParents() const
+    {
+        // TODO: FIXME
+        Parameters<Gaussian> params;
+        for (size_t m = 0; m < numComponents(); ++m)
+            params += component(m)->parametersFromParents() * componentWeight(m);
+        return params;
+    }
 
     //! override Variable
     double logNormalization() const
@@ -193,12 +182,15 @@ public:
     //! override Variable
     double logNormalizationParents() const
     {
-        Parameters<Gaussian> params = parametersFromParents();
-        double mean2 = sqr(params.meanPrecision / params.precision);
-        double precision = params.precision;
-        double logPrecision = log(params.precision);
-
-        return 0.5 * (logPrecision - precision * mean2 - LN_2PI);
+        double result = 0;
+        for (size_t m = 0; m < numComponents(); ++m)
+            result += component(m)->logNormalizationParents() * componentWeight(m);
+        return result;
+//        Parameters<Gaussian> params = parametersFromParents();
+//        double mean2 = sqr(params.meanPrecision / params.precision);
+//        double precision = params.precision;
+//        double logPrecision = log(params.precision);
+//        return 0.5 * (logPrecision - precision * mean2 - LN_2PI);
     }
 
 
