@@ -3,8 +3,6 @@
 
 
 #include <vector>
-#include <functional>
-#include <numeric>
 #include <stdexcept>
 using namespace std;
 

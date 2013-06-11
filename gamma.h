@@ -58,9 +58,6 @@ inline Parameters<Gamma> operator-(const Parameters<Gamma> &a,
 {
     return Parameters<Gamma>(a.shape - b.shape, b.rate - b.rate);
 }
-
-
-
 typedef Parameters<Gamma> GammaParameters;
 
 
@@ -136,7 +133,7 @@ public:
     }
 
     //! override ContinuousVariable
-    double logProbabilityDensity(double /*value*/) const
+    double logProbabilityDensity(const Moments<Gamma> &/*ms*/) const
     {
         throw std::runtime_error("Gamma::logProbabilityDensity(double): not implemented");
     }
@@ -156,10 +153,9 @@ public:
 
 private:
     // current messages received from both parents
+    // TODO: introduce a fake const distribution
     const double m_shapeMsg;
     const double m_rateMsg;
-
-
 };
 
 

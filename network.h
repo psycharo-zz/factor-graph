@@ -34,8 +34,7 @@ public:
 
 private:
     // TODO: smart pointers
-    // TODO: separate thing for array?
-//    map<size_t, auto_ptr<BaseVariable> > m_variables;
+    map<size_t, BaseVariable*> m_variables;
 
     //! indexed children (id -> children[])
     multimap<size_t, size_t> m_children;

@@ -189,11 +189,7 @@ public:
     // virtual double sample() = 0;
 
     //! compute the pdf value fpor the given value
-    virtual double logProbabilityDensity(double value) const = 0;
-
-    //! get the value in case it is observed
-    // TODO: is it necessary? maybe just use moments()
-    inline double value() const { return m_value; }
+    virtual double logProbabilityDensity(const Moments<TDistribution> &m) const = 0;
 
 protected:
     //! stored value in case it is observed

@@ -1,9 +1,9 @@
 # Global TODO
 * Learn univariate gaussians: DONE
-* Create a separate branch in the factor-graph repo
-* Learn univariate mixture models: IN PROGRESS
+* Create a separate branch in the factor-graph repo: IN PROGRESS
+* Learn univariate mixture models: DONE
 
-* Algonquin implementation: based on univariate mixtures
+* Algonquin implementation: based on univariate mixtures: IN PROGRESS
 
 * Learn multivariate gaussians: NOT NECESSARY?
 * Learn multivariate mixture models: NOT NECESSARY?
@@ -12,13 +12,10 @@
   * ?? the difference is that in factor graphs factors can be NOT ONLY DISTRIBUTIONS
        but also deterministic functions
 
-
 * Automatical inference code generation
 * Matlab Bindings (priority)
 
 * Tests for messages (depending on current messages from parents|observed / non-observed)
-
-
 
 
 # Current TODO
@@ -64,14 +61,12 @@
      hidden correspondingly. Note that this means that we actually model the network
      as a bayesian network instead of a factor graph.
 
-  5. `double logNormalization()`
+  5. `double logNormalization()` and `double logNormalizationParents()`
      * computes the 'g()' function of the distribution
      * the problem is that for constant parents it is not clear how it should be computed
        (since the constant parents do not provide messages). one solution is to create a
        ConstantGaussian distribution that provides constants as the output and does not
        update its parameters.
-
-
 
 
 # Questions
@@ -104,10 +99,4 @@
   * ??? Some nodes that do not have parents-variables (meaning that the paremeters
     of their distributions are fixed), have _fixed_ messages from parents ???
 
-
-
-* everything is defined as a set of variables connected via factors
-* every variable can be:
-    -continuous/discrete
-    -observed (point mass) / unobserved (the actual distribution)
 

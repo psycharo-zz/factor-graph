@@ -172,12 +172,12 @@ inline vector<T> operator-(const vector<T> &a, T b)
 
 
 
-
-
-
 // ln(2*PI)
 const double LN_2PI = 1.837877066409345;
 
+
+// EPSILON
+const double EPSILON = 1e-5;
 
 
 

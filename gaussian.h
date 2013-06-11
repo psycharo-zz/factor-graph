@@ -193,8 +193,9 @@ public:
 
     //! compute the log-probability value of the provided value given the current natural parameters
     // TODO: put this into ContinuousVariable?
-    virtual double logProbabilityDensity(double value) const
+    virtual double logProbabilityDensity(const Moments<Gaussian> &ms) const
     {
+        double value = ms.mean;
         return 0.5 * (m_precMsg.logPrecision
                       -m_precMsg.precision * (sqr(value) - 2 * value * m_meanMsg.mean + m_meanMsg.mean2)
                       -LN_2PI);

@@ -49,7 +49,7 @@ void trainDirichlet(const size_t maxNumIters)
 
         double lbCurr = dir->logEvidenceLowerBound() +  lbData;
 
-        if (lbCurr - lbPrev < 1e-3)
+        if (lbCurr - lbPrev < EPSILON)
         {
             cout << "finished at: " << iter << " iterations "
                  << "with lb=" << lbCurr << endl;
@@ -119,7 +119,7 @@ void trainUnivariateGaussian(const size_t maxNumIters)
 
         double lbCurr = lbData + mu.logEvidenceLowerBound() + gamma.logEvidenceLowerBound();
 
-        if (fabs(lbCurr - lbPrev) < 1e-4)
+        if (fabs(lbCurr - lbPrev) < EPSILON)
         {
             cout << "stopped at:" << iter << " iterations"
                  << endl
@@ -140,10 +140,10 @@ void trainUnivariateGaussian(const size_t maxNumIters)
 
 void trainMixtureOfUnivariateGaussians(const size_t maxNumIters)
 {
+    const size_t DIMS = 20;
 
-    const size_t DIMS = 4;
-
-    Dirichlet *dir = new Dirichlet(vector<double>(INIT_DIRICHLET, INIT_DIRICHLET+DIMS));
+    // TODO: random dirichlet initialisation
+    Dirichlet *dir = new Dirichlet(vector<double>(DIMS, 1));
     vector<Gaussian*> mean(DIMS, NULL);
     vector<Gamma*> prec(DIMS, NULL);
 
@@ -168,7 +168,7 @@ void trainMixtureOfUnivariateGaussians(const size_t maxNumIters)
 
         // TODO: using the message passing instead of observing directly
         vector<double> logProb(DIMS, -1);
-        logProb[INIT_DISCRETE[p]-1] = 0;
+        logProb[discr[p]->sample()] = 0;
 
         discr[p]->receiveFromParent(dir->messageToChildren(), dir);
         discr[p]->receiveFromChild(Parameters<Discrete>(logProb), data[p]);
@@ -183,8 +183,6 @@ void trainMixtureOfUnivariateGaussians(const size_t maxNumIters)
     // doing the inference
     for (size_t iter = 0; iter < maxNumIters; ++iter)
     {
-        // for each
-
         // updating the mean components
         for (size_t m = 0; m < DIMS; ++m)
         {
@@ -252,7 +250,7 @@ void trainMixtureOfUnivariateGaussians(const size_t maxNumIters)
         double lbCurr = 0;
         lbCurr += lbData + lbDiscr + lbMean + lbPrec;
 
-        if (fabs(lbCurr - lbPrev) < 1e-4)
+        if (fabs(lbCurr - lbPrev) < EPSILON)
         {
             cout << "stopped at:" << iter << " iterations"
                  << endl

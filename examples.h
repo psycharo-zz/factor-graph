@@ -41,13 +41,6 @@ const double MIX_DATA[] = {
 const size_t MIX_NUM_POINTS = sizeof(MIX_DATA) / sizeof(double);
 
 
-const size_t INIT_DISCRETE[] = {3,3,4,1,3,4,1,4,4,3,3,3,1,3,2,2,3,4,1,4,4,2,4,2,3,4,2,2,2,3,2,2,4,4,1,4,1,1,1,2,2,4,4,1,2,4,1,1,
-                                1,1,3,1,3,2,2,4,1,2,2,3,3,1,4,2,2,1,2,1,2,4,4,4,1,1,3,1,2,3,1,3,1,2,1,3,2,1,2,3,2,3,2,1,2,2,2,1,
-                                3,1,2,2,3,1,4,4,2,1,3,2,4,3,1,4,3,1,1,4,1,1,3,1};
-const double INIT_DIRICHLET[] = {1.0940674616885, 1.83176174760137,1.42667755173837,1.2569};
-
-
-
 void trainDirichlet(const size_t maxNumIters);
 
 void trainUnivariateGaussian(const size_t maxNumIters);
