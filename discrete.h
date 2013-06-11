@@ -33,7 +33,6 @@ public:
 
     Parameters &operator+=(const Parameters &other)
     {
-        throw std::runtime_error("Parameters<Discrete>::operator+=()");
         logProb += other.logProb;
         return *this;
     }
@@ -130,6 +129,14 @@ public:
     inline bool hasParents() const { return m_parent != NULL; }
 
     //! override Variable
+    inline virtual Parameters<Discrete> parameters() const
+    {
+        Parameters<Discrete> result = Variable::parameters();
+        result.logProb -= lognorm(result.logProb);
+        return result;
+    }
+
+    //! override Variable
     double logNormalization() const
     {
         return vmp::lognorm(parameters().logProb);
@@ -171,16 +178,6 @@ public:
     {
         // TODO: isn't it weird that this messages are computed ?FROM MOMENTS?
         return Parameters<Dirichlet>(moments().probs);
-    }
-
-    void updatePosterior()
-    {
-        assert(!isObserved());
-        // for all the children,
-        m_params = parametersFromParents();
-        for (ChildIter it = m_childMsgs.begin(); it != m_childMsgs.end(); ++it)
-            m_params = m_params + it->second;
-        cout << "SIZE:" << m_childMsgs.size() << endl;
     }
 
 

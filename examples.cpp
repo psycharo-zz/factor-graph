@@ -223,13 +223,16 @@ void trainMixtureOfUnivariateGaussians(const size_t maxNumIters)
         {
             discr[p]->receiveFromParent(dir->messageToChildren(), dir);
             discr[p]->receiveFromChild(data[p]->messageToParent(discr[p]), data[p]);
-
-            auto msg = data[p]->messageToParent(discr[p]).logProb;
-
             discr[p]->updatePosterior();
 
-            cout << (discr[p]->parameters().logProb - (parent + msg)) << endl;
+            cout << discr[p]->logEvidenceLowerBound() << endl;
+
+
+//            cout << discr[p]->logNormalization() << "\t"
+//                 << discr[p]->logNormalizationParents() << endl;
         }
+
+
 
         // updating the dirichlet
         for (size_t p = 0; p < MIX_NUM_POINTS; ++p)
@@ -248,14 +251,6 @@ void trainMixtureOfUnivariateGaussians(const size_t maxNumIters)
             lbMean += mean[m]->logEvidenceLowerBound();
             lbPrec += prec[m]->logEvidenceLowerBound();
         }
-
-//        for (size_t p = 0; p < NUM_POINTS; ++p)
-//        {
-////            cout << discr[p]->logEvidenceLowerBoundHidden() << endl;
-//            cout << expv(discr[p]->parametersFromParents().logProb) << endl;
-//            cout << expv(discr[p]->parameters().logProb) << endl;
-//            cout << discr[p]->moments().
-//        }
 
     }
 

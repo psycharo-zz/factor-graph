@@ -115,7 +115,7 @@ public:
     }
 
 
-    //! override HasForm<Dirichlet>
+    //! override Variable
     inline Moments<Dirichlet> moments() const
     {
         Moments<Dirichlet> result(dims());
@@ -124,6 +124,7 @@ public:
         for (size_t i = 0; i < dims(); ++i)
             result.logProb[i] = digamma(parameters().U[i]) - dgSumU;
         // TODO: is normalization required here?
+        result.logProb -= lognorm(result.logProb);
         return result;
     }
 

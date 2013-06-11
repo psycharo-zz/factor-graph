@@ -194,9 +194,9 @@ public:
     // TODO: put this into ContinuousVariable?
     virtual double logProbabilityDensity(double value) const
     {
-        return 0.5 * (m_precMsg.logPrecision -
-                      m_precMsg.precision * (sqr(value) - 2 * value * m_meanMsg.mean + m_meanMsg.mean2)
-                      -log(2*M_PI));
+        return 0.5 * (m_precMsg.logPrecision
+                      -m_precMsg.precision * (sqr(value) - 2 * value * m_meanMsg.mean + m_meanMsg.mean2)
+                      -LN_2PI);
     }
 
 
