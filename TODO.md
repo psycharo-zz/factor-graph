@@ -1,10 +1,28 @@
 # Global TODO
-* Learn univariate gaussians: DONE
-* Create a separate branch in the factor-graph repo: IN PROGRESS
-* Learn univariate mixture models: DONE
 
 * Algonquin implementation: based on univariate mixtures: IN PROGRESS
+  * the algonquin itself should be a node in the overall factor graph
+  * a single mixture node for all the points?
 
+* Matlab Bindings (for Algonquin): IN PROGRESS
+
+* Automatical inference code generation
+
+* Variable arrays
+  - missing values?
+  - what to do with online inference then?
+
+* Network arrays  / multiple parallel networks with common interface
+  - to support multiple frequencies
+
+* Tests for messages (depending on current messages from parents|observed / non-observed)
+
+
+
+* Matlab Bindings (generic, including custom nodes)
+* Learn univariate gaussians: DONE
+* Create a separate branch in the factor-graph repo: DONE
+* Learn univariate mixture models: DONE
 * Learn multivariate gaussians: NOT NECESSARY?
 * Learn multivariate mixture models: NOT NECESSARY?
 * Check how current implementation of mixtures correspond to the gates [Minka'200x]
@@ -12,18 +30,15 @@
   * ?? the difference is that in factor graphs factors can be NOT ONLY DISTRIBUTIONS
        but also deterministic functions
 
-* Automatical inference code generation
-* Matlab Bindings (priority)
-
-* Tests for messages (depending on current messages from parents|observed / non-observed)
-
 
 # Current TODO
 
-* Not clear whether the message should be represented as an array or
-  a distribution.
-  * probably the distribution is better - since the child should "know"
-    which parameters are there
+* VariableArray is definitely necessary: e.g. for algonquin we just have 1 set of parameters
+  per point.
+  * Maybe just create a simple subclass that takes (size_t numPoints)
+
+
+# Later TODO
 
 * Not clear whether the messages should be passed by the network itself or locally
   * Having a global table of messages, stored in `class Network` should speed things up

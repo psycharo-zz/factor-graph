@@ -33,14 +33,22 @@ public:
         assert(m_components.size() == _discrete->dims());
     }
 
+    virtual ~IsMixture() {}
+
     //! get the number of mixtures
     inline size_t numComponents() const { return m_components.size(); }
 
     //! get the weight of the specified mixture component
-    inline double componentWeight(size_t idx) const { return m_weightMsg.probs[idx]; }
+    inline double weight(size_t idx) const { return m_discretePar->moments().probs[idx]; } // TODO: m_weightMsg.probs[idx]; }
 
     //! get mixture component by its index
     inline TDistribution *component(size_t idx) const { return m_components[idx]; }
+
+    //! get parameters of a specific mixture
+    inline Parameters<TDistribution> parameters(size_t idx) const { return m_components[idx]->parameters(); }
+
+    //! get moments of a specific mixture
+    inline Moments<TDistribution> moments(size_t idx) const { return m_components[idx]->moments(); }
 
     //! override ContinuousVariable
     inline void observe(double _value)
@@ -68,7 +76,7 @@ public:
     {
         Parameters<TDistribution> params;
         for (size_t m = 0; m < numComponents(); ++m)
-            params += component(m)->parametersFromParents() * componentWeight(m);
+            params += component(m)->parametersFromParents() * weight(m);
         return params;
     }
 
@@ -78,7 +86,7 @@ public:
     {
         double result = 0;
         for (size_t m = 0; m < numComponents(); ++m)
-            result += component(m)->logNormalization() * componentWeight(m);
+            result += component(m)->logNormalization() * weight(m);
         return result;
     }
 
@@ -87,7 +95,7 @@ public:
     {
         double result = 0;
         for (size_t m = 0; m < numComponents(); ++m)
-            result += component(m)->logNormalizationParents() * componentWeight(m);
+            result += component(m)->logNormalizationParents() * weight(m);
         return result;
     }
 
@@ -97,7 +105,7 @@ public:
     {
         double result = 0.0;
         for (size_t m = 0; m < numComponents(); ++m)
-            result += component(m)->logProbabilityDensity(value) * componentWeight(m);
+            result += component(m)->logProbabilityDensity(value) * weight(m);
         return result;
     }
 
@@ -148,7 +156,7 @@ public:
     Parameters<TParent> messageToParent(size_t idx, TParent *parent) const
     {
         assert(idx < this->numComponents());
-        return this->component(idx)->messageToParent(parent) * this->componentWeight(idx);
+        return this->component(idx)->messageToParent(parent) * this->weight(idx);
     }
 
 };
@@ -172,6 +180,16 @@ public:
             m_components[m] = new Gaussian(_meanPars[m], _precPars[m]);
     }
 
+    MoG(const vector<Gaussian*> _components, Discrete *_discr):
+        IsMixture(_discr),
+        HasMixtureParent<Gaussian, Gaussian>(_discr),
+        HasMixtureParent<Gaussian, Gamma>(_discr)
+    {
+        // TODO:
+        m_components = _components;
+
+    }
+
     using IsMixture<Gaussian>::receiveFromParent;
     using HasMixtureParent<Gaussian, Gaussian>::receiveFromParent;
     using HasMixtureParent<Gaussian, Gamma>::receiveFromParent;
@@ -188,6 +206,45 @@ public:
     }
 
 };
+
+template<>
+class Parameters<MoG>
+{
+public:
+    Parameters()
+    {}
+
+    Parameters(const vector<GaussianParameters> &_comps,
+               const vector<double> &_weights):
+        components(_comps),
+        weights(_weights)
+    {
+        assert(components.size() == weights.size());
+    }
+
+    inline size_t numComponents() const { return components.size(); }
+
+    vector<GaussianParameters> components;
+    vector<double> weights;
+};
+
+
+inline ostream &operator<<(ostream &out, const Parameters<MoG> &params)
+{
+    out << "means = [";
+    for (size_t m = 0; m < params.numComponents(); ++m)
+        out << params.components[m].meanPrecision / params.components[m].precision << " ";
+    out << "]" << endl;
+
+    out << "precs = [";
+    for (size_t m = 0; m < params.numComponents(); ++m)
+        out << params.components[m].precision << " ";
+    out << "]" << endl;
+
+    out << "weights = [" << params.weights << "]" << endl;
+
+    return out;
+}
 
 
 

@@ -41,6 +41,12 @@ public:
     }
 };
 
+inline ostream &operator<<(ostream &out, const Parameters<Gamma> &params)
+{
+    out << "Gamma(" << params.shape << "," << params.rate << ")";
+    return out;
+}
+
 inline Parameters<Gamma> operator*(const Parameters<Gamma> &params, double val)
 {
     return Parameters<Gamma>(params.shape * val, params.rate * val);
@@ -59,6 +65,8 @@ inline Parameters<Gamma> operator-(const Parameters<Gamma> &a,
     return Parameters<Gamma>(a.shape - b.shape, b.rate - b.rate);
 }
 typedef Parameters<Gamma> GammaParameters;
+
+
 
 
 
@@ -113,7 +121,11 @@ public:
     Gamma(double shape, double rate):
         m_shapeMsg(shape),
         m_rateMsg(rate)
-    {}
+    {
+        updatePosterior();
+    }
+
+    virtual ~Gamma() {}
 
     //! override Variable
     inline bool hasParents() const { return false; }
@@ -122,14 +134,14 @@ public:
     //! override Variable
     double logNormalization() const
     {
-        return parameters().shape * log(parameters().rate) - lngamma(parameters().shape);
+        return parameters().shape * log(parameters().rate) - gammaln(parameters().shape);
     }
 
     //! override Variable
     double logNormalizationParents() const
     {
 //        Parameters<Gamma> params = parametersFromParents();
-        return m_shapeMsg * log(m_rateMsg) - lngamma(m_shapeMsg);
+        return m_shapeMsg * log(m_rateMsg) - gammaln(m_shapeMsg);
     }
 
     //! override ContinuousVariable
@@ -156,6 +168,14 @@ private:
     // TODO: introduce a fake const distribution
     const double m_shapeMsg;
     const double m_rateMsg;
+};
+
+/**
+ * "fake" gamma distribution that does not update its parameters
+ * allows doing message passing with constant
+ */
+class ConstGamma : public Gamma
+{
 };
 
 

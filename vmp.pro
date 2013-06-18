@@ -6,7 +6,11 @@ CONFIG -= qt
 SOURCES += main.cpp \
     network.cpp \
     variable.cpp \
-    examples.cpp
+    examples.cpp \
+    algonquin.cpp \
+    mathutil.cpp \
+    matlab/persistentobject.cpp
+#    matlab/mexfactorgraph.cpp
 
 HEADERS += \
     variable.h \
@@ -18,16 +22,19 @@ HEADERS += \
     discrete.h \
     mixture.h \
     util.h \
-    examples.h
+    examples.h \
+    algonquin.h \
+    matlab/persistentobject.h \
+    matlab/convert.h
 
 OTHER_FILES += \
-    TODO.md
+    TODO.md \
+    speechbin.txt
 
 QMAKE_CXXFLAGS += -std=c++11
 
-
 # TODO: matlab support
-LIBS += -lgsl -lblas
+# LIBS += -lgsl -lblas
 
 
 

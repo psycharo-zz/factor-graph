@@ -35,6 +35,11 @@ inline std::ostream& operator <<(std::ostream &os, const std::vector<T> &v)
 
 
 
+// TODO: __PRETTY_FUNCTION__ only works for the GCC
+#define NotImplementedException std::runtime_error(__PRETTY_FUNCTION__ + std::string(": not implemented "))
+
+
+
 }
 
 #endif // UTIL_H

@@ -41,6 +41,12 @@ public:
     vector<double> logProb;
 };
 
+inline ostream &operator<<(ostream &out, const Parameters<Discrete> &params)
+{
+    out << "Discrete(" << params.logProb << ")";
+    return out;
+}
+
 typedef Parameters<Discrete> DiscreteParameters;
 
 
@@ -103,12 +109,25 @@ class Discrete : public Variable<Discrete>,
                  public HasParent<Dirichlet>
 {
 public:
+    Discrete(const vector<double> &logProbs):
+        Variable(Parameters<Discrete>(logProbs)),
+        m_parent(NULL),
+        m_dims(logProbs.size()),
+        m_parentMsg(logProbs)
+    {
+            // TODO: finish
+//            throw NotImplementedException;
+    }
+
     Discrete(Dirichlet *parent):
         Variable(Parameters<Discrete>(parent->dims())),
         m_parent(parent),
         m_dims(parent->dims()),
         m_parentMsg(Moments<Dirichlet>(m_dims))
     {}
+
+
+    virtual ~Discrete() {}
 
     //! get the dimensionality
     inline size_t dims() const { return m_dims; }
@@ -169,13 +188,14 @@ public:
     //! override HasParent<Dirichlet>
     void receiveFromParent(const Moments<Dirichlet> &msg, Dirichlet *parent)
     {
-        assert(parent == m_parent);
+        assert(hasParents() && parent == m_parent);
         m_parentMsg = msg;
     }
 
     //! override HasParent<Dirichlet>
-    Parameters<Dirichlet> messageToParent(Dirichlet */*parent*/) const
+    Parameters<Dirichlet> messageToParent(Dirichlet *parent) const
     {
+        assert(hasParents() && parent == m_parent);
         // TODO: isn't it weird that this messages are computed ?FROM MOMENTS?
         return Parameters<Dirichlet>(moments().probs);
     }

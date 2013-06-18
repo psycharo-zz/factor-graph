@@ -39,6 +39,13 @@ public:
 };
 
 
+inline ostream &operator<<(ostream &out, const Parameters<Dirichlet> &params)
+{
+    out << "Dirichlet(" << params.U << ")";
+    return out;
+}
+
+
 inline Parameters<Dirichlet> operator+(const Parameters<Dirichlet> &a,
                                        const Parameters<Dirichlet> &b)
 {
@@ -56,6 +63,10 @@ template<>
 class Moments<Dirichlet>
 {
 public:
+    Moments(const vector<double> _logProb):
+        logProb(_logProb)
+    {}
+
     Moments(size_t _dims):
         logProb(_dims)
     {}
@@ -93,6 +104,8 @@ public:
         m_dims(u.size())
     {}
 
+    virtual ~Dirichlet() {}
+
     //! get the number of dimensions
     inline size_t dims() const { return m_dims; }
 
@@ -102,14 +115,14 @@ public:
     //! override Variable
     inline double logNormalization() const
     {
-        return lngamma(sumv(parameters().U)) - sumv(lngammav(parameters().U));
+        return gammaln(sumv(parameters().U)) - sumv(gammalnv(parameters().U));
     }
 
     //! override Variable
     inline double logNormalizationParents() const
     {
         Parameters<Dirichlet> params = parametersFromParents();
-        return lngamma(sumv(params.U)) - sumv(lngammav(params.U));
+        return gammaln(sumv(params.U)) - sumv(gammalnv(params.U));
     }
 
 

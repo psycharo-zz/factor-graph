@@ -35,6 +35,9 @@ public:
     double meanPrecision;
     double precision;
 
+    inline double mean() const { return meanPrecision / precision; }
+    inline double variance() const { return 1.0 / precision; }
+
     Parameters &operator+=(const Parameters &other)
     {
         meanPrecision += other.meanPrecision;
@@ -43,6 +46,13 @@ public:
     }
 };
 typedef Parameters<Gaussian> GaussianParameters;
+
+
+inline ostream& operator<<(ostream &out, const Parameters<Gaussian> &params)
+{
+    out << "Gaussian(" << params.mean() << "," << params.precision << ")";
+    return out;
+}
 
 
 inline Parameters<Gaussian> operator*(const Parameters<Gaussian> &params, double val)
@@ -112,7 +122,10 @@ public:
         m_precPar(NULL),
         m_meanMsg(_mean, sqr(_mean)),
         m_precMsg(_prec, log(_prec))
-    {}
+    {
+        // TODO:is this necessary?
+        updatePosterior();
+    }
 
     Gaussian(Gaussian *_meanParent, Gamma *_precParent):
         m_meanPar(_meanParent),

@@ -9,11 +9,7 @@
 #include <functional>
 #include <algorithm>
 using namespace std;
-#include <gsl/gsl_sf_gamma.h>
-#include <gsl/gsl_sf_psi.h>
 
-namespace vmp
-{
 
 // x^2
 template <typename T>
@@ -21,12 +17,46 @@ inline T sqr(T x) { return x*x; }
 
 
 // TODO: matlab support?
+#ifdef GSL
 
-//! scalar digamma function d(ln(Gamma(x)))/dx
 inline double digamma(double x)
 {
     return gsl_sf_psi(x);
 }
+
+inline double lngamma(double x)
+{
+    return gsl_sf_lngamma(x);
+}
+
+
+#else
+double Rand(void);
+double RandN(void);
+double GammaRand(double a);
+double BetaRand(double a, double b);
+int BinoRand(double p, int n);
+
+void ResetSeed(void);
+void SetSeed(long new_ix, long new_iy, long new_iz);
+void GetSeed(long *ix_out, long *iy_out, long *iz_out);
+
+double logSum(double a, double b);
+double pochhammer(double x, int n);
+double di_pochhammer(double x, int n);
+double tri_pochhammer(double x, int n);
+double gammaln2(double x, double d);
+double gammaln(double x);
+double digamma(double x);
+double trigamma(double x);
+double tetragamma(double x);
+
+#endif
+
+
+namespace vmp {
+
+
 
 
 //! vector digamma
@@ -38,17 +68,12 @@ inline vector<double> digammav(const vector<double> &v)
 }
 
 
-//! scalar gamma function ln(Gamma(x))
-inline double lngamma(double x)
-{
-    return gsl_sf_lngamma(x);
-}
 
 
-inline vector<double> lngammav(const vector<double> &v)
+inline vector<double> gammalnv(const vector<double> &v)
 {
     vector<double> result(v.size(), 0);
-    transform(v.begin(), v.end(), result.begin(), lngamma);
+    transform(v.begin(), v.end(), result.begin(), gammaln);
     return result;
 }
 
@@ -63,6 +88,15 @@ inline vector<double> expv(const vector<double> &v)
     vector<double> result(v);
     for (size_t i = 0; i < result.size(); i++)
         result[i] = exp(result[i]);
+    return result;
+}
+
+
+inline vector<double> logv(const vector<double> &v)
+{
+    vector<double> result(v);
+    for (size_t i = 0; i < result.size(); i++)
+        result[i] = log(result[i]);
     return result;
 }
 
@@ -177,10 +211,10 @@ const double LN_2PI = 1.837877066409345;
 
 
 // EPSILON
-const double EPSILON = 1e-5;
-
-
+const double EPSILON = 1e-3;
 
 }
+
+
 
 #endif // MATHUTIL_H

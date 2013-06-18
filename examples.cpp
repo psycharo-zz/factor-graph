@@ -14,7 +14,7 @@
 
 
 using namespace vmp;
-
+#include <cfloat>
 
 
 void trainDirichlet(const size_t maxNumIters)
@@ -30,7 +30,7 @@ void trainDirichlet(const size_t maxNumIters)
     }
 
 
-    double lbPrev = std::numeric_limits<double>::lowest();
+    double lbPrev = -DBL_MAX;
 
     for (size_t iter = 0; iter < maxNumIters; ++iter)
     {
@@ -90,7 +90,7 @@ void trainUnivariateGaussian(const size_t maxNumIters)
     cout << NUM_POINTS << endl;
 
 
-    double lbPrev = numeric_limits<double>::lowest();
+    double lbPrev = -DBL_MAX;
 
     // doing the updates
     for (size_t iter = 0; iter < maxNumIters; ++iter)
@@ -136,57 +136,62 @@ void trainUnivariateGaussian(const size_t maxNumIters)
 }
 
 
-
-
-void trainMixtureOfUnivariateGaussians(const size_t maxNumIters)
+Parameters<MoG> trainGMM(const double *trainingData,
+                         size_t numPoints,
+                         size_t maxNumIters,
+                         const size_t numMixtures,
+                         double dirichletPrior,
+                         const GaussianParameters &priorMean,
+                         const GammaParameters &priorGamma,
+                         double &evidence)
 {
-    const size_t DIMS = 20;
+    Parameters<MoG> result;
 
-    // TODO: random dirichlet initialisation
-    Dirichlet *dir = new Dirichlet(vector<double>(DIMS, 1));
-    vector<Gaussian*> mean(DIMS, NULL);
-    vector<Gamma*> prec(DIMS, NULL);
+    Dirichlet *dir = new Dirichlet(vector<double>(numMixtures, dirichletPrior));
+    vector<Gaussian*> mean(numMixtures, NULL);
+    vector<Gamma*> prec(numMixtures, NULL);
 
-    for (size_t m = 0; m < DIMS; ++m)
+    for (size_t m = 0; m < numMixtures; ++m)
     {
         // TODO: put the first updatePosterior() call into constructor?
-        mean[m] = new Gaussian(0, 1e-3);
+        mean[m] = new Gaussian(priorMean.mean(), priorMean.precision);
         mean[m]->updatePosterior();
 
-        prec[m] = new Gamma(1e-3, 1e-3);
+        prec[m] = new Gamma(priorGamma.shape, priorGamma.rate);
         prec[m]->updatePosterior();
     }
 
 
     // TODO: this should be done inside of the mixture??
-    vector<Discrete*> discr(MIX_NUM_POINTS, NULL);
-    vector<MoG*> data(MIX_NUM_POINTS, NULL);
-    for (size_t p = 0; p < MIX_NUM_POINTS; ++p)
+    vector<Discrete*> discr(numPoints, NULL);
+    vector<MoG*> data(numPoints, NULL);
+
+    for (size_t p = 0; p < numPoints; ++p)
     {
         discr[p] = new Discrete(dir);
         data[p] = new MoG(mean, prec, discr[p]);
 
         // TODO: using the message passing instead of observing directly
-        vector<double> logProb(DIMS, -1);
+        vector<double> logProb(numMixtures, -1);
         logProb[discr[p]->sample()] = 0;
 
         discr[p]->receiveFromParent(dir->messageToChildren(), dir);
         discr[p]->receiveFromChild(Parameters<Discrete>(logProb), data[p]);
         discr[p]->updatePosterior();
 
-        data[p]->observe(MIX_DATA[p]);
+        data[p]->observe(trainingData[p]);
         data[p]->receiveFromParent(discr[p]->messageToChildren(), discr[p]);
     }
 
-    double lbPrev = std::numeric_limits<double>::lowest();
+    double lbPrev = -DBL_MAX;
 
     // doing the inference
     for (size_t iter = 0; iter < maxNumIters; ++iter)
     {
         // updating the mean components
-        for (size_t m = 0; m < DIMS; ++m)
+        for (size_t m = 0; m < numMixtures; ++m)
         {
-            for (size_t p = 0; p < MIX_NUM_POINTS; ++p)
+            for (size_t p = 0; p < numPoints; ++p)
             {
                 data[p]->receiveFromParent(m, prec[m]->messageToChildren(), prec[m]);
                 mean[m]->receiveFromChild(data[p]->messageToParent(m, mean[m]), data[p]);
@@ -195,10 +200,10 @@ void trainMixtureOfUnivariateGaussians(const size_t maxNumIters)
             mean[m]->updatePosterior();
         }
         // updating the precision components
-        for (size_t m = 0; m < DIMS; ++m)
+        for (size_t m = 0; m < numMixtures; ++m)
         {
             // receive all the messages from data
-            for (size_t p = 0; p < MIX_NUM_POINTS; ++p)
+            for (size_t p = 0; p < numPoints; ++p)
             {
                 data[p]->receiveFromParent(m, mean[m]->messageToChildren(), mean[m]);
                 prec[m]->receiveFromChild(data[p]->messageToParent(m, prec[m]), data[p]);
@@ -206,15 +211,15 @@ void trainMixtureOfUnivariateGaussians(const size_t maxNumIters)
             prec[m]->updatePosterior();
         }
         // propagating the precision info
-        for (size_t m = 0; m < DIMS; ++m)
+        for (size_t m = 0; m < numMixtures; ++m)
         {
             Moments<Gamma> msg = prec[m]->messageToChildren();
-            for (size_t p = 0; p < MIX_NUM_POINTS; ++p)
+            for (size_t p = 0; p < numPoints; ++p)
                 data[p]->receiveFromParent(m, msg, prec[m]);
         }
 
         // updating the discrete distributions
-        for (size_t p = 0; p < MIX_NUM_POINTS; ++p)
+        for (size_t p = 0; p < numPoints; ++p)
         {
             discr[p]->receiveFromParent(dir->messageToChildren(), dir);
             discr[p]->receiveFromChild(data[p]->messageToParent(discr[p]), data[p]);
@@ -222,64 +227,60 @@ void trainMixtureOfUnivariateGaussians(const size_t maxNumIters)
         }
 
         // updating the dirichlet
-        for (size_t p = 0; p < MIX_NUM_POINTS; ++p)
+        for (size_t p = 0; p < numPoints; ++p)
             dir->receiveFromChild(discr[p]->messageToParent(dir), discr[p]);
         dir->updatePosterior();
 
-        for (size_t p = 0; p < MIX_NUM_POINTS; ++p)
+        for (size_t p = 0; p < numPoints; ++p)
             // updating the data
             data[p]->receiveFromParent(discr[p]->messageToChildren(), discr[p]);
 
         // computing the lower bound
         double lbMean = 0;
         double lbPrec = 0;
-        for (size_t m = 0; m < DIMS; ++m)
+        for (size_t m = 0; m < numMixtures; ++m)
         {
             lbMean += mean[m]->logEvidenceLowerBound();
             lbPrec += prec[m]->logEvidenceLowerBound();
         }
 
         double lbDiscr = 0;
-        for (size_t p = 0; p < MIX_NUM_POINTS; ++p)
+        for (size_t p = 0; p < numPoints; ++p)
             lbDiscr += discr[p]->logEvidenceLowerBound();
 
         double lbData = 0;
-        for (size_t p = 0; p < MIX_NUM_POINTS; ++p)
+        for (size_t p = 0; p < numPoints; ++p)
             lbData += data[p]->logEvidenceLowerBound();
 
         double lbCurr = 0;
         lbCurr += lbData + lbDiscr + lbMean + lbPrec;
 
+        // TODO: save the numbr of iterations?
         if (fabs(lbCurr - lbPrev) < EPSILON)
-        {
-            cout << "stopped at:" << iter << " iterations"
-                 << endl
-                 << "lb=" << lbCurr
-                 << endl;
             break;
-        }
         lbPrev = lbCurr;
-
     }
 
 
-    for (size_t m = 0; m < DIMS; ++m)
-        cout << mean[m]->moments().mean << " ";
-    cout << endl;
+    result.components.resize(numMixtures);
+    for (size_t m = 0; m < numMixtures; ++m)
+    {
+        result.components[m].meanPrecision = mean[m]->moments().mean * prec[m]->moments().precision;
+        result.components[m].precision = prec[m]->moments().precision;
+    }
 
-    for (size_t m = 0; m < DIMS; ++m)
-        cout << prec[m]->moments().precision << " ";
-    cout << endl;
-
-    for (size_t m = 0; m < DIMS; ++m)
-        cout << exp(dir->moments().logProb[m]) << " ";
-    cout << endl;
+    result.weights.resize(numMixtures);
+    for (size_t m = 0; m < numMixtures; ++m)
+        result.weights[m] = exp(dir->moments().logProb[m]);
+    evidence = lbPrev;
 
     delete dir;
     deleteAll(mean);
     deleteAll(prec);
     deleteAll(data);
     deleteAll(discr);
+
+    return result;
 }
 
 
