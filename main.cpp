@@ -98,9 +98,10 @@ void testAlgonquin()
     for (size_t f = 0; f < noisyBin.size(); ++f)
     {
         pair<double, double> estimated = nwk.process(noisyBin[f]);
-        cout << speechBin[f] << "\t"
-             << estimated.first << "\t"
-             << noisyBin[f] << endl;
+        cout << exp(speechBin[f]) << "\t"
+             << exp(estimated.first) << "\t"
+             << exp(noisyBin[f]) << "\t"
+             << endl;
     }
 }
 

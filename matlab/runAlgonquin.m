@@ -28,11 +28,6 @@ noiseLog = log(abs(fftNoise).^2);
 fftNoisy = spectrogram(noisySpeech(:), WINDOW, OVERLAP_LEN, FFT_SIZE);
 noisyLog = log(abs(fftNoisy).^2);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    NUM_BINS = 10;
-
-%     load('speechpriors.mat');
-%     load('noisepriors.mat');
     nwks = {};
     for bin = 1:NUM_BINS
        nwks{bin} = Network;
@@ -54,15 +49,20 @@ noisyLog = log(abs(fftNoisy).^2);
 
     T = 1:size(estPowS,2);
     F = 1:size(estPowS,1);
-    subplot(3,1,1);
-    plotSpectrogram(T,F,estPowS)
+    subplot(4,1,1);
+    plotSpectrogram(T,F,estPowS);
+    
+    T = 1:size(estPowS,2);
+    F = 1:size(estPowS,1);
+    subplot(4,1,2);
+    plotSpectrogram(T,F,estPowN);
 
-    subplot(3,1,2);
+    subplot(4,1,3);
     [SS,FS,TS,powS] = spectrogram(noisySpeech, FRAME_LEN, OVERLAP_LEN, FFT_SIZE);
     plotSpectrogram(TS,FS,powS);
 
 
-    subplot(3,1,3);
+    subplot(4,1,4);
     [SS,FS,TS,powS] = spectrogram(speech, FRAME_LEN, OVERLAP_LEN, FFT_SIZE);
     plotSpectrogram(TS,FS,powS);
 

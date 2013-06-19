@@ -26,7 +26,8 @@ class AlgonquinNode : public HasParent<Gaussian>
 {
 public:
 
-    static const size_t NUM_ITERATIONS = 2;
+    // TODO: do this up until convergence
+    static const size_t NUM_ITERATIONS = 20;
 
     AlgonquinNode(const MoG *_speechPrior,
                   const MoG *_noisePrior):

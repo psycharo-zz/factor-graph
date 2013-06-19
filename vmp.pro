@@ -9,8 +9,8 @@ SOURCES += main.cpp \
     examples.cpp \
     algonquin.cpp \
     mathutil.cpp \
-    matlab/persistentobject.cpp \
-    matlab/mexfactorgraph.cpp
+    matlab/persistentobject.cpp
+#    matlab/mexfactorgraph.cpp
 
 HEADERS += \
     variable.h \

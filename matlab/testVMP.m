@@ -37,7 +37,7 @@ noisyLog = log(abs(fftNoisy).^2);
 % plotGMM(min(speechBin):0.1:max(speechBin), means, precs, weights);
 
 % % drawing separate frequency bins
-NUM_BINS = 10;
+NUM_BINS = 20;
 EDGE = ceil(sqrt(NUM_BINS));
 for i = 1:NUM_BINS
     subplot(EDGE,EDGE, i);
