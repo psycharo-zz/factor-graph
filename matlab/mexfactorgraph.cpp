@@ -23,11 +23,11 @@ void processNetwork(const std::string &functionName,
 {
     if (functionName == "create")
     {
-        plhs[0] = pointerToMxArray(new Network());
+        plhs[0] = ptrToMxArray(new Network());
         return;
     }
 
-    Network *nwk = static_cast<Network*>(mxArrayToObject(prhs[POINTER_IDX]));
+    Network *nwk = mxArrayToPtr<Network>(prhs[POINTER_IDX]);
     if (functionName == "train")
     {
         double *speech;
@@ -41,18 +41,28 @@ void processNetwork(const std::string &functionName,
         // training mixtures
         nwk->train(speech, cols_s, noise, cols_n);
 
-        plhs[0] = toStruct(nwk->speechPrior());
-        plhs[1] = toStruct(nwk->noisePrior());
+        plhs[0] = toMxStruct(nwk->speechPrior());
+        plhs[1] = toMxStruct(nwk->noisePrior());
     }
     else if (functionName == "process")
     {
-        double frame = mxArrayToDouble(prhs[POINTER_IDX+1]);
-        cout << frame << endl;
+        pair<double,double> result = nwk->process(mxArrayTo<double>(prhs[POINTER_IDX+1]));
+        plhs[0] = toMxArray(result.first);
+        plhs[1] = toMxArray(result.second);
     }
     else if (functionName == "setPriors")
     {
-        nwk->setPriors(structToMoG(prhs[POINTER_IDX+1]),
-                       structToMoG(prhs[POINTER_IDX+2]));
+        nwk->setPriors(mxStructTo<MoG>(prhs[POINTER_IDX+1]),
+                       mxStructTo<MoG>(prhs[POINTER_IDX+2]));
+    }
+    else if (functionName == "priors")
+    {
+        if (nwk->speechPrior() != NULL &&
+            nwk->noisePrior() != NULL)
+        {
+            plhs[0] = toMxStruct(nwk->speechPrior());
+            plhs[1] = toMxStruct(nwk->noisePrior());
+        }
     }
     else if (functionName == "delete")
         delete nwk;
@@ -64,11 +74,11 @@ void processNetworkArray(const std::string &functionName,
 {
     if (functionName == "create")
     {
-        plhs[0] = pointerToMxArray(new NetworkArray(mxArrayToInt(prhs[TYPE_IDX+1])));
+        plhs[0] = ptrToMxArray(new NetworkArray(mxArrayTo<int>(prhs[TYPE_IDX+1])));
         return;
     }
 
-    NetworkArray *nwk = static_cast<NetworkArray*>(mxArrayToObject(prhs[POINTER_IDX]));
+    NetworkArray *nwk = mxArrayToPtr<NetworkArray>(prhs[POINTER_IDX]);
 
     if (functionName == "train")
     {
@@ -127,9 +137,9 @@ void processGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         means[m] = params.components[m].mean();
         precs[m] = params.components[m].precision;
     }
-    plhs[0] = arrayToMxArray(means, 1, numMixtures);
-    plhs[1] = arrayToMxArray(precs, 1, numMixtures);
-    plhs[2] = arrayToMxArray(params.weights.data(), 1, numMixtures);
+    plhs[0] = toMxArray(means, 1, numMixtures);
+    plhs[1] = toMxArray(precs, 1, numMixtures);
+    plhs[2] = toMxArray(params.weights.data(), 1, numMixtures);
 }
 
 
@@ -154,19 +164,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         processNetworkArray(functionName, nlhs, plhs, nrhs, prhs);
     else if (typeName == "GMM")
         processGMM(nlhs, plhs, nrhs, prhs);
-    else if (typeName == "Gaussian")
+    else if (typeName == "test")
     {
-//        cout << structToGaussian(prhs[POINTER_IDX]) << endl;
-        plhs[0] = toStruct(GaussianParameters(0, 1e-3));
-    }
-    else if (typeName == "Gamma")
-    {
-//        cout << structToGamma(prhs[POINTER_IDX]) << endl;
-        plhs[0] = toStruct(GammaParameters(1e-1, 1e-3));
-    }
-    else if (typeName == "MoG")
-    {
-        cout << structToMoG(prhs[POINTER_IDX]) << endl;
+//        plhs[0] = toMxArray(120.0);
+//        cout << mxArrayTo<int>(prhs[POINTER_IDX]) << endl;
+        cout << mxArrayTo<vector<double> >(prhs[POINTER_IDX]) << endl;
     }
     else
         mexErrMsgTxt("Unsupported operation\n");

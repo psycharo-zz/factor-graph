@@ -64,10 +64,50 @@ void testSpeechGMM()
 
 
 
+// algonquin for a single frequency band
+void testAlgonquin()
+{
+    // priors
+    vector<double> weights = {0.4991, 0.2737, 0.0, 0.2270};
+    vector<double> precs = {0.5482, 0.9289, 0.0222, 0.8215};
+    vector<double> meanPrecs = {4.2749, -3.4840,-6.4307, 0.0516};
+
+    Parameters<MoG> speechPriors;
+    speechPriors.weights = weights;
+    speechPriors.components.resize(weights.size());
+
+    for (size_t m = 0; m < weights.size(); ++m)
+    {
+        speechPriors.components[m].meanPrecision = meanPrecs[m];
+        speechPriors.components[m].precision = precs[m];
+        cout << meanPrecs[m] / precs[m] << " " << weights[m] << endl;
+    }
+
+    Parameters<MoG> noisePriors;
+    noisePriors.weights = {1};
+    noisePriors.components = {GaussianParameters(-1.9787, 0.5141)};
+
+    // noisy speech
+    auto noisyBin = read_bins("noisybin.txt")[0];
+    auto speechBin = read_bins("speechbin.txt")[0];
+
+    // clean speech
+
+    Network nwk;
+    nwk.setPriors(speechPriors, noisePriors);
+    for (size_t f = 0; f < noisyBin.size(); ++f)
+    {
+        pair<double, double> estimated = nwk.process(noisyBin[f]);
+        cout << speechBin[f] << "\t"
+             << estimated.first << "\t"
+             << noisyBin[f] << endl;
+    }
+}
+
 
 int main()
 {
-    testSpeechGMM();
+    testAlgonquin();
 
 
     return 0;

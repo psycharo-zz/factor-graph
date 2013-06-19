@@ -5,14 +5,13 @@ using namespace algonquin;
 
 
 
-void AlgonquinNode::updatePosterior()
+pair<double, double> AlgonquinNode::run()
 {
-    for (size_t iter = 0; iter < MAX_NUM_ITERATIONS; ++iter)
+    for (size_t iter = 0; iter < NUM_ITERATIONS; ++iter)
         for (size_t s = 0; s < numSpeech(); ++s)
             for (size_t n = 0; n < numNoise(); ++n)
             {
-                size_t i = index(s,n);
-
+                size_t i = index(s, n);
                 double meanS = m_speechMeans[i];
                 double meanN = m_noiseMeans[i];
 
@@ -35,9 +34,6 @@ void AlgonquinNode::updatePosterior()
                 m_noiseMeans[i] += m_noiseVars[i] * tmpN;
             }
 
-    cout << m_speechMeans << endl;
-    cout << m_speechVars << endl;
-
     // updating weight parameters
     for (size_t s = 0; s < numSpeech(); ++s)
         for (size_t n = 0; n < numNoise(); ++n)
@@ -57,7 +53,7 @@ void AlgonquinNode::updatePosterior()
             double tmp_n = sqr(jacob.second) * m_postPrec[i];
 
             double traces = priorPrecSpeech(s) * m_speechVars[i] +
-                    priorPrecNoise(n) * m_noiseVars[i] +
+                            priorPrecNoise(n) * m_noiseVars[i] +
                     tmp_s * m_speechVars[i] +
                     tmp_n * m_noiseVars[i];
 
@@ -67,7 +63,15 @@ void AlgonquinNode::updatePosterior()
             m_weightParams[i] = priorWeightSpeech(s) * priorWeightNoise(n) * exp(-0.5 * (means + traces + determs));
         }
 
-
     normalize(m_weightParams);
+
+    pair<double, double> result(0, 0);
+    for (size_t i = 0; i < numParameters(); ++i)
+    {
+        result.first += m_speechMeans[i] * m_weightParams[i];
+        result.second += m_noiseMeans[i] * m_weightParams[i];
+    }
+
+    return result;
 }
 

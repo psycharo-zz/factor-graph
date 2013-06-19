@@ -14,7 +14,7 @@ namespace algonquin
 using namespace vmp;
 
 
-const size_t MAX_NUM_ITERATIONS = 400;
+
 
 
 /**
@@ -25,6 +25,8 @@ const size_t MAX_NUM_ITERATIONS = 400;
 class AlgonquinNode : public HasParent<Gaussian>
 {
 public:
+
+    static const size_t NUM_ITERATIONS = 2;
 
     AlgonquinNode(const MoG *_speechPrior,
                   const MoG *_noisePrior):
@@ -53,8 +55,8 @@ public:
     }
 
 
-    // run a single iteration of the inference
-    virtual void updatePosterior();
+    //! returns a pair <speech_estimation, noise_estimation>
+    virtual pair<double,double> run();
 
     void observe(double frame)
     {
@@ -103,8 +105,8 @@ private:
 
     // prior accessors
     // TODO: add to MoG convenient functions?
-    inline double priorMeanSpeech(size_t s) const { return m_speechParent->moments(s).mean; }
-    inline double priorMeanNoise(size_t n) const { return m_noiseParent->moments(n).mean; }
+    inline double priorMeanSpeech(size_t s) const { return m_speechParent->parameters(s).mean(); }
+    inline double priorMeanNoise(size_t n) const { return m_noiseParent->parameters(n).mean(); }
     inline double priorPrecSpeech(size_t s) const { return m_speechParent->parameters(s).precision; }
     inline double priorPrecNoise(size_t n) const { return m_noiseParent->parameters(n).precision;; }
 
@@ -150,6 +152,7 @@ public:
 
     static const size_t NUM_SPEECH = 4;
     static const size_t NUM_NOISE = 1;
+    static const size_t NUM_ITERATIONS = 400;
 
     Network():
         m_weightSpeech(NULL),
@@ -172,10 +175,10 @@ public:
 
 
     // TODO: make a constructor instead?
-    static MoG *mixtureFromParameters(const Parameters<MoG> &params)
+    static MoG *mixtureFromParameters(const Parameters<MoG> &params, Discrete* &discr)
     {
         vector<Gaussian*> comps(params.numComponents(), NULL);
-        Discrete *discr = new Discrete(logv(params.weights));
+        discr = new Discrete(logv(params.weights));
         for (size_t m = 0; m < params.numComponents(); ++m)
             comps[m] = new Gaussian(params.components[m].mean(),
                                     params.components[m].precision);
@@ -187,38 +190,39 @@ public:
     {
         double evidence;
         Parameters<MoG> params = trainGMM(speechFrames, numSpeechFrames,
-                                          MAX_NUM_ITERATIONS, NUM_SPEECH,
+                                          NUM_ITERATIONS, NUM_SPEECH,
                                           1, GaussianParameters(0, 1e-3), GammaParameters(1e-3, 1e-3),
                                           evidence);
-        m_speechPrior = mixtureFromParameters(params);
+        m_speechPrior = mixtureFromParameters(params, m_weightSpeech);
 
         params = trainGMM(noiseFrames, numNoiseFrames,
-                          MAX_NUM_ITERATIONS, NUM_NOISE,
+                          NUM_ITERATIONS, NUM_NOISE,
                           1, GaussianParameters(0, 1e-3), GammaParameters(1e-3, 1e-3),
                           evidence);
 
-        m_noisePrior = mixtureFromParameters(params);
+        m_noisePrior = mixtureFromParameters(params, m_weightNoise);
 
         m_node = new AlgonquinNode(m_speechPrior, m_noisePrior);
     }
 
 
     void setPriors(const Parameters<MoG> &paramsSpeech, const Parameters<MoG> &paramsNoise)
-
     {
-        cout << "HERE" << endl;
-        cout << paramsSpeech << endl;
-        cout << paramsNoise << endl;
+        m_speechPrior = mixtureFromParameters(paramsSpeech, m_weightSpeech);
+        m_noisePrior = mixtureFromParameters(paramsNoise, m_weightNoise);
+
+        m_node = new AlgonquinNode(m_speechPrior, m_noisePrior);
     }
 
     inline const MoG *speechPrior() const { return m_speechPrior; }
     inline const MoG *noisePrior() const { return m_noisePrior; }
 
 
-    void process(double frame)
+    pair<double, double> process(double frame)
     {
+        assert(m_node != NULL);
         m_node->observe(frame);
-        m_node->updatePosterior();
+        return m_node->run();
     }
 
 private:

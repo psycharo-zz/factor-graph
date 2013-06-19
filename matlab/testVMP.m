@@ -8,15 +8,14 @@
 SIGNAL_LEN = length(speech);
 [noise, freqN] = wavread('white');
 noise = repeatSignal(noise, length(speech));
-inSNR = 25;
+inSNR = 45;
 noisySpeech = addNoise(speech, noise, inSNR);
-
 
 FRAME_LEN = 256; 
 % shifting window length
 OVERLAP_LEN = 128;
 % the size of DFT
-FFT_SIZE = 256;
+FFT_SIZE = 128;
 % analysis window TODO: what does periodic mean?
 WINDOW  = hanning(FRAME_LEN);  
 % the number of frequency bins FFT_SIZE/2+1
@@ -27,6 +26,9 @@ speechLog = log(abs(fftSpeech).^2);
 
 fftNoise = spectrogram(noise(:), WINDOW, OVERLAP_LEN, FFT_SIZE);
 noiseLog = log(abs(fftNoise).^2);
+
+fftNoisy = spectrogram(noisySpeech(:), WINDOW, OVERLAP_LEN, FFT_SIZE);
+noisyLog = log(abs(fftNoisy).^2);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -47,33 +49,67 @@ noiseLog = log(abs(fftNoise).^2);
 %     NOISE_PRIORS{i} = priorN;
 % end
 
-% load('speechpriors.mat');
-% load('noisepriors.mat');
+load('speechpriors.mat');
+load('noisepriors.mat');
 
+% for i = 1:NUM_BINS
+%     nwk = Network;
+%     nwk.setPriors(SPEECH_PRIORS{i}, NOISE_PRIORS{i});
+%     [speech, noise] = nwk.priors;
+% end
 
-% NUM_BINS = 3;
-% 
-EDGE = ceil(sqrt(NUM_BINS));
-% 
+nwks = {};
+for bin = 1:NUM_BINS
+   nwks{bin} = Network;
+   nwks{bin}.setPriors(SPEECH_PRIORS{bin}, NOISE_PRIORS{bin});
+end
 
 bin = 3;
-speechBin = speechLog(bin,:);
 
-nwk = Network;
-[priorS, priorN] = nwk.train(speechBin(1:500), [1]);
-weights = [priorS(:).weight];
-precs = [priorS(:).precision];
-means = [priorS(:).meanPrecision] ./ precs;
+% NUM_FRAMES = floor(length(noisyLog) / 2);
+NUM_FRAMES = length(noisyLog);
+
+estPowS = zeros(bin, NUM_FRAMES);
+estPowN = zeros(bin, NUM_FRAMES);
+
+for f = 1:NUM_FRAMES
+    for bin = 1:NUM_BINS
+        frame = speechLog(bin, f);
+        [logS, logN] = nwks{bin}.process(frame);
+        estPowS(bin, f) = exp(logS);
+        estPowN(bin, f) = exp(logN);
+    end
+end
+
+T = 1:size(estPowS,2);
+F = 1:size(estPowS,1);
+subplot(3,1,1);
+plotSpectrogram(T,F,estPowS)
+
+subplot(3,1,2);
+[SS,FS,TS,powS] = spectrogram(noisySpeech, FRAME_LEN, OVERLAP_LEN, FFT_SIZE);
+plotSpectrogram(TS,FS,powS);
+
+
+subplot(3,1,3);
+[SS,FS,TS,powS] = spectrogram(speech, FRAME_LEN, OVERLAP_LEN, FFT_SIZE);
+plotSpectrogram(TS,FS,powS);
+
+
+
+% for f = 1:length(noisyLog)
+%     frame = speechLog(bin, f);
+% %     nwk.process(frame)
+%     fprintf('%f,', frame);
+% end
+% fprintf('\n');
+
+ 
+
 	
-histDistr(speechBin, 100);
-hold on;
-plotGMM(min(speechBin):0.1:max(speechBin), means, precs, weights);
-
-
-
-
-
-
+% histDistr(speechBin, 100);
+% hold on;
+% plotGMM(min(speechBin):0.1:max(speechBin), means, precs, weights);
 
 
 

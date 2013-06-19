@@ -9,8 +9,8 @@ SOURCES += main.cpp \
     examples.cpp \
     algonquin.cpp \
     mathutil.cpp \
-    matlab/persistentobject.cpp
-#    matlab/mexfactorgraph.cpp
+    matlab/persistentobject.cpp \
+    matlab/mexfactorgraph.cpp
 
 HEADERS += \
     variable.h \
@@ -29,7 +29,8 @@ HEADERS += \
 
 OTHER_FILES += \
     TODO.md \
-    speechbin.txt
+    speechbin.txt \
+    noisybin.txt
 
 QMAKE_CXXFLAGS += -std=c++11
 

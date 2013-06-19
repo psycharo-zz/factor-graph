@@ -17,8 +17,12 @@ classdef Network < CppObject
             mexfactorgraph('setPriors', this.type_name, this.cpp_handle, speech, noise);
         end
         
-        function process(this, frame)
-            mexfactorgraph('process', this.type_name, this.cpp_handle, frame);
+        function [speechPrior, noisePrior] = priors(this)
+            [speechPrior, noisePrior] = mexfactorgraph('priors', this.type_name, this.cpp_handle);
+        end
+        
+        function [logPowS, logPowN] = process(this, frame)
+            [logPowS, logPowN] = mexfactorgraph('process', this.type_name, this.cpp_handle, frame);
         end
             
     end
