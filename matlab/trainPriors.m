@@ -1,7 +1,4 @@
-% basic
-
-% mex mexfactorgraph.cpp ../algonquin.cpp ../variable.cpp ../examples.cpp ../mathutil.cpp -I../
-
+function [SPEECH_PRIORS, NOISE_PRIORS] = trainPriors
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 [speech, freqS] = wavread('bbcnews'); 
@@ -31,31 +28,30 @@ fftNoisy = spectrogram(noisySpeech(:), WINDOW, OVERLAP_LEN, FFT_SIZE);
 noisyLog = log(abs(fftNoisy).^2);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% for prior vmp training
+MAX_NUM_ITERS = 150;
 
-% histDistr(speechBin, 100);
-% hold on;
-% plotGMM(min(speechBin):0.1:max(speechBin), means, precs, weights);
+NUM_SPEECH = 8;
+NUM_NOISE = 1;
+NUM_SPEECH_FRAMES = 600;
 
-% % drawing separate frequency bins
-NUM_BINS = 10;
-EDGE = ceil(sqrt(NUM_BINS));
+NOISE_PRIORS = cell(1,NUM_BINS);
+SPEECH_PRIORS = cell(1,NUM_BINS);
 for i = 1:NUM_BINS
-    subplot(EDGE,EDGE, i);
+    speechBin = speechLog(i,:);
+    noiseBin = noiseLog(i,:);
     
-    speechBin = speechLog(i,1:600);
-    histDistr(speechBin, 100);
+    nwk = Network;
+    [priorS, priorN] = nwk.train(speechBin(1:NUM_SPEECH_FRAMES), NUM_SPEECH, ...
+                                 noiseBin(1:300), NUM_NOISE, ...
+                                 MAX_NUM_ITERS);
+    SPEECH_PRIORS{i} = priorS;
+    NOISE_PRIORS{i} = priorN;
     
-    weights = [SPEECH_PRIORS{i}.weight];
-    precs = [SPEECH_PRIORS{i}.precision];
-    means = [SPEECH_PRIORS{i}.meanPrecision] ./ precs;
-    hold on;
-    
-    plotGMM(min(speechBin):0.1:max(speechBin), means, precs, weights);   
-    
-end    
+    i
+end
 
 
-% % testing the c++ implementation of the gmm learning
-% [means, precs, weights] = mexfactorgraph('GMM', 'GMM', speechBin);
 
+end
 

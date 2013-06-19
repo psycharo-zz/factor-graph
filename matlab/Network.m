@@ -9,8 +9,10 @@ classdef Network < CppObject
             this = this@CppObject(type);
         end
         
-        function [speechPrior, noisePrior] = train(this, speech, noise)
-            [speechPrior, noisePrior] = mexfactorgraph('train', this.type_name, this.cpp_handle, speech, noise);
+        function [speechPrior, noisePrior] = train(this, speech, numSpeechComps, noise, numNoiseComps, maxNumIters)
+            [speechPrior, noisePrior] = mexfactorgraph('train', this.type_name, this.cpp_handle, ...
+                                                       speech, numSpeechComps, ...
+                                                       noise, numNoiseComps, maxNumIters);
         end
         
         function setPriors(this, speech, noise)

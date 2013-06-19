@@ -150,9 +150,7 @@ class Network : public PersistentObject
 {
 public:
 
-    static const size_t NUM_SPEECH = 4;
-    static const size_t NUM_NOISE = 1;
-    static const size_t NUM_ITERATIONS = 400;
+    static const size_t NUM_ITERATIONS = 150;
 
     Network():
         m_weightSpeech(NULL),
@@ -185,18 +183,19 @@ public:
         return new MoG(comps, discr);
     }
 
-    void train(const double *speechFrames, size_t numSpeechFrames,
-               const double *noiseFrames, size_t numNoiseFrames)
+    void train(const double *speechFrames, size_t numSpeechFrames, size_t numSpeechComps,
+               const double *noiseFrames, size_t numNoiseFrames, size_t numNoiseComps,
+               size_t maxNumIters)
     {
         double evidence;
         Parameters<MoG> params = trainGMM(speechFrames, numSpeechFrames,
-                                          NUM_ITERATIONS, NUM_SPEECH,
+                                          maxNumIters, numSpeechComps,
                                           1, GaussianParameters(0, 1e-3), GammaParameters(1e-3, 1e-3),
                                           evidence);
         m_speechPrior = mixtureFromParameters(params, m_weightSpeech);
 
         params = trainGMM(noiseFrames, numNoiseFrames,
-                          NUM_ITERATIONS, NUM_NOISE,
+                          maxNumIters, numNoiseComps,
                           1, GaussianParameters(0, 1e-3), GammaParameters(1e-3, 1e-3),
                           evidence);
 
@@ -256,8 +255,8 @@ public:
         {
             double *s = speech + f * numSpeech;
             double *n = noise + f * numNoise;
-            m_networks[f].train(s, numSpeech,
-                                n, numNoise);
+            throw NotImplementedException;
+            m_networks[f].train(s, numSpeech, 4, n, numNoise, 1, 150);
         }
     }
 

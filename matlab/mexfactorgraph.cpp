@@ -33,13 +33,19 @@ void processNetwork(const std::string &functionName,
         double *speech;
         size_t rows_s, cols_s;
         mxArrayToDoubleArray(prhs[POINTER_IDX+1], speech, rows_s, cols_s);
+        size_t numSpeechComps = mxArrayTo<int>(prhs[POINTER_IDX+2]);
 
         double *noise;
         size_t rows_n, cols_n;
-        mxArrayToDoubleArray(prhs[POINTER_IDX+2], noise, rows_n, cols_n);
+        mxArrayToDoubleArray(prhs[POINTER_IDX+3], noise, rows_n, cols_n);
+        size_t numNoiseComps = mxArrayTo<int>(prhs[POINTER_IDX+4]);
+
+        size_t maxNumIters = mxArrayTo<int>(prhs[POINTER_IDX+5]);
 
         // training mixtures
-        nwk->train(speech, cols_s, noise, cols_n);
+        nwk->train(speech, cols_s, numSpeechComps,
+                   noise, cols_n, numNoiseComps,
+                   maxNumIters);
 
         plhs[0] = toMxStruct(nwk->speechPrior());
         plhs[1] = toMxStruct(nwk->noisePrior());
@@ -69,42 +75,6 @@ void processNetwork(const std::string &functionName,
 }
 
 
-void processNetworkArray(const std::string &functionName,
-                         int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
-{
-    if (functionName == "create")
-    {
-        plhs[0] = ptrToMxArray(new NetworkArray(mxArrayTo<int>(prhs[TYPE_IDX+1])));
-        return;
-    }
-
-    NetworkArray *nwk = mxArrayToPtr<NetworkArray>(prhs[POINTER_IDX]);
-
-    if (functionName == "train")
-    {
-        double *speech, *noise;
-        size_t numDataSpeech, numDataNoise;
-        size_t numFreqs;
-
-        mxArrayToDoubleArray(prhs[POINTER_IDX+1], speech, numDataSpeech, numFreqs);
-        mxArrayToDoubleArray(prhs[POINTER_IDX+2], noise, numDataNoise, numFreqs);
-
-        if (numFreqs != nwk->numFreqs())
-        {
-            mexErrMsgTxt("the number of frequencies is not correct");
-            return;
-        }
-
-        nwk->train(speech, numDataSpeech,
-                   noise, numDataNoise);
-    }
-    else if (functionName == "process")
-    {
-
-    }
-    else if (functionName == "delete")
-        delete nwk;
-}
 
 
 void processGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -160,16 +130,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // here the only possible typeName is Network
     if (typeName == "Network")
         processNetwork(functionName, nlhs, plhs, nrhs, prhs);
-    else if (typeName == "NetworkArray")
-        processNetworkArray(functionName, nlhs, plhs, nrhs, prhs);
     else if (typeName == "GMM")
         processGMM(nlhs, plhs, nrhs, prhs);
-    else if (typeName == "test")
-    {
-//        plhs[0] = toMxArray(120.0);
-//        cout << mxArrayTo<int>(prhs[POINTER_IDX]) << endl;
-        cout << mxArrayTo<vector<double> >(prhs[POINTER_IDX]) << endl;
-    }
     else
         mexErrMsgTxt("Unsupported operation\n");
 
