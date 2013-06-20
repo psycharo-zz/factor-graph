@@ -117,7 +117,7 @@ void testSpeechGMM()
     const size_t maxNumIters = 1000;
     const size_t numMixtures = 4;
 
-    double evidence;
+    double evidence = 0;
     size_t iters;
 
 

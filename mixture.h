@@ -84,8 +84,8 @@ public:
     //! override Variable
     Parameters<TDistribution> parametersFromParents() const
     {
-        Parameters<TDistribution> params;
-        for (size_t m = 0; m < numComponents(); ++m)
+        Parameters<TDistribution> params = component(0)->parametersFromParents() * weight(0);
+        for (size_t m = 1; m < numComponents(); ++m)
             params += component(m)->parametersFromParents() * weight(m);
         return params;
     }
@@ -94,7 +94,7 @@ public:
     // FIXME
     inline virtual double logNormalization() const
     {
-        double result = 0;
+        double result = 0.0;
         for (size_t m = 0; m < numComponents(); ++m)
             result += component(m)->logNormalization() * weight(m);
         return result;
@@ -103,7 +103,7 @@ public:
     //! override Variable
     inline virtual double logNormalizationParents() const
     {
-        double result = 0;
+        double result = 0.0;
         for (size_t m = 0; m < numComponents(); ++m)
             result += component(m)->logNormalizationParents() * weight(m);
         return result;

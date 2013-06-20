@@ -33,10 +33,20 @@
 
 # Current TODO
 
-* VariableArray is definitely necessary: e.g. for algonquin we just have 1 set of parameters
-  per point.
-  * Maybe just create a simple subclass that takes (size_t numPoints)
+## VariableArray
 
+* this class(es) specify template models. there are _at least_ following
+cases:
+
+0. single parent -> single child (no template at all)
+1. single parent -> multple children
+2. multiple parents -> multiple children (1-1 mapping)
+3. multiple parents -> single child (seems like this is mixture distributions)
+4. not sure if this is related BUT if we want temporal dependencies,
+   it should be handled separately
+
+* it could be done, e.g. by introducing mix-ins - that implement special
+  cases.
 
 # Later TODO
 

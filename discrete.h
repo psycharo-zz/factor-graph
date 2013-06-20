@@ -76,7 +76,6 @@ public:
     Moments()
     {}
 
-
     Moments(const vector<double> &_p):
         probs(_p)
     {}

@@ -257,8 +257,8 @@ Parameters<MoG> trainGMM(const double *trainingData,
             lbData += data[p]->logEvidenceLowerBound();
 
         double lbCurr = 0;
-        lbCurr += lbData + lbDiscr + lbMean + lbPrec;
 
+        lbCurr += lbData + lbDiscr + lbMean + lbPrec;
 
         // TODO: save the numbr of iterations?
         if (fabs(lbCurr - lbPrev) < EPSILON && iter > minIters)
