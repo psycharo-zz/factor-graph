@@ -87,17 +87,19 @@ void processGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     const size_t numPoints = cols;
     const size_t maxNumIters = 500;
-    const size_t numMixtures = 8;
+    const size_t numMixtures = 6;
 
     Parameters<MoG> params;
     double evidence;
+    size_t iters;
 
     params =  trainGMM(data,
                        numPoints,
                        maxNumIters,
                        numMixtures,
                        1, GaussianParameters(0, 1e-3), GammaParameters(1e-3, 1e-3),
-                       evidence);
+                       evidence,
+                       iters);
 
     cout << params << endl;
 

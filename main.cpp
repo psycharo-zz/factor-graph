@@ -41,29 +41,6 @@ std::vector<std::vector<double> > read_bins(const std::string &fileName)
     return result;
 }
 
-
-
-void testSpeechGMM()
-{
-    auto speechBins = read_bins("speechbin.txt");
-
-    cout << speechBins.size() << endl;
-    vector<double> bin = speechBins[0];
-
-    const size_t numPoints = 500;
-    const size_t maxNumIters = 500;
-    const size_t numMixtures = 8;
-
-    double evidence;
-    Parameters<MoG> params = trainGMM(bin.data(), numPoints,
-                                      maxNumIters, numMixtures,
-                                      1, GaussianParameters(0, 1e-3), GammaParameters(1e-3, 1e-3),
-                                      evidence);
-    cout << params << endl;
-}
-
-
-
 // algonquin for a single frequency band
 void testAlgonquin()
 {
@@ -106,9 +83,67 @@ void testAlgonquin()
 }
 
 
+
+/*
+ *
+points: 200
+iters:  466
+mixtures:4
+evidence:-552.123
+means = [4.22319 -3.46179 -6.42874 0.00133329 ]
+precs = [0.520569 0.909226 0.0220358 1.01377 ]
+weights = [0.509738	0.278057	0.010094	0.202111	]
+1.55 seconds.
+ *
+ */
+
+
+void testSpeechGMM()
+{
+    auto speechBins = read_bins("speechbin.txt");
+    vector<double> bin = speechBins[0];
+
+    const size_t numPoints = 999;
+    const size_t maxNumIters = 1000;
+    const size_t numMixtures = 4;
+
+    double evidence;
+    size_t iters;
+
+
+    clock_t startTime = clock();
+    Parameters<MoG> params = trainGMM(bin.data(), numPoints,
+                                      maxNumIters, numMixtures,
+                                      1, GaussianParameters(0, 1e-3), GammaParameters(1e-3, 1e-3),
+                                      evidence,
+                                      iters);
+    double runTime = double(clock() - startTime) / (double) CLOCKS_PER_SEC;
+
+    cout << "points: " << numPoints << endl
+         << "iters:  " << iters << endl
+         << "mixtures:" << numMixtures << endl
+         << "evidence:" << evidence << endl
+         << params
+         << runTime << " seconds." << endl;
+}
+
+
+
+#include <ctime>
+
+#include <gperftools/profiler.h>
+
 int main()
 {
-    testAlgonquin();
+
+    ProfilerStart("gmm.prof");
+    testSpeechGMM();
+    ProfilerStop();
+
+    // to compute its execution duration in runtime
+
+
+
 
 
     return 0;

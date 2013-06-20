@@ -73,6 +73,10 @@ template<>
 class Moments<Discrete>
 {
 public:
+    Moments()
+    {}
+
+
     Moments(const vector<double> &_p):
         probs(_p)
     {}
@@ -115,8 +119,7 @@ public:
         m_dims(logProbs.size()),
         m_parentMsg(logProbs)
     {
-            // TODO: finish
-//            throw NotImplementedException;
+        updatePosterior();
     }
 
     Discrete(Dirichlet *parent):
@@ -124,8 +127,9 @@ public:
         m_parent(parent),
         m_dims(parent->dims()),
         m_parentMsg(Moments<Dirichlet>(m_dims))
-    {}
-
+    {
+        updatePosterior();
+    }
 
     virtual ~Discrete() {}
 
@@ -144,28 +148,9 @@ public:
     //! draw a random integer sample
     inline size_t sample() const { return rand() % m_dims; }
 
-    //! override Variable
-    inline bool hasParents() const { return m_parent != NULL; }
 
     //! override Variable
-    inline virtual Parameters<Discrete> parameters() const
-    {
-        Parameters<Discrete> result = Variable::parameters();
-        result.logProb -= lognorm(result.logProb);
-        return result;
-    }
-
-    //! override Variable
-    double logNormalization() const
-    {
-        return vmp::lognorm(parameters().logProb);
-    }
-
-    //! override Variable
-    double logNormalizationParents() const { return 0.0; }
-
-    //! override Variable
-    Moments<Discrete> moments() const
+    inline Moments<Discrete> updatedMoments() const
     {
         if (isObserved())
         {
@@ -174,12 +159,30 @@ public:
             return Moments<Discrete>(probs);
         }
         else
-            // TODO: update these quantities when updating the posterior
-            return Moments<Discrete>(expv(parameters().logProb - lognorm(parameters().logProb)));
+            return Moments<Discrete>(expv(m_params.logProb - lognorm(m_params.logProb)));
     }
 
+    //! override Variable
+    inline bool hasParents() const { return m_parent != NULL; }
+
+    //! override Variable
+    inline virtual Parameters<Discrete> parameters() const
+    {
+        Parameters<Discrete> result = m_params;
+        result.logProb -= lognorm(result.logProb);
+        return result;
+    }
+
+    //! override Variable
+    inline double logNormalization() const { return 0.0; }
+    // TODO: return lognorm(parameters.logProb);
+
+    //! override Variable
+    inline double logNormalizationParents() const { return 0.0; }
+
+
     //! override HasForm<Discrete>
-    Parameters<Discrete> parametersFromParents() const
+    inline Parameters<Discrete> parametersFromParents() const
     {
         // TODO: check correctness
         return Parameters<Discrete>(m_parentMsg.logProb);
@@ -216,8 +219,30 @@ protected:
 
     //! stored value in case it is observed
     size_t m_value;
-
 };
+
+
+
+//class DiscreteVector
+//{
+//public:
+//    //! creata a discrete vector indexed by m
+//    DiscreteVector(Dirichlet *v, size_t size)
+//    {
+
+//    }
+
+//    //! assign values for all of these
+//    void observe(const vector<double> *values);
+
+//private:
+
+
+//    //! current
+//    Moments<Dirichlet> m_parentMsg;
+
+//};
+
 
 
 }

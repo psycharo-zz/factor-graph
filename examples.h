@@ -149,7 +149,8 @@ vmp::Parameters<vmp::MoG> trainGMM(const double *trainingData, size_t numPoints,
                                    double dirichletPrior,
                                    const vmp::GaussianParameters &priorMean,
                                    const vmp::GammaParameters &priorGamma,
-                                   double &evidence);
+                                   double &evidence,
+                                   size_t &iters);
 
 
 

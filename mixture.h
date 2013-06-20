@@ -48,13 +48,22 @@ public:
     inline Parameters<TDistribution> parameters(size_t idx) const { return m_components[idx]->parameters(); }
 
     //! get moments of a specific mixture
-    inline Moments<TDistribution> moments(size_t idx) const { return m_components[idx]->moments(); }
+    inline const Moments<TDistribution> &updatedMoments(size_t idx) const { return m_components[idx]->updatedMoments(); }
+
+    //! override Variable
+    inline void updatePosterior()
+    {
+        cout << "MoG::updatePosterior()" << endl;
+        ContinuousVariable<TDistribution>::updatePosterior();
+    }
+
 
     //! override ContinuousVariable
     inline void observe(double _value)
     {
         for (size_t m = 0; m < numComponents(); ++m)
             m_components[m]->observe(_value);
+
         this->m_observed = true;
         this->m_value = _value;
     }
@@ -63,7 +72,7 @@ public:
     inline bool hasParents() const { return true; }
 
     //! override Variable
-    Moments<TDistribution> moments() const
+    Moments<TDistribution> updatedMoments() const
     {
         // simply getting the value of one of the components
         // FIXME: only observed mixtures for now
@@ -122,7 +131,7 @@ public:
         assert(m_discretePar == parent);
 
         Parameters<Discrete> params(numComponents());
-        Moments<TDistribution> value = moments();
+        Moments<TDistribution> value = updatedMoments();
         // TODO: when non-observed it actually might depend on mean AND mean2, not only on the value itself
         for (size_t m = 0; m < numComponents(); ++m)
             params.logProb[m] = component(m)->logProbabilityDensity(value);

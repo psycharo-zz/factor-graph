@@ -58,10 +58,10 @@ void trainDirichlet(const size_t maxNumIters)
         lbPrev = lbCurr;
     }
 
-    cout << expv(dir->moments().logProb) << endl;
+    cout << expv(dir->updatedMoments().logProb) << endl;
 
     // sanity check
-    cout << sumv(expv(dir->moments().logProb)) << endl;
+    cout << sumv(expv(dir->updatedMoments().logProb)) << endl;
 
     deleteAll(lambda);
     delete dir;
@@ -130,8 +130,8 @@ void trainUnivariateGaussian(const size_t maxNumIters)
         lbPrev = lbCurr;
     }
 
-    cout << "mean,var:" << mu.moments().mean << " " << 1./ gamma.moments().precision << endl;
-    cout << "stdev:" << sqrt(1./gamma.moments().precision) << endl;
+    cout << "mean,var:" << mu.updatedMoments().mean << " " << 1./ gamma.updatedMoments().precision << endl;
+    cout << "stdev:" << sqrt(1./gamma.updatedMoments().precision) << endl;
 
 }
 
@@ -143,7 +143,8 @@ Parameters<MoG> trainGMM(const double *trainingData,
                          double dirichletPrior,
                          const GaussianParameters &priorMean,
                          const GammaParameters &priorGamma,
-                         double &evidence)
+                         double &evidence,
+                         size_t &iters)
 {
     Parameters<MoG> result;
 
@@ -155,10 +156,7 @@ Parameters<MoG> trainGMM(const double *trainingData,
     {
         // TODO: put the first updatePosterior() call into constructor?
         mean[m] = new Gaussian(priorMean.mean(), priorMean.precision);
-        mean[m]->updatePosterior();
-
         prec[m] = new Gamma(priorGamma.shape, priorGamma.rate);
-        prec[m]->updatePosterior();
     }
 
 
@@ -170,6 +168,7 @@ Parameters<MoG> trainGMM(const double *trainingData,
     {
         discr[p] = new Discrete(dir);
         data[p] = new MoG(mean, prec, discr[p]);
+
 
         // TODO: using the message passing instead of observing directly
         vector<double> logProb(numMixtures, -1);
@@ -185,6 +184,10 @@ Parameters<MoG> trainGMM(const double *trainingData,
 
     double lbPrev = -DBL_MAX;
 
+    // minimal number of iterations (convergence can be slow in the beginning - which is probably a bug)
+    const size_t minIters = 10;
+
+    iters = maxNumIters;
     // doing the inference
     for (size_t iter = 0; iter < maxNumIters; ++iter)
     {
@@ -199,6 +202,7 @@ Parameters<MoG> trainGMM(const double *trainingData,
             // TODO: UNIFY computation of the moments() and messageToParents()!
             mean[m]->updatePosterior();
         }
+
         // updating the precision components
         for (size_t m = 0; m < numMixtures; ++m)
         {
@@ -255,23 +259,29 @@ Parameters<MoG> trainGMM(const double *trainingData,
         double lbCurr = 0;
         lbCurr += lbData + lbDiscr + lbMean + lbPrec;
 
+
         // TODO: save the numbr of iterations?
-        if (fabs(lbCurr - lbPrev) < EPSILON)
+        if (fabs(lbCurr - lbPrev) < EPSILON && iter > minIters)
+        {
+            iters = iter;
             break;
+        }
         lbPrev = lbCurr;
+
+        assert(lbCurr >= lbPrev);
     }
 
 
     result.components.resize(numMixtures);
     for (size_t m = 0; m < numMixtures; ++m)
     {
-        result.components[m].meanPrecision = mean[m]->moments().mean * prec[m]->moments().precision;
-        result.components[m].precision = prec[m]->moments().precision;
+        result.components[m].meanPrecision = mean[m]->updatedMoments().mean * prec[m]->updatedMoments().precision;
+        result.components[m].precision = prec[m]->updatedMoments().precision;
     }
 
     result.weights.resize(numMixtures);
     for (size_t m = 0; m < numMixtures; ++m)
-        result.weights[m] = exp(dir->moments().logProb[m]);
+        result.weights[m] = exp(dir->updatedMoments().logProb[m]);
     evidence = lbPrev;
 
     delete dir;

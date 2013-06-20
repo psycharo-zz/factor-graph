@@ -130,7 +130,9 @@ public:
     Gaussian(Gaussian *_meanParent, Gamma *_precParent):
         m_meanPar(_meanParent),
         m_precPar(_precParent)
-    {}
+    {
+        updatePosterior();
+    }
 
     virtual ~Gaussian() {}
 
@@ -146,7 +148,6 @@ public:
     virtual void receiveFromParent(const Moments<Gaussian> &msg, Gaussian *parent)
     {
         assert(m_meanPar == parent);
-
         m_meanMsg = msg;
     }
 
@@ -183,7 +184,7 @@ public:
 
     //! <u> = [<mean>, <mean>^2 + 1./<precision>], expectations are based on the current
     // TODO: this should only be updated when parameters are updated
-    inline Moments<Gaussian> moments() const
+    inline Moments<Gaussian> updatedMoments() const
     {
         // TODO: update this at the same time with the posterior?
         if (isObserved())

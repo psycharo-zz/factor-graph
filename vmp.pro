@@ -36,6 +36,7 @@ QMAKE_CXXFLAGS += -std=c++11
 
 # TODO: matlab support
 # LIBS += -lgsl -lblas
+LIBS += -lprofiler
 
 
 

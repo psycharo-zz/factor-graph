@@ -63,6 +63,9 @@ template<>
 class Moments<Dirichlet>
 {
 public:
+    Moments()
+    {}
+
     Moments(const vector<double> _logProb):
         logProb(_logProb)
     {}
@@ -102,7 +105,9 @@ public:
         Variable(Parameters<Dirichlet>(u)),
         m_priorU(u),
         m_dims(u.size())
-    {}
+    {
+        updatePosterior();
+    }
 
     virtual ~Dirichlet() {}
 
@@ -127,7 +132,7 @@ public:
 
 
     //! override Variable
-    inline Moments<Dirichlet> moments() const
+    inline Moments<Dirichlet> updatedMoments() const
     {
         Moments<Dirichlet> result(dims());
         // lambda functions/matrices?

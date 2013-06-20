@@ -151,7 +151,7 @@ public:
     }
 
     //! override Variable. [a/b, (ln(Gamma(a)))' - log(b)]
-    inline Moments<Gamma> moments() const
+    inline Moments<Gamma> updatedMoments() const
     {
         return Moments<Gamma>(parameters().shape / parameters().rate,
                               digamma(parameters().shape) - log(parameters().rate));

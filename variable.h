@@ -83,7 +83,10 @@ public:
     virtual bool hasParents() const = 0;
 
     //! get the moments TODO: the same as message to children
-    virtual Moments<TDistribution> moments() const = 0;
+    virtual Moments<TDistribution> updatedMoments() const = 0;
+
+    //! get the updated moments
+    inline const Moments<TDistribution> &moments() const { return m_moments; }
 
     //! prior parameters, received from the parents
     virtual Parameters<TDistribution> parametersFromParents() const = 0;
@@ -107,13 +110,14 @@ public:
     double logEvidenceLowerBoundObserved() const
     {
         // TODO: m_params SHOULD NOT BE USED for the observed variables!
-        return parametersFromParents() * moments()
+        return parametersFromParents() * updatedMoments()
              + logNormalizationParents();
     }
 
     //! compute LB in case the variable is hidden
     double logEvidenceLowerBoundHidden() const
     {
+        // TODO: change to updatedMoments() in case it fails
         return parametersFromParents() * moments() - parameters() * moments()
                + logNormalizationParents()
                - logNormalization();
@@ -130,7 +134,7 @@ public:
 
 
     //! get the message to all the children. TODO: the same as `moments()`
-    Moments<TDistribution> messageToChildren() const { return moments(); }
+    inline Moments<TDistribution> messageToChildren() const { return moments(); }
 
     //! obtain a message from a child
     // TODO: make a check that there is indeed such a child
@@ -155,6 +159,7 @@ public:
         m_params = parametersFromParents();
         for (ChildIter it = m_childMsgs.begin(); it != m_childMsgs.end(); ++it)
             m_params += it->second;
+        m_moments = updatedMoments();
     }
 
 protected:
@@ -163,6 +168,9 @@ protected:
 
     //! current parameters of the approximate posterior
     Parameters<TDistribution> m_params;
+
+    //! current values of the moments
+    Moments<TDistribution> m_moments;
 
     // messages received from children
     std::map<size_t, Parameters<TDistribution> > m_childMsgs;
@@ -183,6 +191,8 @@ public:
     {
         this->m_observed = true;
         m_value = _value;
+
+        this->m_moments = this->updatedMoments();
     }
 
     // add a method to derive random samples

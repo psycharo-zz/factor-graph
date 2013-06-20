@@ -189,16 +189,19 @@ public:
                size_t maxNumIters)
     {
         double evidence;
+        size_t iterations;
         Parameters<MoG> params = trainGMM(speechFrames, numSpeechFrames,
                                           maxNumIters, numSpeechComps,
                                           1, GaussianParameters(0, 1e-3), GammaParameters(1e-3, 1e-3),
-                                          evidence);
+                                          evidence,
+                                          iterations);
         m_speechPrior = mixtureFromParameters(params, m_weightSpeech);
 
         params = trainGMM(noiseFrames, numNoiseFrames,
                           maxNumIters, numNoiseComps,
                           1, GaussianParameters(0, 1e-3), GammaParameters(1e-3, 1e-3),
-                          evidence);
+                          evidence,
+                          iterations);
 
         m_noisePrior = mixtureFromParameters(params, m_weightNoise);
 
