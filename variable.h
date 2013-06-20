@@ -92,7 +92,7 @@ public:
     virtual Parameters<TDistribution> parametersFromParents() const = 0;
 
     //! posterior parameters of the distribution
-    inline virtual Parameters<TDistribution> parameters() const
+    inline virtual const Parameters<TDistribution> &parameters() const
     {
         assert(!isObserved());
         return m_params;

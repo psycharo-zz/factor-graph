@@ -27,7 +27,8 @@ public:
     IsMixture(Discrete *_discrete):
         m_components(_discrete->dims(), NULL),
         m_discretePar(_discrete),
-        m_weightMsg(_discrete->dims())
+        m_weightMsg(_discrete->dims()),
+        m_numComponents(_discrete->dims())
     {
         assert(_discrete->dims() > 0);
         assert(m_components.size() == _discrete->dims());
@@ -36,7 +37,7 @@ public:
     virtual ~IsMixture() {}
 
     //! get the number of mixtures
-    inline size_t numComponents() const { return m_components.size(); }
+    inline size_t numComponents() const { return m_numComponents; }
 
     //! get the weight of the specified mixture component
     inline double weight(size_t idx) const { return m_discretePar->moments().probs[idx]; } // TODO: m_weightMsg.probs[idx]; }
@@ -45,7 +46,7 @@ public:
     inline TDistribution *component(size_t idx) const { return m_components[idx]; }
 
     //! get parameters of a specific mixture
-    inline Parameters<TDistribution> parameters(size_t idx) const { return m_components[idx]->parameters(); }
+    inline const Parameters<TDistribution> &parameters(size_t idx) const { return m_components[idx]->parameters(); }
 
     //! get moments of a specific mixture
     inline const Moments<TDistribution> &updatedMoments(size_t idx) const { return m_components[idx]->updatedMoments(); }
@@ -146,6 +147,8 @@ protected:
     Discrete *m_discretePar;
     //! message from the discrete parent
     DiscreteMoments m_weightMsg;
+    //! the total number of components
+    size_t m_numComponents;
 };
 
 template <typename TDistribution, typename TParent>

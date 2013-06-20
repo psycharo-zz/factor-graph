@@ -133,6 +133,15 @@ public:
 
     virtual ~Discrete() {}
 
+
+    //! override Variable
+    inline void updatePosterior()
+    {
+        Variable<Discrete>::updatePosterior();
+        m_params.logProb -= lognorm(m_params.logProb);
+        m_moments = updatedMoments();
+    }
+
     //! get the dimensionality
     inline size_t dims() const { return m_dims; }
 
@@ -159,19 +168,11 @@ public:
             return Moments<Discrete>(probs);
         }
         else
-            return Moments<Discrete>(expv(m_params.logProb - lognorm(m_params.logProb)));
+            return Moments<Discrete>(expv(parameters().logProb));
     }
 
     //! override Variable
     inline bool hasParents() const { return m_parent != NULL; }
-
-    //! override Variable
-    inline virtual Parameters<Discrete> parameters() const
-    {
-        Parameters<Discrete> result = m_params;
-        result.logProb -= lognorm(result.logProb);
-        return result;
-    }
 
     //! override Variable
     inline double logNormalization() const { return 0.0; }

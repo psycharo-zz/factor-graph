@@ -244,6 +244,22 @@ public:
 };
 
 
+
+class VectorGaussian
+{
+public:
+    VectorGaussian(Gaussian *_meanParent, Gamma *_precParent)
+    {}
+
+    virtual ~VectorGaussian() {}
+
+protected:
+
+};
+
+
+
+
 }
 
 
