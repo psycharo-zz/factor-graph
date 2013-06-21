@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <iostream>
+#include <stdexcept>
 #include <cassert>
 
 namespace vmp
@@ -40,6 +41,6 @@ inline std::ostream& operator <<(std::ostream &os, const std::vector<T> &v)
 
 
 
-}
+} // namespace vmp
 
 #endif // UTIL_H

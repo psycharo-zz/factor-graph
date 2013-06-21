@@ -37,16 +37,27 @@ NUM_SPEECH_FRAMES = 600;
 
 NOISE_PRIORS = cell(1,NUM_BINS);
 SPEECH_PRIORS = cell(1,NUM_BINS);
+
+NUM_BINS = 30;
+EDGE = ceil(sqrt(NUM_BINS));
 for i = 1:NUM_BINS
     speechBin = speechLog(i,:);
     noiseBin = noiseLog(i,:);
     
-    nwk = Network;
-    [priorS, priorN] = nwk.train(speechBin(1:NUM_SPEECH_FRAMES), NUM_SPEECH, ...
-                                 noiseBin(1:300), NUM_NOISE, ...
-                                 MAX_NUM_ITERS);
-    SPEECH_PRIORS{i} = priorS;
-    NOISE_PRIORS{i} = priorN;
+%     nwk = Network;
+%     [priorS, priorN] = nwk.train(speechBin(1:NUM_SPEECH_FRAMES), NUM_SPEECH, ...
+%                                  noiseBin(1:300), NUM_NOISE, ...
+%                                  MAX_NUM_ITERS);
+%     SPEECH_PRIORS{i} = priorS;
+%     NOISE_PRIORS{i} = priorN;
+    % testing the c++ implementation of the gmm learning
+     [means, precs, weights] = mexfactorgraph('GMM', 'GMM', speechBin);
+%     SPEECH_PRIORS{i} = struct('means',means,'precs',precs,'weights',weights);
+% 
+    subplot(EDGE, EDGE, i);
+    hold on;
+    histDistr(speechBin, 100);
+    plotGMM(min(speechBin):0.1:max(speechBin), means, precs, weights);   
     
     i
 end

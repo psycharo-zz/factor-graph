@@ -64,13 +64,23 @@ template <typename TDistribution>
 class Variable : public BaseVariable
 {
 public:
+    typedef Parameters<TDistribution> TParameters;
+    typedef Moments<TDistribution> TMoments;
+
     Variable():
         m_observed(false)
     {}
 
-    Variable(const Parameters<TDistribution> &params):
+    Variable(const TParameters &_params, const TMoments &_moments):
         m_observed(false),
-        m_params(params)
+        m_params(_params),
+        m_moments(_moments)
+    {}
+
+    Variable(const TParameters &_params):
+        m_observed(false),
+        m_params(_params),
+        m_moments(_params)
     {}
 
     virtual ~Variable() {};
@@ -78,44 +88,43 @@ public:
     //! check whether the variable is observed
     inline virtual bool isObserved() const { return m_observed; }
 
+    // TODO: add other messages
+    TParameters *addChild(BaseVariable *var)
+    {
+        // TODO: is such initialisation bad?
+        pair<MessageIt, bool> it = m_messages.insert(make_pair(var->id(), parameters()));
+        return &it.first->second;
+    }
 
-    //! check whether any parents are non-constant
-    virtual bool hasParents() const = 0;
-
-    //! get the moments TODO: the same as message to children
-    virtual Moments<TDistribution> updatedMoments() const = 0;
+    //! update the moments
+    virtual void updateMoments() = 0;
 
     //! get the updated moments
-    inline const Moments<TDistribution> &moments() const { return m_moments; }
+    inline virtual const TMoments &moments() const { return m_moments; }
 
     //! prior parameters, received from the parents
-    virtual Parameters<TDistribution> parametersFromParents() const = 0;
+    virtual TParameters parametersFromParents() const = 0;
 
     //! posterior parameters of the distribution
-    inline virtual const Parameters<TDistribution> &parameters() const
-    {
-        assert(!isObserved());
-        return m_params;
-    }
+    inline virtual const TParameters &parameters() const { return m_params; }
 
 
     //! compute the constitute to the lower bound on the log-evidence
-    virtual double logEvidenceLowerBound() const
+    virtual double logEvidence() const
     {
-        return isObserved() ? logEvidenceLowerBoundObserved() :
-                              logEvidenceLowerBoundHidden();
+        return isObserved() ? logEvidenceObserved() :
+                              logEvidenceHidden();
     }
 
     //! compute LB in case the variable is observed
-    double logEvidenceLowerBoundObserved() const
+    double logEvidenceObserved() const
     {
         // TODO: m_params SHOULD NOT BE USED for the observed variables!
-        return parametersFromParents() * updatedMoments()
-             + logNormalizationParents();
+        return parametersFromParents() * moments() + logNormalizationParents();
     }
 
     //! compute LB in case the variable is hidden
-    double logEvidenceLowerBoundHidden() const
+    double logEvidenceHidden() const
     {
         // TODO: change to updatedMoments() in case it fails
         return parametersFromParents() * moments() - parameters() * moments()
@@ -132,35 +141,17 @@ public:
     // TODO: the log-??something?? to compute the f() function
     // virtual double computeF() const = 0;
 
-
-    //! get the message to all the children. TODO: the same as `moments()`
-    inline Moments<TDistribution> messageToChildren() const { return moments(); }
-
-    //! obtain a message from a child
-    // TODO: make a check that there is indeed such a child
-    virtual void receiveFromChild(const Parameters<TDistribution> &msg, BaseVariable *child)
-    {
-        // TODO: check if this is correct
-        m_observed = false;
-        map_insert(m_childMsgs, make_pair(child->id(), msg));
-    }
-
-
-    Parameters<TDistribution> messageFromChild(BaseVariable *child)
-    {
-        return m_childMsgs[child->id()];
-    }
-
     //! updating the posterior w.r.t to the current messages
     virtual void updatePosterior()
     {
         assert(!isObserved());
-        // for all the children,
         m_params = parametersFromParents();
-        for (ChildIter it = m_childMsgs.begin(); it != m_childMsgs.end(); ++it)
+        for (MessageIt it = m_messages.begin(); it != m_messages.end(); ++it)
             m_params += it->second;
-        m_moments = updatedMoments();
+        updateMoments();
     }
+
+
 
 protected:
     //! flag whether the variable is observed or not
@@ -169,41 +160,14 @@ protected:
     //! current parameters of the approximate posterior
     Parameters<TDistribution> m_params;
 
+    //! the latest parameters retrieved from parents
+
     //! current values of the moments
     Moments<TDistribution> m_moments;
 
-    // messages received from children
-    std::map<size_t, Parameters<TDistribution> > m_childMsgs;
-    typedef typename map<size_t, Parameters<TDistribution> >::iterator ChildIter;
-};
-
-
-
-/**
- * variable taking only continuous values
- */
-template <typename TDistribution>
-class ContinuousVariable : public Variable<TDistribution>
-{
-public:
-    //! observe a scalar value TODO: make a template/vector version?
-    virtual void observe(double _value)
-    {
-        this->m_observed = true;
-        m_value = _value;
-
-        this->m_moments = this->updatedMoments();
-    }
-
-    // add a method to derive random samples
-    // virtual double sample() = 0;
-
-    //! compute the pdf value fpor the given value
-    virtual double logProbabilityDensity(const Moments<TDistribution> &m) const = 0;
-
-protected:
-    //! stored value in case it is observed
-    double m_value;
+    //! storage for children's messages
+    map<size_t, TParameters> m_messages;
+    typedef typename map<size_t, TParameters>::iterator MessageIt;
 };
 
 
@@ -218,18 +182,165 @@ public:
     // TODO: here there is no need to have the second parameter,
     // since it is assumed that there is only one parent of this type
     // mb introduce yet another class like HasMultipleParents
-    virtual void receiveFromParent(const Moments<TParent> &ms, TParent *parent) = 0;
-    virtual Parameters<TParent> messageToParent(TParent *parent) const = 0;
+//    virtual void receiveFromParent(const Moments<TParent> &ms, TParent *parent) = 0;
+    virtual void messageToParent(Parameters<TParent> *params) const = 0;
+};
+
+template <typename TDistribution>
+class VariableArray;
+
+
+
+// TODO: is this needed?
+template <typename TDistribution>
+class Parameters<VariableArray<TDistribution> >
+{
+public:
+    typedef Parameters<TDistribution> TParameters;
+
+    Parameters<VariableArray<TDistribution> >(size_t _size, const TParameters &_params = TParameters())
+        : params(_size, _params)
+    {}
+
+    inline TParameters &operator[](size_t idx) { return params[idx]; }
+    inline const TParameters &operator[](size_t idx) const { return params[idx]; }
+
+    inline size_t size() const { return params.size(); }
+
+    vector<TParameters> params;
 };
 
 
 
+template <typename TDistribution>
+class VariableArray : public BaseVariable
+{
+public:
+    typedef VariableArray<TDistribution> Type;
+    typedef Parameters<VariableArray<TDistribution> > TParamsVector;
+
+    typedef Parameters<TDistribution> TParameters;
+    typedef Moments<TDistribution> TMoments;
 
 
+    VariableArray(size_t _size, const TParameters &_params, const TMoments &_moments):
+        m_observed(false),
+        m_parameters(_size, _params),
+        m_moments(_size, _moments)
+    {}
+
+    VariableArray(size_t _size):
+        m_observed(false),
+        m_moments(_size),
+        m_parameters(_size)
+    {}
+
+    virtual ~VariableArray() {}
+
+    //! register as a child, returns a place to store message for this child
+    TParamsVector *addChild(BaseVariable *var)
+    {
+        // TODO: is such initialisation bad?
+        pair<MessageIt, bool> it = m_messages.insert(make_pair(var->id(), m_parameters));
+        return &it.first->second;
+    }
+
+    //!
+    inline bool isObserved() const { return m_observed; }
+
+    //! get the number of
+    inline size_t size() const { return m_moments.size(); }
+
+    //! message 1-1
+    inline const TMoments &moments(size_t idx) const { return m_moments[idx]; }
+
+    //! all the moments
+    inline const vector<TMoments> &moments() const { return m_moments; }
+
+    //! update parameters for each separate distribution
+    virtual void updatePosterior()
+    {
+        assert(!isObserved());
+        // initialisation
+        for (size_t i = 0; i < size(); ++i)
+            m_parameters[i] = parametersFromParents(i);
+
+        // going through all the messages
+        for (MessageIt it = m_messages.begin(); it != m_messages.end(); ++it)
+        {
+            const TParamsVector &params = it->second;
+            for (size_t i = 0; i < size(); ++i)
+                m_parameters[i] += params[i];
+        }
+        // updating the moments
+        updateMoments();
+    }
+
+    //! update moments
+    virtual void updateMoments() = 0;
+
+    //! get the parameters for a specific variable
+    virtual TParameters parametersFromParents(size_t idx) const = 0;
+
+    //! normalization
+    virtual double logNormalization() const = 0;
+    virtual double logNormalizationParents() const = 0;
+
+    //! get the parameters
+    inline virtual const TParameters &parameters(size_t idx) const
+    {
+        assert(!isObserved());
+        return m_parameters.params[idx];
+    }
+
+    //! evidence lower bound
+    virtual double logEvidence() const
+    {
+        return isObserved() ? logEvidenceObserved() : logEvidenceHidden();
+    }
+
+    double logEvidenceObserved() const
+    {
+        double result = 0.0;
+        for (size_t i = 0; i < size(); ++i)
+            result += parametersFromParents(i) * m_moments[i];
+        return result + logNormalizationParents();
+    }
+
+    double logEvidenceHidden() const
+    {
+        // TODO: change to updatedMoments() in case it fails
+        double result = 0.0;
+        for (size_t i = 0; i < size(); ++i)
+            result += parametersFromParents(i) * moments(i) - parameters(i) * moments(i);
+        return result + logNormalizationParents() - logNormalization();
+    }
+
+    //! probability densities vector
+    inline virtual vector<double> logProbabilityDensity(const TMoments &_moments) const { throw NotImplementedException; }
 
 
+protected:
+    //! observed/hidden flag
+    bool m_observed;
+
+    //! moments/observations
+    vector<TMoments> m_moments;
+
+    //! parameters TODO: should it actually have this? -only if hidden, and non-deterministic
+    TParamsVector m_parameters;
+
+    //! messages received from children, indexed by node ids
+    map<size_t, TParamsVector> m_messages;
+    typedef typename map<size_t, TParamsVector>::iterator MessageIt;
 
 
 };
+
+
+// TODO: continuous/discrete variables?
+
+
+} // namespace vmp
 
 #endif // VARIABLE_H

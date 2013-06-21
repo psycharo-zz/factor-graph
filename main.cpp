@@ -1,20 +1,25 @@
 #include <iostream>
 #include <fstream>
-using namespace std;
+
 
 
 #include <variable.h>
 #include <gaussian.h>
+#include <gaussianarray.h>
 #include <gamma.h>
 #include <mixture.h>
 #include <discrete.h>
-
+#include <discretearray.h>
 #include <examples.h>
-
 #include <algonquin.h>
+#include <ctime>
+#include <gperftools/profiler.h>
+#include <cfloat>
 
+
+using namespace std;
 using namespace vmp;
-using namespace algonquin;
+
 
 
 std::vector<std::vector<double> > read_bins(const std::string &fileName)
@@ -41,49 +46,6 @@ std::vector<std::vector<double> > read_bins(const std::string &fileName)
     return result;
 }
 
-// algonquin for a single frequency band
-void testAlgonquin()
-{
-    // priors
-    vector<double> weights = {0.4991, 0.2737, 0.0, 0.2270};
-    vector<double> precs = {0.5482, 0.9289, 0.0222, 0.8215};
-    vector<double> meanPrecs = {4.2749, -3.4840,-6.4307, 0.0516};
-
-    Parameters<MoG> speechPriors;
-    speechPriors.weights = weights;
-    speechPriors.components.resize(weights.size());
-
-    for (size_t m = 0; m < weights.size(); ++m)
-    {
-        speechPriors.components[m].meanPrecision = meanPrecs[m];
-        speechPriors.components[m].precision = precs[m];
-        cout << meanPrecs[m] / precs[m] << " " << weights[m] << endl;
-    }
-
-    Parameters<MoG> noisePriors;
-    noisePriors.weights = {1};
-    noisePriors.components = {GaussianParameters(-1.9787, 0.5141)};
-
-    // noisy speech
-    auto noisyBin = read_bins("noisybin.txt")[0];
-    auto speechBin = read_bins("speechbin.txt")[0];
-
-    // clean speech
-
-    Network nwk;
-    nwk.setPriors(speechPriors, noisePriors);
-    for (size_t f = 0; f < noisyBin.size(); ++f)
-    {
-        pair<double, double> estimated = nwk.process(noisyBin[f]);
-        cout << exp(speechBin[f]) << "\t"
-             << exp(estimated.first) << "\t"
-             << exp(noisyBin[f]) << "\t"
-             << endl;
-    }
-}
-
-
-
 /*
  *
 points: 200
@@ -104,6 +66,11 @@ means = [-3.98751 0.638693 3.99423 0 ]
 precs = [0.265769 0.197848 1.0533 1 ]
 weights = [0.255284	0.319829	0.424326	0.000560864	]
 7.06 seconds.
+
+means = [0.455054 -3.59932 3.91002 0 ]
+precs = [0.487944 0.236359 0.908833 1 ]
+weights = [0.190794	0.315197	0.493449	0.000560864	]
+
  *
  */
 
@@ -114,7 +81,7 @@ void testSpeechGMM()
     vector<double> bin = speechBins[0];
 
     const size_t numPoints = 999;
-    const size_t maxNumIters = 1000;
+    const size_t maxNumIters = 456;
     const size_t numMixtures = 4;
 
     double evidence = 0;
@@ -135,25 +102,18 @@ void testSpeechGMM()
          << "evidence:" << evidence << endl
          << params
          << runTime << " seconds." << endl;
+
 }
 
 
-
-#include <ctime>
-
-#include <gperftools/profiler.h>
-
 int main()
 {
-
-    ProfilerStart("gmm.prof");
     testSpeechGMM();
-    ProfilerStop();
 
-    // to compute its execution duration in runtime
-
-
-
+//    trainDirichletVector(10);
+//    trainGaussianVector(10);
+//    trainUnivariateGaussian(10);
+//    trainDirichletVector(10);
 
 
     return 0;

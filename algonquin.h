@@ -8,14 +8,7 @@
 
 
 
-namespace algonquin
-{
-
-using namespace vmp;
-
-
-
-
+namespace vmp {
 
 /**
  * @brief a compound noise implementing algonquin algorithm for a single
@@ -29,8 +22,8 @@ public:
     // TODO: do this up until convergence
     static const size_t NUM_ITERATIONS = 20;
 
-    AlgonquinNode(const MoG *_speechPrior,
-                  const MoG *_noisePrior):
+    AlgonquinNode(const MoGArray *_speechPrior,
+                  const MoGArray *_noisePrior):
         m_speechParent(_speechPrior),
         m_noiseParent(_noisePrior),
         m_speechMeans(numParameters(), 0.0), m_noiseMeans(numParameters(), 0.0),
@@ -95,8 +88,8 @@ private:
     inline size_t index(size_t s, size_t n) const { return numSpeech() * n + s; }
 
     //! the number of speech/noise components
-    inline size_t numSpeech() const { return m_speechParent->numComponents(); }
-    inline size_t numNoise() const { return m_noiseParent->numComponents(); }
+    inline size_t numSpeech() const { return m_speechParent->dims(); }
+    inline size_t numNoise() const { return m_noiseParent->dims(); }
     //! get the total number of variational parameters
     inline size_t numParameters() const { return numSpeech() * numNoise(); }
 
@@ -105,19 +98,19 @@ private:
     inline double meanNoise(size_t index) const { return m_noiseMeans[index]; }
 
     // prior accessors
-    // TODO: add to MoG convenient functions?
-    inline double priorMeanSpeech(size_t s) const { return m_speechParent->parameters(s).mean(); }
-    inline double priorMeanNoise(size_t n) const { return m_noiseParent->parameters(n).mean(); }
-    inline double priorPrecSpeech(size_t s) const { return m_speechParent->parameters(s).precision; }
-    inline double priorPrecNoise(size_t n) const { return m_noiseParent->parameters(n).precision;; }
+    // TODO: add to MoG convenient functions? TODO: parameters() ?
+    inline double priorMeanSpeech(size_t s) const { throw NotImplementedException; }// { return m_speechParent->mean()->moments(s).mean; }
+    inline double priorMeanNoise(size_t n) const { throw NotImplementedException; }//{ return m_noiseParent->mean()->moments(n).mean; }
+    inline double priorPrecSpeech(size_t s) const { throw NotImplementedException; }//{ return m_speechParent->precision()->moments(s).precision; }
+    inline double priorPrecNoise(size_t n) const { throw NotImplementedException; }// { return m_noiseParent->precision()->moments(n).precision; }
 
     // prior weights
-    inline double priorWeightSpeech(size_t s) const { return m_speechParent->weight(s); }
-    inline double priorWeightNoise(size_t n) const { return m_noiseParent->weight(n); }
+    inline double priorWeightSpeech(size_t s) const { throw NotImplementedException; }//return m_speechParent->weight(s); }
+    inline double priorWeightNoise(size_t n) const { throw NotImplementedException; }//return m_noiseParent->weight(n); }
 
     // parents
-    const MoG *m_speechParent;
-    const MoG *m_noiseParent;
+    const MoGArray *m_speechParent;
+    const MoGArray *m_noiseParent;
 
     // TODO: add a prior over the indices
 
@@ -174,14 +167,20 @@ public:
 
 
     // TODO: make a constructor instead?
-    static MoG *mixtureFromParameters(const Parameters<MoG> &params, Discrete* &discr)
+    static MoG *mixtureFromParameters(const Parameters<MoG> &params, Discrete* &discrete)
     {
-        vector<Gaussian*> comps(params.numComponents(), NULL);
-        discr = new Discrete(logv(params.weights));
-        for (size_t m = 0; m < params.numComponents(); ++m)
-            comps[m] = new Gaussian(params.components[m].mean(),
-                                    params.components[m].precision);
-        return new MoG(comps, discr);
+        VariableArray<Gaussian> *means = new GaussianArray<Gaussian, Gamma>(params.dims(), NULL, NULL);
+//        VariableArray<Gamma> *precs = new GammaArray(params.dims(), );
+        discrete = new Discrete(logv(params.weights));
+
+        // priors
+
+//        for (size_t m = 0; m < params.dims(); ++m)
+//        {
+//            comps[m] = new ConstGaussian(params.components[m].mean(), params.components[m].precision);
+//        }
+//        return new MoGArray(1, means, precs, _selector);
+        return NULL;
     }
 
     void train(const double *speechFrames, size_t numSpeechFrames, size_t numSpeechComps,
@@ -197,15 +196,15 @@ public:
                                           iterations);
         m_speechPrior = mixtureFromParameters(params, m_weightSpeech);
 
-        params = trainGMM(noiseFrames, numNoiseFrames,
-                          maxNumIters, numNoiseComps,
-                          1, GaussianParameters(0, 1e-3), GammaParameters(1e-3, 1e-3),
-                          evidence,
-                          iterations);
+//        params = trainGMM(noiseFrames, numNoiseFrames,
+//                          maxNumIters, numNoiseComps,
+//                          1, GaussianParameters(0, 1e-3), GammaParameters(1e-3, 1e-3),
+//                          evidence,
+//                          iterations);
 
         m_noisePrior = mixtureFromParameters(params, m_weightNoise);
 
-        m_node = new AlgonquinNode(m_speechPrior, m_noisePrior);
+//        m_node = new AlgonquinNode(m_speechPrior, m_noisePrior);
     }
 
 
@@ -214,7 +213,7 @@ public:
         m_speechPrior = mixtureFromParameters(paramsSpeech, m_weightSpeech);
         m_noisePrior = mixtureFromParameters(paramsNoise, m_weightNoise);
 
-        m_node = new AlgonquinNode(m_speechPrior, m_noisePrior);
+//        m_node = new AlgonquinNode(m_speechPrior, m_noisePrior);
     }
 
     inline const MoG *speechPrior() const { return m_speechPrior; }
@@ -239,47 +238,8 @@ private:
 
 
 
-/**
- * an abstraction representing an array of networks, each for a specific frequency
- */
-class NetworkArray : public PersistentObject
-{
-public:
-    NetworkArray(size_t _numFreqs):
-        m_networks(_numFreqs)
-    {}
-
-    inline size_t numFreqs() const { return m_networks.size(); }
-
-    //
-    void train(double *speech, size_t numSpeech,
-               double *noise, size_t numNoise)
-    {
-        for (size_t f = 0; f < numFreqs(); ++f)
-        {
-            double *s = speech + f * numSpeech;
-            double *n = noise + f * numNoise;
-            throw NotImplementedException;
-            m_networks[f].train(s, numSpeech, 4, n, numNoise, 1, 150);
-        }
-    }
-
-    void process(double *frame)
-    {
-        for (size_t f = 0; f < numFreqs(); ++f)
-            m_networks[f].process(frame[f]);
-    }
-
-    inline const Network &network(size_t f) { return m_networks[f]; }
-
-
-private:
-    vector<Network> m_networks;
 };
 
-
-
-}
 
 
 #endif // ALGONQUIN_H

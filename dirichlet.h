@@ -46,17 +46,17 @@ inline ostream &operator<<(ostream &out, const Parameters<Dirichlet> &params)
 }
 
 
-inline Parameters<Dirichlet> operator+(const Parameters<Dirichlet> &a,
-                                       const Parameters<Dirichlet> &b)
-{
-    return Parameters<Dirichlet>(a.U + b.U);
-}
+//inline Parameters<Dirichlet> operator+(const Parameters<Dirichlet> &a,
+//                                       const Parameters<Dirichlet> &b)
+//{
+//    return Parameters<Dirichlet>(a.U + b.U);
+//}
 
-inline Parameters<Dirichlet> operator-(const Parameters<Dirichlet> &a,
-                                       const Parameters<Dirichlet> &b)
-{
-    return Parameters<Dirichlet>(a.U - b.U);
-}
+//inline Parameters<Dirichlet> operator-(const Parameters<Dirichlet> &a,
+//                                       const Parameters<Dirichlet> &b)
+//{
+//    return Parameters<Dirichlet>(a.U - b.U);
+//}
 
 
 template<>
@@ -102,10 +102,12 @@ public:
      * @param _dims the dimensionality
      */
     Dirichlet(const vector<double> &u):
-        Variable(Parameters<Dirichlet>(u)),
+        Variable(Parameters<Dirichlet>(u),
+                 Moments<Dirichlet>(u.size())), // TODO: decent initialisation
         m_priorU(u),
         m_dims(u.size())
     {
+        m_moments.logProb.resize(m_dims);
         updatePosterior();
     }
 
@@ -132,32 +134,45 @@ public:
 
 
     //! override Variable
-    inline Moments<Dirichlet> updatedMoments() const
+    inline void updateMoments()
     {
-        Moments<Dirichlet> result(dims());
         // lambda functions/matrices?
         double dgSumU = digamma(sumv(parameters().U));
         for (size_t i = 0; i < dims(); ++i)
-            result.logProb[i] = digamma(parameters().U[i]) - dgSumU;
+            m_moments.logProb[i] = digamma(parameters().U[i]) - dgSumU;
         // TODO: is normalization required here?
-        result.logProb -= lognorm(result.logProb);
-        return result;
+        m_moments.logProb -= lognorm(m_moments.logProb);
     }
 
-    //! override HasForm<Dirichlet>
     inline Parameters<Dirichlet> parametersFromParents() const
     {
-        return Parameters<Dirichlet>(m_priorU);
+        return m_priorU;
     }
 
 
-private:
+protected:
     //! the prior parameter vector
     const vector<double> m_priorU;
 
     //! dimensionality
     size_t m_dims;
 };
+
+
+class ConstDirichlet : public Dirichlet
+{
+public:
+    ConstDirichlet(const vector<double> &_logProb):
+        Dirichlet(_logProb),
+        m_constMoments(_logProb)
+    {}
+
+    inline const Moments<Dirichlet> &moments() const { return m_constMoments; }
+
+private:
+    Moments<Dirichlet> m_constMoments;
+};
+
 
 }
 

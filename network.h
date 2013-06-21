@@ -21,12 +21,17 @@ public:
     virtual ~Network() {}
 
     /**
-     * @brief runInference
-     * @param maxIterations
-     * @return
+     * @brief running inference
      */
-    double runInference(int )
+    double runInference(const vector<BaseVariable*> vars, size_t numIters)
     {
+
+        for (size_t iters = 0; iters < vars.size(); iters += 2)
+        {
+
+        }
+
+
         std::runtime_error("Network::runInference(int): not implemented");
         return 0;
     }

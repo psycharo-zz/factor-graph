@@ -1,8 +1,7 @@
 #include <algonquin.h>
 
-using namespace algonquin;
 
-
+using namespace vmp;
 
 
 pair<double, double> AlgonquinNode::run()

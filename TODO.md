@@ -48,6 +48,19 @@ cases:
 * it could be done, e.g. by introducing mix-ins - that implement special
   cases.
 
+  messageToParent(VariableVector *parent)
+  receiveFromParent(VariableVector *parent)
+  * does this change updatePosterior() ??
+
+  messageToParent(Variable *)
+  recieveFromParent(Variable *)
+
+
+* VariableVector should also introduce something like a
+
+
+
+
 # Later TODO
 
 * Not clear whether the messages should be passed by the network itself or locally

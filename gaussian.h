@@ -24,7 +24,10 @@ template <>
 class Parameters<Gaussian>
 {
 public:
-    Parameters() {}
+    Parameters():
+        meanPrecision(0),
+        precision(0)
+    {}
 
     // TODO: this constructor should not be necessary?
     Parameters(double mp, double p):
@@ -44,6 +47,13 @@ public:
         precision += other.precision;
         return *this;
     }
+
+    Parameters &operator*=(double value)
+    {
+        meanPrecision *= value;
+        precision *= value;
+        return *this;
+    }
 };
 typedef Parameters<Gaussian> GaussianParameters;
 
@@ -61,20 +71,6 @@ inline Parameters<Gaussian> operator*(const Parameters<Gaussian> &params, double
                                 params.precision * val);
 }
 
-inline Parameters<Gaussian> operator+(const Parameters<Gaussian> &a,
-                                      const Parameters<Gaussian> &b)
-{
-    return Parameters<Gaussian>(a.meanPrecision + b.meanPrecision, a.precision + b.precision);
-}
-
-
-inline Parameters<Gaussian> operator-(const Parameters<Gaussian> &a,
-                                      const Parameters<Gaussian> &b)
-{
-    return Parameters<Gaussian>(a.meanPrecision - b.meanPrecision, a.precision - b.precision);
-}
-
-
 
 /**
  * stores expectation of the natural statistics vector
@@ -88,6 +84,11 @@ public:
     Moments<Gaussian>()
     {}
 
+    Moments<Gaussian>(const Parameters<Gaussian> &params):
+        mean(params.mean()),
+        mean2(sqr(params.mean()))
+    {}
+
     Moments<Gaussian>(double _mean, double _mean2):
         mean(_mean),
         mean2(_mean2)
@@ -97,6 +98,7 @@ public:
     double mean2;
 };
 typedef Moments<Gaussian> GaussianMoments;
+
 
 
 // dot product
@@ -109,110 +111,87 @@ inline double operator*(const Parameters<Gaussian> &params,
 
 
 
+
 /**
  * gaussian distributed variable
+ * TODO: do smthing about overloading
  */
-class Gaussian: public ContinuousVariable<Gaussian>,
+class Gaussian: public Variable<Gaussian>,
                 public HasParent<Gaussian>,
                 public HasParent<Gamma>
+
 {
 public:
-    Gaussian(double _mean, double _prec):
-        m_meanPar(NULL),
-        m_precPar(NULL),
-        m_meanMsg(_mean, sqr(_mean)),
-        m_precMsg(_prec, log(_prec))
-    {
-        // TODO:is this necessary?
-        updatePosterior();
-    }
+    typedef Parameters<Gaussian> TParameters;
+    typedef Moments<Gaussian> TMoments;
+
+    Gaussian(double _mean, double _prec);
 
     Gaussian(Gaussian *_meanParent, Gamma *_precParent):
-        m_meanPar(_meanParent),
-        m_precPar(_precParent)
+        Variable(TParameters(_meanParent->moments().mean, _precParent->moments().precision)),
+        m_meanParent(_meanParent),
+        m_precParent(_precParent),
+        m_hasParents(true)
     {
         updatePosterior();
     }
 
     virtual ~Gaussian() {}
 
+    //! observe a scalar value TODO: make a template/vector version?
+    inline virtual void observe(double _value)
+    {
+        this->m_observed = true;
+        this->m_moments.mean = _value;
+        this->m_moments.mean2 = sqr(_value);
+    }
+
+
     //! check if there are any non-constant parents
-    virtual bool hasParents() const
+    inline virtual bool hasParents() const
     {
         // TODO: maybe introduce a separate flag variable or even ask
         // whether a particular parent is present or not
-        return (m_meanPar != NULL) && (m_precPar != NULL);
+        return m_hasParents;
     }
 
-    //! get message from mean parent
-    virtual void receiveFromParent(const Moments<Gaussian> &msg, Gaussian *parent)
+    inline void messageToParent(Parameters<Gaussian> *params) const
     {
-        assert(m_meanPar == parent);
-        m_meanMsg = msg;
+        messageToParent(params, moments(), precMsg());
+//        params->meanPrecision = moments().mean * precMsg().precision;
+//        params->precision = precMsg().precision;
     }
 
-    //! message to mean parent
-    virtual Parameters<Gaussian> messageToParent(Gaussian *parent) const
+    inline void messageToParent(Parameters<Gamma> *params) const
     {
-        assert(parent == m_meanPar);
-
-        double meanPrec = moments().mean * m_precMsg.precision;
-        double prec = m_precMsg.precision;
-        // TODO: check the sign here
-        return Parameters<Gaussian>(meanPrec, prec);
+        messageToParent(params, moments(), meanMsg());
+//        params->shape = 0.5;
+//        params->rate = 0.5 * (moments().mean2 - 2 * moments().mean * meanMsg().mean + meanMsg().mean2);
     }
 
-    //! get message from the gamma parent
-    virtual void receiveFromParent(const Moments<Gamma> &msg, Gamma *parent)
+    //! override Variable
+    inline virtual void updateMoments()
     {
-        assert(parent == m_precPar);
-        m_precMsg = msg;
+        Gaussian::updateMoments(m_moments, parameters());
     }
 
-    //! message to the gamma parent
-    Parameters<Gamma> messageToParent(Gamma *parent) const
-    {
-        assert(parent == m_precPar);
 
-        // for array it would look as follows
-        // a'_m = a_m + 1/2 * \sum_i q_{im}
-        // b'_, = b + 1/2 * \sum_i q_{im} (x_i^2 - 2x_i <mu_m> + <mu2_m>)
-        double shape = 0.5;
-        double rate = 0.5 * (moments().mean2 - 2 * moments().mean * m_meanMsg.mean + m_meanMsg.mean2);
-        return Parameters<Gamma>(shape, rate);
+    //! get messages from parents
+    inline const Moments<Gaussian> &meanMsg() const
+    {
+        return m_meanParent->moments();
     }
 
-    //! <u> = [<mean>, <mean>^2 + 1./<precision>], expectations are based on the current
-    // TODO: this should only be updated when parameters are updated
-    inline Moments<Gaussian> updatedMoments() const
+    //! get message from parents
+    inline const Moments<Gamma> &precMsg() const
     {
-        // TODO: update this at the same time with the posterior?
-        if (isObserved())
-            return Moments<Gaussian>(m_value, sqr(m_value));
-        else
-        {
-            double mean = parameters().meanPrecision / parameters().precision;
-            double var = 1.0 / parameters().precision;
-            return Moments<Gaussian>(mean, sqr(mean) + var);
-        }
+        return m_precParent->moments();
     }
 
     //! compute parameters from parents
-    Parameters<Gaussian> parametersFromParents() const
+    inline Parameters<Gaussian> parametersFromParents() const
     {
-        return Parameters<Gaussian>(m_meanMsg.mean * m_precMsg.precision,
-                                    m_precMsg.precision);
-    }
-
-
-    //! compute the log-probability value of the provided value given the current natural parameters
-    // TODO: put this into ContinuousVariable?
-    virtual double logProbabilityDensity(const Moments<Gaussian> &ms) const
-    {
-        double value = ms.mean;
-        return 0.5 * (m_precMsg.logPrecision
-                      -m_precMsg.precision * (sqr(value) - 2 * value * m_meanMsg.mean + m_meanMsg.mean2)
-                      -LN_2PI);
+        return Parameters<Gaussian>(meanMsg().mean * precMsg().precision, precMsg().precision);
     }
 
 
@@ -231,32 +210,96 @@ public:
     {
         // 0.5 (<log(\gamma)> - <\gamma> * <\mean^2> - ln(2*PI))
         // HOW TO COMPUTE THIS FROM parametersFromParents() ??
-        return 0.5 * (m_precMsg.logPrecision - m_precMsg.precision * m_meanMsg.mean2 - log(2 * M_PI));
+        return 0.5 * (precMsg().logPrecision - precMsg().precision * meanMsg().mean2 - LN_2PI);
     }
 
-    // parents
-    Gaussian *m_meanPar;
-    Gamma *m_precPar;
+    //! compute the log-probability value of the provided value given the current natural parameters
+    // TODO: put this into ContinuousVariable?
+    virtual double logProbabilityDensity(const Moments<Gaussian> &ms) const
+    {
+        return Gaussian::logProbabilityDensity(ms, meanMsg(), precMsg());
+    }
 
-    // current messages received from both parents
-    Moments<Gaussian> m_meanMsg;
-    Moments<Gamma> m_precMsg;
-};
+    // static versions
+    inline static TParameters parametersFromParents(const Moments<Gaussian> &meanMsg, const Moments<Gamma> &precMsg)
+    {
+        return TParameters(meanMsg.mean * precMsg.precision,
+                           precMsg.precision);
+    }
 
 
+    inline static void messageToParent(Parameters<Gamma> *params,
+                                       const Moments<Gaussian> &value, const Moments<Gaussian> &meanMsg)
+    {
+        params->shape = 0.5;
+        params->rate = 0.5 * (value.mean2 - 2 * value.mean * meanMsg.mean + meanMsg.mean2);
+    }
 
-class VectorGaussian
-{
-public:
-    VectorGaussian(Gaussian *_meanParent, Gamma *_precParent)
-    {}
+    inline static void messageToParent(Parameters<Gaussian> *params,
+                                       const Moments<Gaussian> &value, const Moments<Gamma> &precMsg)
+    {
+        params->meanPrecision = value.mean * precMsg.precision;
+        params->precision = precMsg.precision;
+    }
 
-    virtual ~VectorGaussian() {}
+
+    inline static void updateMoments(TMoments &moments, const TParameters &params)
+    {
+        moments.mean = params.meanPrecision / params.precision;
+        moments.mean2 = sqr(moments.mean) + 1.0 / params.precision;
+    }
+
+    // 1D gaussian
+    inline static double logProbabilityDensity(const TMoments &value, const Moments<Gaussian> &meanMsg, const Moments<Gamma> &precMsg)
+    {
+        return 0.5 * (precMsg.logPrecision
+                      -precMsg.precision * (value.mean2 - 2 * value.mean * meanMsg.mean + meanMsg.mean2)
+                      -LN_2PI);
+    }
+
+
+    inline static double logNormalization(const TParameters &params)
+    {
+        return 0.5 * (log(params.precision)
+                      - params.precision * sqr(params.meanPrecision / params.precision)
+                      - LN_2PI);
+    }
+
+    inline static double logNormalizationParents(const Moments<Gaussian> &meanMsg, const Moments<Gamma> &precMsg)
+    {
+        return 0.5 * (precMsg.logPrecision
+                      - precMsg.precision * meanMsg.mean2
+                      - LN_2PI);
+    }
+
 
 protected:
+    // parents
+    Gaussian *m_meanParent;
+    Gamma *m_precParent;
 
+    bool m_hasParents;
+
+    Gaussian():
+        m_meanParent(NULL),
+        m_precParent(NULL),
+        m_hasParents(false)
+    {}
 };
 
+
+
+/**
+ * fake distribution with constants. TODO: add throws?
+ */
+class ConstGaussian : public Gaussian
+{
+public:
+    ConstGaussian(double _mean)
+    {
+        m_moments = Moments<Gaussian>(_mean, sqr(_mean));
+    }
+};
 
 
 

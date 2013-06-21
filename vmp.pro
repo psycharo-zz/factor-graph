@@ -9,7 +9,10 @@ SOURCES += main.cpp \
     examples.cpp \
     algonquin.cpp \
     mathutil.cpp \
-    matlab/persistentobject.cpp
+    gaussian.cpp \
+    matlab/persistentobject.cpp \
+    gaussianarray.cpp \
+    discretearray.cpp
 #    matlab/mexfactorgraph.cpp
 
 HEADERS += \
@@ -25,14 +28,16 @@ HEADERS += \
     examples.h \
     algonquin.h \
     matlab/persistentobject.h \
-    matlab/convert.h
+    matlab/convert.h \
+    gaussianarray.h \
+    discretearray.h
 
 OTHER_FILES += \
     TODO.md \
     speechbin.txt \
     noisybin.txt
 
-QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CXXFLAGS += -std=c++11 -Wno-reorder -Wno-unused-variable -Wno-unused-parameter
 
 # TODO: matlab support
 # LIBS += -lgsl -lblas

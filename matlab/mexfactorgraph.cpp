@@ -8,8 +8,6 @@ using namespace std;
 #include "convert.h"
 
 
-using namespace algonquin;
-
 
 
 const size_t FUNCTION_IDX = 0;
@@ -86,7 +84,7 @@ void processGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 
     const size_t numPoints = cols;
-    const size_t maxNumIters = 500;
+    const size_t maxNumIters = 150;
     const size_t numMixtures = 6;
 
     Parameters<MoG> params;
@@ -101,10 +99,8 @@ void processGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                        evidence,
                        iters);
 
-    cout << params << endl;
-
     double means[numMixtures], precs[numMixtures];
-    for (size_t m = 0; m < params.numComponents(); ++m)
+    for (size_t m = 0; m < params.dims(); ++m)
     {
         means[m] = params.components[m].mean();
         precs[m] = params.components[m].precision;

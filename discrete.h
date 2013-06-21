@@ -50,20 +50,6 @@ inline ostream &operator<<(ostream &out, const Parameters<Discrete> &params)
 typedef Parameters<Discrete> DiscreteParameters;
 
 
-inline Parameters<Discrete> operator+(const Parameters<Discrete> &a,
-                                      const Parameters<Discrete> &b)
-{
-    return Parameters<Discrete>(a.logProb + b.logProb);
-}
-
-
-inline Parameters<Discrete> operator-(const Parameters<Discrete> &a,
-                                      const Parameters<Discrete> &b)
-{
-    return Parameters<Discrete>(a.logProb - b.logProb);
-}
-
-
 
 /**
  * stores expectation of the natural statistics vector of
@@ -112,21 +98,23 @@ class Discrete : public Variable<Discrete>,
                  public HasParent<Dirichlet>
 {
 public:
-    Discrete(const vector<double> &logProbs):
-        Variable(Parameters<Discrete>(logProbs)),
-        m_parent(NULL),
-        m_dims(logProbs.size()),
-        m_parentMsg(logProbs)
+    Discrete(const vector<double> &_logProbs):
+        Variable(Parameters<Discrete>(_logProbs),
+                 Moments<Discrete>(expv(_logProbs))),
+        m_parent(new ConstDirichlet(_logProbs)),
+        m_dims(_logProbs.size())
     {
+        m_moments.probs.resize(dims());
         updatePosterior();
     }
 
     Discrete(Dirichlet *parent):
-        Variable(Parameters<Discrete>(parent->dims())),
+        Variable(Parameters<Discrete>(parent->dims()),
+                 Moments<Discrete>(parent->dims())),
         m_parent(parent),
-        m_dims(parent->dims()),
-        m_parentMsg(Moments<Dirichlet>(m_dims))
+        m_dims(parent->dims())
     {
+        m_moments.probs.resize(dims());
         updatePosterior();
     }
 
@@ -138,36 +126,30 @@ public:
     {
         Variable<Discrete>::updatePosterior();
         m_params.logProb -= lognorm(m_params.logProb);
-        m_moments = updatedMoments();
+        updateMoments();
     }
 
-    //! get the dimensionality
-    inline size_t dims() const { return m_dims; }
 
     //! set a fixed value
-    inline void observe(size_t _value)
+    inline void observe(size_t value)
     {
-        if (!validate(_value))
+        if (!validate(value))
             throw std::runtime_error("DiscreteVariable::observe(size_t): the value out of bounds");
         m_observed = true;
-        m_value = _value;
+        m_moments.probs.assign(dims(), 0);
+        m_moments.probs[value] = 1.0;
     }
 
     //! draw a random integer sample
     inline size_t sample() const { return rand() % m_dims; }
 
+    //! get the dimensionality
+    inline size_t dims() const { return m_dims; }
 
     //! override Variable
-    inline Moments<Discrete> updatedMoments() const
+    virtual void updateMoments()
     {
-        if (isObserved())
-        {
-            vector<double> probs(dims(), 0);
-            probs[m_value] = 1.0;
-            return Moments<Discrete>(probs);
-        }
-        else
-            return Moments<Discrete>(expv(parameters().logProb));
+        Discrete::updateMoments(m_moments, parameters());
     }
 
     //! override Variable
@@ -180,33 +162,40 @@ public:
     //! override Variable
     inline double logNormalizationParents() const { return 0.0; }
 
-
     //! override HasForm<Discrete>
     inline Parameters<Discrete> parametersFromParents() const
     {
         // TODO: check correctness
-        return Parameters<Discrete>(m_parentMsg.logProb);
+        return m_parent->moments().logProb;
     }
 
-    //! override HasParent<Dirichlet>
-    void receiveFromParent(const Moments<Dirichlet> &msg, Dirichlet *parent)
+    inline void messageToParent(Parameters<Dirichlet> *params) const
     {
-        assert(hasParents() && parent == m_parent);
-        m_parentMsg = msg;
+        params->U = moments().probs;
     }
 
-    //! override HasParent<Dirichlet>
-    Parameters<Dirichlet> messageToParent(Dirichlet *parent) const
+
+    // static versions
+    inline static Parameters<Discrete> parametersFromParents(const Moments<Dirichlet> &dirMsg)
     {
-        assert(hasParents() && parent == m_parent);
-        // TODO: isn't it weird that this messages are computed ?FROM MOMENTS?
-        return Parameters<Dirichlet>(moments().probs);
+        return dirMsg.logProb;
     }
 
+    inline static void updateMoments(Moments<Discrete> &moments, const Parameters<Discrete> &params)
+    {
+        for (size_t i = 0; i < moments.probs.size(); ++i)
+            moments.probs[i] = exp(params.logProb[i]);
+    }
+
+
+    inline static double logNormalization(const TParameters &params) { return 0.0; }
+
+    //! override Variable
+    inline static double logNormalizationParents(const Moments<Dirichlet> &moments) { return 0.0; }
 
 protected:
     //! check whether the value is within the limits TODO: rename the function
-    inline bool validate(size_t _value) { return _value < m_dims; }
+    inline bool validate(size_t _value) { return _value < dims(); }
 
     //! the (only) dirichlet parent
     Dirichlet *m_parent;
@@ -215,37 +204,15 @@ protected:
     size_t m_dims;
 
     //! the message from its dirichlet parent
-    Moments<Dirichlet> m_parentMsg;
-
-    //! stored value in case it is observed
-    size_t m_value;
+//    Moments<Dirichlet> m_parentMsg;
 };
 
 
 
-//class DiscreteVector
-//{
-//public:
-//    //! creata a discrete vector indexed by m
-//    DiscreteVector(Dirichlet *v, size_t size)
-//    {
-
-//    }
-
-//    //! assign values for all of these
-//    void observe(const vector<double> *values);
-
-//private:
-
-
-//    //! current
-//    Moments<Dirichlet> m_parentMsg;
-
-//};
 
 
 
-}
+} // namespace vmp
 
 
 #endif // DISCRETE_H

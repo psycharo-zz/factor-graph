@@ -1,7 +1,7 @@
 % basic
 
 % mex mexfactorgraph.cpp ../algonquin.cpp ../variable.cpp ../examples.cpp ../mathutil.cpp -I../
-
+function testVMP(SPEECH_PRIORS, NOISE_PRIORS)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 [speech, freqS] = wavread('bbcnews'); 
@@ -54,8 +54,6 @@ for i = 1:NUM_BINS
     
 end    
 
-
-% % testing the c++ implementation of the gmm learning
-% [means, precs, weights] = mexfactorgraph('GMM', 'GMM', speechBin);
+end
 
 

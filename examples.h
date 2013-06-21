@@ -143,7 +143,6 @@ const size_t BIN_NUM_POINTS = sizeof(BIN_DATA) / sizeof(double);
 
 void trainDirichlet(const size_t maxNumIters);
 
-void trainUnivariateGaussian(const size_t maxNumIters);
 
 vmp::Parameters<vmp::MoG> trainGMM(const double *trainingData, size_t numPoints, size_t maxNumIters, size_t numMixtures,
                                    double dirichletPrior,
@@ -151,6 +150,8 @@ vmp::Parameters<vmp::MoG> trainGMM(const double *trainingData, size_t numPoints,
                                    const vmp::GammaParameters &priorGamma,
                                    double &evidence,
                                    size_t &iters);
+
+
 
 
 
