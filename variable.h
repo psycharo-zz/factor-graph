@@ -3,15 +3,11 @@
 
 #include <vector>
 #include <map>
-
 using namespace std;
 
 
+
 #include <util.h>
-
-
-
-// TODO: create a separate implementation file?
 
 namespace vmp
 {
@@ -36,6 +32,7 @@ public:
 
 /**
  * @brief the base class for all the variables
+ * simply assigns ids
  */
 class BaseVariable
 {
@@ -66,6 +63,7 @@ class Variable : public BaseVariable
 public:
     typedef Parameters<TDistribution> TParameters;
     typedef Moments<TDistribution> TMoments;
+    typedef TDistribution TVariableType;
 
     Variable():
         m_observed(false)
@@ -83,7 +81,7 @@ public:
         m_moments(_params)
     {}
 
-    virtual ~Variable() {};
+    virtual ~Variable() {}
 
     //! check whether the variable is observed
     inline virtual bool isObserved() const { return m_observed; }
@@ -138,6 +136,9 @@ public:
     //! compute the log-normalization based from parents
     virtual double logNormalizationParents() const = 0;
 
+    //! compute the log-probability function
+    virtual double logProbabilityDensity(const TMoments &moments) const = 0;
+
     // TODO: the log-??something?? to compute the f() function
     // virtual double computeF() const = 0;
 
@@ -174,6 +175,7 @@ protected:
 
 /**
  * mixin that specifies the parent-child relationship
+ * TODO: use variadic templates
  */
 template <typename TParent>
 class HasParent
@@ -186,6 +188,8 @@ public:
     virtual void messageToParent(Parameters<TParent> *params) const = 0;
 };
 
+
+
 template <typename TDistribution>
 class VariableArray;
 
@@ -197,9 +201,14 @@ class Parameters<VariableArray<TDistribution> >
 {
 public:
     typedef Parameters<TDistribution> TParameters;
+    typedef VariableArray<TDistribution> TArray;
 
-    Parameters<VariableArray<TDistribution> >(size_t _size, const TParameters &_params = TParameters())
-        : params(_size, _params)
+    Parameters(size_t _size, const TParameters &_params = TParameters()):
+        params(_size, _params)
+    {}
+
+    Parameters(size_t _size, const vector<TParameters> &_params):
+        params(_params)
     {}
 
     inline TParameters &operator[](size_t idx) { return params[idx]; }
@@ -222,18 +231,31 @@ public:
     typedef Parameters<TDistribution> TParameters;
     typedef Moments<TDistribution> TMoments;
 
-
-    VariableArray(size_t _size, const TParameters &_params, const TMoments &_moments):
-        m_observed(false),
-        m_parameters(_size, _params),
-        m_moments(_size, _moments)
-    {}
-
+    //! create a variable array with _uninitialized_ moments parameters. TODO: this should not be necessart
     VariableArray(size_t _size):
-        m_observed(false),
+        m_parameters(_size),
         m_moments(_size),
-        m_parameters(_size)
+        m_observed(false)
     {}
+
+    //! create a variable array with identical initial values of parameters
+    VariableArray(size_t _size, const TParameters &_params):
+        m_parameters(_size, _params),
+        m_moments(_size, TMoments(_params)),
+        m_observed(false)
+    {}
+
+    //! create a variable array with different parameter values for each elements
+    VariableArray(const TParamsVector &_params):
+        m_parameters(_params),
+        m_observed(false)
+    {
+        // TODO: funcitonal-style?
+        for (size_t i = 0; i < _params.size(); ++i)
+            m_moments.push_back(TMoments(_params[i]));
+    }
+
+
 
     virtual ~VariableArray() {}
 
@@ -286,11 +308,18 @@ public:
     virtual double logNormalization() const = 0;
     virtual double logNormalizationParents() const = 0;
 
-    //! get the parameters
+    //! get parameters for a specific point
     inline virtual const TParameters &parameters(size_t idx) const
     {
         assert(!isObserved());
         return m_parameters.params[idx];
+    }
+
+    //! get all the parameters vector
+    inline virtual const TParamsVector &parameters() const
+    {
+        assert(!isObserved());
+        return m_parameters;
     }
 
     //! evidence lower bound
@@ -321,14 +350,14 @@ public:
 
 
 protected:
-    //! observed/hidden flag
-    bool m_observed;
+    //! parameters TODO: should it actually have this? -only if hidden, and non-deterministic
+    TParamsVector m_parameters;
 
     //! moments/observations
     vector<TMoments> m_moments;
 
-    //! parameters TODO: should it actually have this? -only if hidden, and non-deterministic
-    TParamsVector m_parameters;
+    //! observed/hidden flag
+    bool m_observed;
 
     //! messages received from children, indexed by node ids
     map<size_t, TParamsVector> m_messages;

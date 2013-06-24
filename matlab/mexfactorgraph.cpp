@@ -19,6 +19,7 @@ const size_t POINTER_IDX = 2;
 void processNetwork(const std::string &functionName,
                     int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+
     if (functionName == "create")
     {
         plhs[0] = ptrToMxArray(new Network());
@@ -28,25 +29,24 @@ void processNetwork(const std::string &functionName,
     Network *nwk = mxArrayToPtr<Network>(prhs[POINTER_IDX]);
     if (functionName == "train")
     {
+        size_t maxNumIters = mxArrayTo<int>(prhs[POINTER_IDX+5]);
+
         double *speech;
         size_t rows_s, cols_s;
         mxArrayToDoubleArray(prhs[POINTER_IDX+1], speech, rows_s, cols_s);
         size_t numSpeechComps = mxArrayTo<int>(prhs[POINTER_IDX+2]);
+        nwk->trainSpeech(speech, cols_s, numSpeechComps, maxNumIters);
 
         double *noise;
         size_t rows_n, cols_n;
         mxArrayToDoubleArray(prhs[POINTER_IDX+3], noise, rows_n, cols_n);
         size_t numNoiseComps = mxArrayTo<int>(prhs[POINTER_IDX+4]);
 
-        size_t maxNumIters = mxArrayTo<int>(prhs[POINTER_IDX+5]);
-
         // training mixtures
-        nwk->train(speech, cols_s, numSpeechComps,
-                   noise, cols_n, numNoiseComps,
-                   maxNumIters);
+        nwk->trainNoise(noise, cols_n, numNoiseComps, maxNumIters);
 
-        plhs[0] = toMxStruct(nwk->speechPrior());
-        plhs[1] = toMxStruct(nwk->noisePrior());
+        plhs[0] = toMxStruct(nwk->speechDistr());
+        plhs[1] = toMxStruct(nwk->noiseDistr());
     }
     else if (functionName == "process")
     {
@@ -54,22 +54,23 @@ void processNetwork(const std::string &functionName,
         plhs[0] = toMxArray(result.first);
         plhs[1] = toMxArray(result.second);
     }
-    else if (functionName == "setPriors")
+    else if (functionName == "setDistrs")
     {
-        nwk->setPriors(mxStructTo<MoG>(prhs[POINTER_IDX+1]),
-                       mxStructTo<MoG>(prhs[POINTER_IDX+2]));
+        cout << "not supported" << endl;
+//        nwk->setDistributions(mxStructTo<MoG>(prhs[POINTER_IDX+1]),
+//                              mxStructTo<MoG>(prhs[POINTER_IDX+2]));
     }
-    else if (functionName == "priors")
+    else if (functionName == "distrs")
     {
-        if (nwk->speechPrior() != NULL &&
-            nwk->noisePrior() != NULL)
+        if (nwk->trained())
         {
-            plhs[0] = toMxStruct(nwk->speechPrior());
-            plhs[1] = toMxStruct(nwk->noisePrior());
+            plhs[0] = toMxStruct(nwk->speechDistr());
+            plhs[1] = toMxStruct(nwk->noiseDistr());
         }
     }
     else if (functionName == "delete")
         delete nwk;
+
 }
 
 
@@ -122,15 +123,24 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         return;
     }
 
-    string functionName(mxArrayToString(prhs[FUNCTION_IDX]));
-    string typeName(mxArrayToString(prhs[TYPE_IDX]));
+    try
+    {
 
-    // here the only possible typeName is Network
-    if (typeName == "Network")
-        processNetwork(functionName, nlhs, plhs, nrhs, prhs);
-    else if (typeName == "GMM")
-        processGMM(nlhs, plhs, nrhs, prhs);
-    else
-        mexErrMsgTxt("Unsupported operation\n");
+        string functionName(mxArrayToString(prhs[FUNCTION_IDX]));
+        string typeName(mxArrayToString(prhs[TYPE_IDX]));
+
+        // here the only possible typeName is Network
+        if (typeName == "Network")
+            processNetwork(functionName, nlhs, plhs, nrhs, prhs);
+        else if (typeName == "GMM")
+            processGMM(nlhs, plhs, nrhs, prhs);
+        else
+            mexErrMsgTxt("Unsupported operation\n");
+    }
+    catch (...)
+    {
+        mexErrMsgTxt("Unknown error occured\n");
+    }
+
 
 }

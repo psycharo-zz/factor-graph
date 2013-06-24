@@ -231,16 +231,15 @@ mxArray *toMxStruct(const Parameters<Discrete> &params)
 // TODO: also use Parameters<MoG> instead
 mxArray *toMxStruct(const MoG *mog)
 {
-    throw NotImplementedException;
-//    mxArray *result = mxCreateStructMatrix(1, mog->numComponents(), 4, FIELDS_GMM);
-//    for (size_t i = 0; i < mog->numComponents(); ++i)
-//    {
-//        mxSetField(result, i, MEX_TYPE, toMxArray("GMM"));
-//        mxSetField(result, i, MEX_MEANPREC, toMxArray(mog->parameters(i).meanPrecision));
-//        mxSetField(result, i, MEX_PREC, toMxArray(mog->parameters(i).precision));
-//        mxSetField(result, i, MEX_WEIGHT, toMxArray(mog->weight(i)));
-//    }
-//    return result;
+    mxArray *result = mxCreateStructMatrix(1, mog->dims(), 4, FIELDS_GMM);
+    for (size_t i = 0; i < mog->dims(); ++i)
+    {
+        mxSetField(result, i, MEX_TYPE, toMxArray("MoG"));
+        mxSetField(result, i, MEX_MEANPREC, toMxArray(mog->parameters(i).meanPrecision));
+        mxSetField(result, i, MEX_PREC, toMxArray(mog->parameters(i).precision));
+        mxSetField(result, i, MEX_WEIGHT, toMxArray(mog->weight(i)));
+    }
+    return result;
 }
 
 

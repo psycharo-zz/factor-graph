@@ -18,11 +18,8 @@ namespace vmp
 {
 
 
-class MoG : public Variable<Gaussian>
-{
-public:
 
-};
+class MoG;
 
 template<>
 class Parameters<MoG>
@@ -41,9 +38,118 @@ public:
 
     inline size_t dims() const { return components.size(); }
 
-    vector<GaussianParameters> components;
+    vector<Gaussian::TParameters> components;
     vector<double> weights;
 };
+
+
+
+
+// TODO: finish it
+class MoG : public Variable<Gaussian>,
+            public HasParent<VariableArray<Gaussian> >,
+            public HasParent<VariableArray<Gamma> >,
+            public HasParent<Discrete>
+{
+public:
+    MoG(VariableArray<Gaussian> *_meanComps,
+        VariableArray<Gamma> *_precComps,
+        Discrete *_selector):
+        m_meanComps(_meanComps),
+        m_precComps(_precComps),
+        m_selector(_selector)
+    {
+        assert(_meanComps->size() == _selector->dims() &&
+               _precComps->size() == _selector->dims());
+    }
+
+    size_t dims() const { return m_selector->dims(); }
+
+    // utility functions to access separate mixtures
+    const Moments<Gaussian> &meanMoments(size_t m) const { return m_meanComps->moments(m); }
+    const Moments<Gamma> &precMoments(size_t m) const { return m_precComps->moments(m); }
+    double weight(size_t idx) const { return m_selector->moments().probs[idx]; }
+
+    //! TODO:
+    TParameters parameters(size_t m) const
+    {
+        return TParameters(m_meanComps->moments(m).mean * m_precComps->moments(m).precision,
+                           m_precComps->moments(m).precision);
+    }
+
+    void observe(double value)
+    {
+        m_moments.mean = value;
+        m_moments.mean2 = sqr(value);
+        m_observed = true;
+    }
+
+    //! override Variable
+    void updatePosterior() { throw NotImplementedException; }
+
+    //! override Variable
+    void updateMoments() { throw NotImplementedException; }
+
+    //! override Variable
+    TParameters parametersFromParents() const { throw NotImplementedException; }
+
+    //! override Variable
+    double logNormalization() const { throw NotImplementedException; }
+
+    //! override
+    double logNormalizationParents() const { throw NotImplementedException; }
+
+
+    // message to discrete variables TODO: VariableArray<Discrete>
+    void messageToParent(Discrete::TParameters *params) const
+    {
+        for (size_t m = 0; m < dims(); ++m)
+            params->logProb[m] = logProbabilityDensity(m_moments);
+        params->logProb -= lognorm(params->logProb);
+    }
+
+    // message to mean mixtures
+    void messageToParent(VariableArray<Gaussian>::TParamsVector *v) const
+    {
+        vector<Gaussian::TParameters> &params = v->params;
+
+        Gaussian::TParameters tmp;
+        for (size_t m = 0; m < dims(); ++m)
+        {
+            TVariableType::messageToParent(&params[m], m_moments, precMoments(m));
+            params[m] *= weight(m);
+        }
+    }
+
+    // message to variance mixtures
+    void messageToParent(VariableArray<Gamma>::TParamsVector *v) const
+    {
+        vector<Gamma::TParameters> &params = v->params;
+        for (size_t m = 0; m < dims(); ++m)
+        {
+            TVariableType::messageToParent(&params[m], m_moments, meanMoments(m));
+            params[m] *= weight(m);
+        }
+    }
+
+    double logProbabilityDensity(const TMoments &moments) const
+    {
+        double result = 0.0;
+        for (size_t m = 0; m < dims(); ++m)
+            result += weight(m) * TVariableType::logProbabilityDensity(moments, meanMoments(m), precMoments(m));
+        return result;
+    }
+
+
+private:
+    VariableArray<Gaussian> *m_meanComps;
+    VariableArray<Gamma> *m_precComps;
+    Discrete *m_selector;
+
+
+};
+
+
 
 
 
@@ -53,7 +159,8 @@ public:
  */
 class MoGArray : public VariableArray<Gaussian>,
                  public HasParent<VariableArray<Gaussian> >,
-                 public HasParent<VariableArray<Gamma> > // TODO: not sure if <Gaussian> is better than <MoG>
+                 public HasParent<VariableArray<Gamma> >
+                 // public HasParent<DiscreteArray>// TODO: not sure if <Gaussian> is better than <MoG>
 {
 public:
 
@@ -66,6 +173,7 @@ public:
           m_precComps(_precComps),
           m_selector(_selector)
     {
+        // TODO: do something about DiscreteArray*
         assert(_meanComps->size() == _selector->dims() &&
                _precComps->size() == _selector->dims());
     }
@@ -76,6 +184,17 @@ public:
     virtual ~MoGArray() {}
 
     inline size_t dims() const { return m_selector->dims(); }
+
+    //
+    void observe(const double *values)
+    {
+        for (size_t i = 0; i < size(); ++i)
+        {
+            m_moments[i].mean = values[i];
+            m_moments[i].mean2 = sqr(values[i]);
+        }
+        m_observed = true;
+    }
 
     void observe(const vector<double> &values)
     {
@@ -88,8 +207,8 @@ public:
     }
 
 
-    // message to discrete variables
-    void messageToParent(VariableArray<Discrete>::TParamsVector *v) const
+    // message to discrete variables TODO: VariableArray<Discrete>
+    void messageToParent(DiscreteArray::TParamsVector *v) const
     {
         assert(v->params.size() == size());
         vector<Discrete::TParameters> &params = v->params;
@@ -153,6 +272,7 @@ public:
     //! override VariableArray
     void updatePosterior()
     {
+        // TODO: either introduce richer parameters, or simply use an expectation \sum_i weight(i) * param(i)
         throw NotImplementedException;
     }
 
@@ -199,7 +319,6 @@ private:
     //! components
     VariableArray<Gaussian> *m_meanComps;
     VariableArray<Gamma> *m_precComps;
-
     //! selector variable
     DiscreteArray *m_selector;
 };

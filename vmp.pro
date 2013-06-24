@@ -30,14 +30,17 @@ HEADERS += \
     matlab/persistentobject.h \
     matlab/convert.h \
     gaussianarray.h \
-    discretearray.h
+    discretearray.h \
+    gammaarray.h
 
 OTHER_FILES += \
     TODO.md \
     speechbin.txt \
     noisybin.txt
 
-QMAKE_CXXFLAGS += -std=c++11 -Wno-reorder -Wno-unused-variable -Wno-unused-parameter
+QMAKE_CXXFLAGS += -std=c++11 -Wno-unused-variable -Wno-unused-parameter
+
+OBJECTS_DIR = ./.obj
 
 # TODO: matlab support
 # LIBS += -lgsl -lblas

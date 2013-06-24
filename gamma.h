@@ -129,7 +129,7 @@ class Gamma: public Variable<Gamma>
 {
 public:
     Gamma(double _shape, double _rate):
-        Variable(GammaParameters(_shape, _rate)),
+        Variable(TParameters(_shape, _rate)),
         m_shapeMsg(_shape),
         m_rateMsg(_rate)
     {
@@ -152,7 +152,7 @@ public:
     }
 
     //! override ContinuousVariable
-    double logProbabilityDensity(const Moments<Gamma> &/*ms*/) const
+    double logProbabilityDensity(const TMoments &/*ms*/) const
     {
         throw NotImplementedException;
     }
@@ -164,9 +164,9 @@ public:
     }
 
     //! override Variable. simply a constant for gamma distribution
-    inline Parameters<Gamma> parametersFromParents() const
+    inline TParameters parametersFromParents() const
     {
-        return Parameters<Gamma>(m_shapeMsg, m_rateMsg);
+        return TParameters(m_shapeMsg, m_rateMsg);
     }
 
 
@@ -219,57 +219,6 @@ public:
 
 
 
-/**
- * the array version, can be used e.g. for mixtures
- */
-class GammaArray : public VariableArray<Gamma>
-{
-public:
-    GammaArray(size_t _size, const GammaParameters &prior):
-        VariableArray<Gamma>(_size, prior, GammaMoments(prior)),
-        m_prior(prior)
-    {}
-
-//    GammaArray(size_t _size, const TParamsVector &priors):
-//    {}
-
-    // our gamma can't have any parents
-//    void messageToParent();
-
-
-    //! override VariableArray
-    TParameters parametersFromParents(size_t /*idx*/) const { return m_prior; }
-
-
-    //! override VariableArray
-    void updateMoments()
-    {
-        for (size_t i = 0; i < size(); ++i)
-            Gamma::updateMoments(m_moments[i], m_parameters[i]);
-    }
-
-
-    //! override VariableArray
-    inline double logNormalization() const
-    {
-        double result = 0.0;
-        for (size_t i = 0; i < size(); ++i)
-            result += Gamma::logNormalization(m_parameters[i]);
-        return result;
-    }
-
-    //! override Variable
-    inline double logNormalizationParents() const
-    {
-        return Gamma::logNormalizationParents(m_prior.shape, m_prior.rate) * size();
-    }
-
-
-
-protected:
-    // constant priors, no parents (TODO?)
-    TParameters m_prior;
-};
 
 
 

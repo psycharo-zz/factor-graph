@@ -1,4 +1,4 @@
-function [SPEECH_PRIORS, NOISE_PRIORS] = trainPriors
+function [nwks, SPEECH_PRIORS, NOISE_PRIORS] = trainPriors
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 [speech, freqS] = wavread('bbcnews'); 
@@ -29,31 +29,33 @@ noisyLog = log(abs(fftNoisy).^2);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % for prior vmp training
-MAX_NUM_ITERS = 150;
+MAX_NUM_ITERS = 50;
 
-NUM_SPEECH = 8;
+NUM_SPEECH = 4;
 NUM_NOISE = 1;
-NUM_SPEECH_FRAMES = 600;
+NUM_SPEECH_FRAMES = 999;
 
 NOISE_PRIORS = cell(1,NUM_BINS);
 SPEECH_PRIORS = cell(1,NUM_BINS);
 
-NUM_BINS = 30;
 EDGE = ceil(sqrt(NUM_BINS));
+
+nwks = cell(1,NUM_BINS);
 for i = 1:NUM_BINS
     speechBin = speechLog(i,:);
     noiseBin = noiseLog(i,:);
     
-%     nwk = Network;
-%     [priorS, priorN] = nwk.train(speechBin(1:NUM_SPEECH_FRAMES), NUM_SPEECH, ...
-%                                  noiseBin(1:300), NUM_NOISE, ...
-%                                  MAX_NUM_ITERS);
-%     SPEECH_PRIORS{i} = priorS;
-%     NOISE_PRIORS{i} = priorN;
-    % testing the c++ implementation of the gmm learning
-     [means, precs, weights] = mexfactorgraph('GMM', 'GMM', speechBin);
-%     SPEECH_PRIORS{i} = struct('means',means,'precs',precs,'weights',weights);
-% 
+    nwks{i} = Network;
+    [priorS, priorN] = nwks{i}.train(speechBin(1:NUM_SPEECH_FRAMES), NUM_SPEECH, ...
+                                     noiseBin(1:100), NUM_NOISE, ...
+                                     MAX_NUM_ITERS);
+    SPEECH_PRIORS{i} = priorS;
+    NOISE_PRIORS{i} = priorN;
+
+    weights = [SPEECH_PRIORS{i}.weight];
+    precs = [SPEECH_PRIORS{i}.precision];
+    means = [SPEECH_PRIORS{i}.meanPrecision] ./ precs;
+    
     subplot(EDGE, EDGE, i);
     hold on;
     histDistr(speechBin, 100);

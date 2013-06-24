@@ -20,8 +20,8 @@ template<>
 class Parameters<Dirichlet>
 {
 public:
-    Parameters(size_t _dims):
-        U(_dims)
+    Parameters(size_t _dims, double value = 1):
+        U(_dims, value)
     {}
 
     Parameters(const vector<double> &_U):
@@ -33,6 +33,8 @@ public:
         U += other.U;
         return *this;
     }
+
+    inline size_t dims() const { return U.size(); }
 
     //! the concentration parameter
     vector<double> U;
@@ -66,6 +68,12 @@ public:
     Moments()
     {}
 
+    Moments(const Parameters<Dirichlet> &_params):
+        logProb(_params.dims())
+    {
+        fromParameters(*this, _params);
+    }
+
     Moments(const vector<double> _logProb):
         logProb(_logProb)
     {}
@@ -73,6 +81,17 @@ public:
     Moments(size_t _dims):
         logProb(_dims)
     {}
+
+    inline size_t dims() const { return logProb.size(); }
+
+    static void fromParameters(Moments &moments, const Parameters<Dirichlet> &params)
+    {
+        double dgSumU = digamma(sumv(params.U));
+        for (size_t i = 0; i < moments.dims(); ++i)
+            moments.logProb[i] = digamma(params.U[i]) - dgSumU;
+        // TODO: is normalization required here?
+        moments.logProb -= lognorm(moments.logProb);
+    }
 
     //! log-probabilities
     vector<double> logProb;
@@ -101,23 +120,22 @@ public:
     /**
      * @param _dims the dimensionality
      */
-    Dirichlet(const vector<double> &u):
-        Variable(Parameters<Dirichlet>(u),
-                 Moments<Dirichlet>(u.size())), // TODO: decent initialisation
-        m_priorU(u),
-        m_dims(u.size())
+    Dirichlet(const TParameters &_params):
+        Variable(_params), // TODO: decent initialisation
+        m_priorU(_params.U)
     {
-        m_moments.logProb.resize(m_dims);
         updatePosterior();
     }
+
+    Dirichlet(size_t _dims, const double value):
+        Variable(TParameters(_dims, value)),
+        m_priorU(_dims, value)
+    {}
 
     virtual ~Dirichlet() {}
 
     //! get the number of dimensions
-    inline size_t dims() const { return m_dims; }
-
-    //! override Variable. TODO: in current implementation cannot have a
-    inline bool hasParents() const { return false; }
+    inline size_t dims() const { return m_priorU.size(); }
 
     //! override Variable
     inline double logNormalization() const
@@ -144,18 +162,14 @@ public:
         m_moments.logProb -= lognorm(m_moments.logProb);
     }
 
-    inline Parameters<Dirichlet> parametersFromParents() const
-    {
-        return m_priorU;
-    }
+    inline Parameters<Dirichlet> parametersFromParents() const { return m_priorU; }
+
+    double logProbabilityDensity(const TMoments &/*moments*/) const { throw NotImplementedException; }
 
 
 protected:
     //! the prior parameter vector
     const vector<double> m_priorU;
-
-    //! dimensionality
-    size_t m_dims;
 };
 
 

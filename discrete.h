@@ -37,6 +37,8 @@ public:
         return *this;
     }
 
+    inline size_t dims() const { return logProb.size(); }
+
     //! log-probabilities of the discrete choices
     vector<double> logProb;
 };
@@ -62,17 +64,33 @@ public:
     Moments()
     {}
 
+    Moments(const Parameters<Discrete> &_params):
+        probs(_params.dims(), 1.0 / _params.dims())
+    {
+        fromParameters(*this, _params);
+    }
+
     Moments(const vector<double> &_p):
         probs(_p)
     {}
 
     // TODO: unnormalized distribution, not cool
     Moments(size_t _size):
-        probs(_size)
+        probs(_size, 1.0 / _size)
     {}
+
+    inline size_t dims() const { return probs.size(); }
 
     //! probabilities of the discrete choices
     vector<double> probs;
+
+    //! needed for speed
+    static void fromParameters(Moments<Discrete> &moments, const Parameters<Discrete> &params)
+    {
+        for (size_t i = 0; i < moments.probs.size(); ++i)
+            moments.probs[i] = exp(params.logProb[i]);
+    }
+
 };
 
 typedef Moments<Discrete> DiscreteMoments;
@@ -99,22 +117,16 @@ class Discrete : public Variable<Discrete>,
 {
 public:
     Discrete(const vector<double> &_logProbs):
-        Variable(Parameters<Discrete>(_logProbs),
-                 Moments<Discrete>(expv(_logProbs))),
-        m_parent(new ConstDirichlet(_logProbs)),
-        m_dims(_logProbs.size())
+        Variable(Parameters<Discrete>(_logProbs)),
+        m_parent(new ConstDirichlet(_logProbs))
     {
-        m_moments.probs.resize(dims());
         updatePosterior();
     }
 
     Discrete(Dirichlet *parent):
-        Variable(Parameters<Discrete>(parent->dims()),
-                 Moments<Discrete>(parent->dims())),
-        m_parent(parent),
-        m_dims(parent->dims())
+        Variable(Parameters<Discrete>(parent->dims())),
+        m_parent(parent)
     {
-        m_moments.probs.resize(dims());
         updatePosterior();
     }
 
@@ -141,10 +153,10 @@ public:
     }
 
     //! draw a random integer sample
-    inline size_t sample() const { return rand() % m_dims; }
+    inline size_t sample() const { return rand() % dims(); }
 
     //! get the dimensionality
-    inline size_t dims() const { return m_dims; }
+    inline size_t dims() const { return m_moments.probs.size(); }
 
     //! override Variable
     virtual void updateMoments()
@@ -174,6 +186,7 @@ public:
         params->U = moments().probs;
     }
 
+    double logProbabilityDensity(const TMoments &/*moments*/) const { throw NotImplementedException; }
 
     // static versions
     inline static Parameters<Discrete> parametersFromParents(const Moments<Dirichlet> &dirMsg)
@@ -199,9 +212,6 @@ protected:
 
     //! the (only) dirichlet parent
     Dirichlet *m_parent;
-
-    //! the maximum allowed number of choices
-    size_t m_dims;
 
     //! the message from its dirichlet parent
 //    Moments<Dirichlet> m_parentMsg;

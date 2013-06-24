@@ -26,6 +26,14 @@ public:
         m_precParent(precision)
     {}
 
+    //! initialise with given parameters
+    GaussianArray(const TParamsVector &_params, TMeanParent *mean, TPrecParent *precision):
+        VariableArray<Gaussian>(_params),
+        m_meanParent(mean),
+        m_precParent(precision)
+    {}
+
+
     //! TODO: generic?
     inline void observe(const vector<double> &values)
     {

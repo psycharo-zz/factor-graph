@@ -15,12 +15,12 @@ classdef Network < CppObject
                                                        noise, numNoiseComps, maxNumIters);
         end
         
-        function setPriors(this, speech, noise)
-            mexfactorgraph('setPriors', this.type_name, this.cpp_handle, speech, noise);
+        function setDistributions(this, speech, noise)
+            mexfactorgraph('setDistrs', this.type_name, this.cpp_handle, speech, noise);
         end
         
-        function [speechPrior, noisePrior] = priors(this)
-            [speechPrior, noisePrior] = mexfactorgraph('priors', this.type_name, this.cpp_handle);
+        function [speech, noise] = distrs(this)
+            [speech, noise] = mexfactorgraph('distrs', this.type_name, this.cpp_handle);
         end
         
         function [logPowS, logPowN] = process(this, frame)

@@ -1,4 +1,4 @@
-function runAlgonquin(SPEECH_PRIORS, NOISE_PRIORS)
+function runAlgonquin(nwks)
 %RUNALGONQUIN run algonquin algorithm
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -28,24 +28,19 @@ noiseLog = log(abs(fftNoise).^2);
 fftNoisy = spectrogram(noisySpeech(:), WINDOW, OVERLAP_LEN, FFT_SIZE);
 noisyLog = log(abs(fftNoisy).^2);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    nwks = {};
+NUM_FRAMES = length(noisyLog);
+
+estPowS = zeros(NUM_BINS, NUM_FRAMES);
+estPowN = zeros(NUM_BINS, NUM_FRAMES);
+ 
+for f = 1:NUM_FRAMES
     for bin = 1:NUM_BINS
-       nwks{bin} = Network;
-       nwks{bin}.setPriors(SPEECH_PRIORS{bin}, NOISE_PRIORS{bin});
+        frame = noisyLog(bin, f);
+        [logS, logN] = nwks{bin}.process(frame);
+        estPowS(bin, f) = exp(logS);
+        estPowN(bin, f) = exp(logN);
     end
-    NUM_FRAMES = length(noisyLog);
-
-    estPowS = zeros(NUM_BINS, NUM_FRAMES);
-    estPowN = zeros(NUM_BINS, NUM_FRAMES);
-
-    for f = 1:NUM_FRAMES
-        for bin = 1:NUM_BINS
-            frame = noisyLog(bin, f);
-            [logS, logN] = nwks{bin}.process(frame);
-            estPowS(bin, f) = exp(logS);
-            estPowN(bin, f) = exp(logN);
-        end
-    end
+end
 
     T = 1:size(estPowS,2);
     F = 1:size(estPowS,1);

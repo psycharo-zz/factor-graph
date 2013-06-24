@@ -5,6 +5,8 @@
 #include <vector>
 #include <map>
 
+#include <cfloat>
+#include <random>
 #include <numeric>
 #include <functional>
 #include <algorithm>
@@ -58,6 +60,14 @@ namespace vmp {
 
 
 
+//! random vector of integers i in [0;max)
+inline vector<size_t> randomv(size_t _size, size_t _max)
+{
+    vector<size_t> result(_size, 0);
+    for (size_t i = 0; i < _size; ++i)
+        result[i] = i % _max;
+    return result;
+}
 
 //! vector digamma
 inline vector<double> digammav(const vector<double> &v)
@@ -212,6 +222,10 @@ const double LN_2PI = 1.837877066409345;
 
 // EPSILON
 const double EPSILON = 1e-3;
+
+
+// initial value for the lower bound
+const double LB_INIT = -DBL_MAX;
 
 }
 

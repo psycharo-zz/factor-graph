@@ -2,13 +2,19 @@
 
 
 
+
 #include <variable.h>
+
 #include <gaussian.h>
 #include <gaussianarray.h>
 #include <gamma.h>
+#include <gammaarray.h>
+#include <discrete.h>
+
+
 #include <mixture.h>
 #include <network.h>
-#include <discrete.h>
+
 #include <ostream>
 #include <ctime>
 #include <limits>
@@ -18,146 +24,59 @@ using namespace vmp;
 #include <cfloat>
 
 
-void trainDirichlet(const size_t maxNumIters)
-{
-    const size_t DIMS = 5;
-    Dirichlet *dir = new Dirichlet(vector<double>(DIMS, 1));
-    vector<Discrete*> lambda;
-    vector<Dirichlet::TParameters*> params;
-
-    for (size_t p = 0; p < 100; ++p)
-    {
-        lambda.push_back(new Discrete(dir));
-        params.push_back(dir->addChild(lambda[p]));
-        // initialising
-        lambda[p]->observe(p % 3);
-    }
-
-
-    double lbPrev = -DBL_MAX;
-
-    for (size_t iter = 0; iter < maxNumIters; ++iter)
-    {
-        // running the inference
-        for (size_t p = 0; p < lambda.size(); ++p)
-            lambda[p]->messageToParent(params[p]);
-        dir->updatePosterior();
-
-        double lbData = 0.0;
-        // summing up the lower bound
-        for (size_t p = 0; p < lambda.size(); ++p)
-            lbData += lambda[p]->logEvidence();
-
-        double lbCurr = dir->logEvidence() +  lbData;
-
-        if (lbCurr - lbPrev < EPSILON)
-        {
-            cout << "finished at: " << iter << " iterations "
-                 << "with lb=" << lbCurr << endl;
-            break;
-        }
-        lbPrev = lbCurr;
-    }
-
-    cout << expv(dir->moments().logProb) << endl;
-
-    // sanity check
-    cout << sumv(expv(dir->moments().logProb)) << endl;
-
-    deleteAll(lambda);
-    delete dir;
-}
-
-
-
-Parameters<MoG> trainGMM(const double *trainingData,
-                              size_t numPoints,
-                              size_t maxNumIters,
-                                const size_t numMixtures,
-                         double dirichletPrior,
-                         const GaussianParameters &priorMean,
-                         const GammaParameters &priorGamma,
-                         double &evidence,
-                         size_t &iters)
+Parameters<MoG> trainGMM(const double *trainingData, size_t numPoints, size_t maxNumIters, const size_t numMixtures,
+                         double dirichletPrior, const GaussianParameters &priorMean, const GammaParameters &priorGamma,
+                         double &evidence, size_t &iters)
 {
     Parameters<MoG> result;
     result.components.resize(numMixtures);
     result.weights.resize(numMixtures);
 
-    Dirichlet dirichlet(vector<double>(numMixtures, dirichletPrior));
+    auto dirichlet = Dirichlet(numMixtures, dirichletPrior);
+    auto selector = DiscreteArray(numPoints, &dirichlet);
+    selector.initialize(randomv(numPoints, numMixtures));
 
-    DiscreteArray *selector = new DiscreteArray(numPoints, &dirichlet);
-    vector<size_t> init(selector->size());
-    for (size_t i = 0; i < selector->size(); ++i)
-        init[i] = i % selector->dims();
-    selector->initialize(init);
+    auto meanPrior = ConstGaussian(priorMean.mean());
+    auto precPrior = ConstGamma(priorMean.precision);
+    auto mean = GaussianArray<Gaussian, Gamma>(numMixtures, &meanPrior, &precPrior);
+    auto prec = GammaArray(numMixtures, priorGamma);
 
-    // message
-    Parameters<Dirichlet> *paramsDirichlet = dirichlet.addChild(selector);
+    auto data = MoGArray(numPoints, &mean, &prec, &selector);
+    data.observe(trainingData);
 
-    // TODO: pointers, so everything looks like
-    // VectorArray<Gaussian> = GaussianArray<Gaussian, Gamma>;
-    ConstGaussian *meanPrior = new ConstGaussian(priorMean.mean());
-    ConstGamma *precPrior = new ConstGamma(priorMean.precision);
+    auto sequence = make_tuple(make_pair(&data, &mean),
+                               make_pair(&data, &prec),
+                               make_pair(&data, &selector),
+                               make_pair(&selector, &dirichlet));
 
-    VariableArray<Gaussian> *mean = new GaussianArray<Gaussian, Gamma>(numMixtures, meanPrior, precPrior);
-    VariableArray<Gamma> *prec = new GammaArray(numMixtures, priorGamma);
+    auto network = make_tuple(&data, &mean, &prec, &selector, &dirichlet);
 
-    MoGArray data(numPoints, mean, prec, selector);
-    data.observe(vector<double>(trainingData, trainingData + numPoints));
-
-    VariableArray<Gaussian>::TParamsVector *paramsMean = mean->addChild(&data);
-    VariableArray<Gamma>::TParamsVector *paramsPrec = prec->addChild(&data);
-    VariableArray<Discrete>::TParamsVector *paramsSelector = selector->addChild(&data);
-
-    double lbPrev = -DBL_MAX;
-    for (size_t iter = 0; iter < maxNumIters; ++iter)
+    iters = maxNumIters;
+    evidence = LB_INIT;
+    for (size_t i = 0; i < maxNumIters; i++)
     {
-        data.messageToParent(paramsMean);
-        mean->updatePosterior();
+        for_each(sequence, SendToParent());
 
-        data.messageToParent(paramsPrec);
-        prec->updatePosterior();
+        // computing evidence
+        AddEvidence lbCurr;
+        for_each(network, lbCurr);
 
-        data.messageToParent(paramsSelector);
-        selector->updatePosterior();
-
-        selector->messageToParent(paramsDirichlet);
-        dirichlet.updatePosterior();
-
-        double lbCurr = mean->logEvidence()
-                        + prec->logEvidence()
-                        + dirichlet.logEvidence()
-                        + selector->logEvidence()
-                        + data.logEvidence();
-        assert(lbCurr > lbPrev);
-
-        if (lbCurr - lbPrev < EPSILON)
+        if (lbCurr.value - evidence <= EPSILON)
         {
-            iters = iter;
-            evidence = lbCurr;
+            iters = i;
+            evidence = lbCurr.value;
             break;
         }
-        lbPrev = lbCurr;
+        evidence = lbCurr.value;
     }
-
 
     for (size_t m = 0; m < numMixtures; ++m)
     {
-        result.components[m] = GaussianParameters(mean->moments(m).mean * prec->moments(m).precision,
-                                                  prec->moments(m).precision);
+        result.components[m] = Parameters<Gaussian>(mean.moments(m).mean * prec.moments(m).precision,
+                                                    prec.moments(m).precision);
     }
     result.weights = expv(dirichlet.moments().logProb);
 
-
-
-    delete meanPrior;
-    delete precPrior;
-
-    delete selector;
-    delete mean;
-    delete prec;
-
     return result;
-
 }
+

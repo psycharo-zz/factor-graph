@@ -16,7 +16,7 @@ class DiscreteArray : public VariableArray<Discrete>,
 {
 public:
     DiscreteArray(size_t _size, Dirichlet *_parent):
-        VariableArray(_size, TParameters(_parent->dims()), TMoments(_parent->dims())),
+        VariableArray(_size, TParameters(_parent->dims())),
         m_parent(_parent)
     {}
 

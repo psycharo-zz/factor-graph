@@ -4,9 +4,9 @@
 using namespace vmp;
 
 
-pair<double, double> AlgonquinNode::run()
+void AlgonquinVariable::updatePosterior()
 {
-    for (size_t iter = 0; iter < NUM_ITERATIONS; ++iter)
+    for (size_t iter = 0; iter < m_numIters; ++iter)
         for (size_t s = 0; s < numSpeech(); ++s)
             for (size_t n = 0; n < numNoise(); ++n)
             {
@@ -14,7 +14,7 @@ pair<double, double> AlgonquinNode::run()
                 double meanS = m_speechMeans[i];
                 double meanN = m_noiseMeans[i];
 
-                pair<double,double> jacob = sumLogJacobian(meanS, meanN);
+                pair<double,double> jacob = sumlog_jacobian(meanS, meanN);
 
                 // phiS(:,c_s,c_n) = 1 ./ (prec_s + (dg_s .^ 2) .* inv_psi);
                 m_speechVars[i] = 1.0  / (priorPrecSpeech(s) + sqr(jacob.first) * m_postPrec[i]);
@@ -22,13 +22,13 @@ pair<double, double> AlgonquinNode::run()
 
                 // tmpS = (prec_s .* (muS(:,c_s) - meanS) + dg_s .* inv_psi .* (y - gFunc(meanS, meanN)));
                 double tmpS = priorPrecSpeech(s) * (priorMeanSpeech(s) - meanS)
-                        + jacob.first * m_postPrec[i] * (m_value - sumLog(meanS, meanN));
+                        + jacob.first * m_postPrec[i] * (m_value - sumlog(meanS, meanN));
 
                 // etaS(:,c_s,c_n) = meanS + phiS(:,c_s,c_n) .* tmpS
                 m_speechMeans[i] += m_speechVars[i] * tmpS;
 
                 double tmpN = priorPrecNoise(n) * (priorMeanNoise(n) - meanN)
-                        + jacob.second * m_postPrec[i] * (m_value - sumLog(meanS, meanN));
+                        + jacob.second * m_postPrec[i] * (m_value - sumlog(meanS, meanN));
 
                 m_noiseMeans[i] += m_noiseVars[i] * tmpN;
             }
@@ -42,9 +42,9 @@ pair<double, double> AlgonquinNode::run()
             double meanS = meanSpeech(i);
             double meanN = meanNoise(i);
 
-            pair<double,double> jacob = sumLogJacobian(meanS, meanN);
+            pair<double,double> jacob = sumlog_jacobian(meanS, meanN);
 
-            double means = sqr(m_value - sumLog(meanS, meanN)) * m_postPrec[i] +
+            double means = sqr(m_value - sumlog(meanS, meanN)) * m_postPrec[i] +
                     sqr(meanS - priorMeanSpeech(s)) * priorPrecSpeech(s) +
                     sqr(meanN - priorMeanNoise(n)) * priorPrecNoise(n);
 
@@ -64,13 +64,19 @@ pair<double, double> AlgonquinNode::run()
 
     normalize(m_weightParams);
 
+    // updating the moments (?)
+    updateMoments();
+}
+
+
+void AlgonquinVariable::updateMoments()
+{
     pair<double, double> result(0, 0);
+    m_fakeMoments = make_pair(0, 0);
     for (size_t i = 0; i < numParameters(); ++i)
     {
-        result.first += m_speechMeans[i] * m_weightParams[i];
-        result.second += m_noiseMeans[i] * m_weightParams[i];
+        m_fakeMoments.first += m_speechMeans[i] * m_weightParams[i];
+        m_fakeMoments.second += m_noiseMeans[i] * m_weightParams[i];
     }
-
-    return result;
 }
 

@@ -146,27 +146,14 @@ public:
         this->m_moments.mean2 = sqr(_value);
     }
 
-
-    //! check if there are any non-constant parents
-    inline virtual bool hasParents() const
-    {
-        // TODO: maybe introduce a separate flag variable or even ask
-        // whether a particular parent is present or not
-        return m_hasParents;
-    }
-
     inline void messageToParent(Parameters<Gaussian> *params) const
     {
-        messageToParent(params, moments(), precMsg());
-//        params->meanPrecision = moments().mean * precMsg().precision;
-//        params->precision = precMsg().precision;
+        Gaussian::messageToParent(params, moments(), precMsg());
     }
 
     inline void messageToParent(Parameters<Gamma> *params) const
     {
-        messageToParent(params, moments(), meanMsg());
-//        params->shape = 0.5;
-//        params->rate = 0.5 * (moments().mean2 - 2 * moments().mean * meanMsg().mean + meanMsg().mean2);
+        Gaussian::messageToParent(params, moments(), meanMsg());
     }
 
     //! override Variable
