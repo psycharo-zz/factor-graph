@@ -1,17 +1,12 @@
 #include <examples.h>
 
 
-
-
 #include <variable.h>
-
 #include <gaussian.h>
 #include <gaussianarray.h>
 #include <gamma.h>
 #include <gammaarray.h>
 #include <discrete.h>
-
-
 #include <mixture.h>
 #include <network.h>
 
@@ -19,30 +14,28 @@
 #include <ctime>
 #include <limits>
 
-
 using namespace vmp;
 #include <cfloat>
 
 
-Parameters<MoG> trainGMM(const double *trainingData, size_t numPoints, size_t maxNumIters, const size_t numMixtures,
-                         double dirichletPrior, const GaussianParameters &priorMean, const GammaParameters &priorGamma,
-                         double &evidence, size_t &iters)
+vmp::MixtureNetwork *vmp::trainMixture(const double *points, size_t numPoints, size_t numMixtures, size_t maxNumIters)
 {
-    Parameters<MoG> result;
-    result.components.resize(numMixtures);
-    result.weights.resize(numMixtures);
+    // initialising the resulting network
+    MixtureNetwork *nwk = new MixtureNetwork;
 
-    auto dirichlet = Dirichlet(numMixtures, dirichletPrior);
+    auto dirichlet = Dirichlet(numMixtures, DIRICHLET_PRIOR);
     auto selector = DiscreteArray(numPoints, &dirichlet);
     selector.initialize(randomv(numPoints, numMixtures));
 
-    auto meanPrior = ConstGaussian(priorMean.mean());
-    auto precPrior = ConstGamma(priorMean.precision);
+    auto meanPrior = ConstGaussian(GAUSS_PRIOR_MEAN);
+    auto precPrior = ConstGamma(GAUSS_PRIOR_PREC);
+    // distributions over parameters
     auto mean = GaussianArray<Gaussian, Gamma>(numMixtures, &meanPrior, &precPrior);
-    auto prec = GammaArray(numMixtures, priorGamma);
-
+    auto prec = GammaArray(numMixtures, Parameters<Gamma>(GAMMA_PRIOR_SHAPE, GAMMA_PRIOR_RATE));
     auto data = MoGArray(numPoints, &mean, &prec, &selector);
-    data.observe(trainingData);
+
+    // messages
+    data.observe(points);
 
     auto sequence = make_tuple(make_pair(&data, &mean),
                                make_pair(&data, &prec),
@@ -51,32 +44,30 @@ Parameters<MoG> trainGMM(const double *trainingData, size_t numPoints, size_t ma
 
     auto network = make_tuple(&data, &mean, &prec, &selector, &dirichlet);
 
-    iters = maxNumIters;
-    evidence = LB_INIT;
+    // running inference
     for (size_t i = 0; i < maxNumIters; i++)
     {
         for_each(sequence, SendToParent());
 
-        // computing evidence
         AddEvidence lbCurr;
         for_each(network, lbCurr);
 
-        if (lbCurr.value - evidence <= EPSILON)
+        if (lbCurr.value - nwk->evidence <= EPSILON)
         {
-            iters = i;
-            evidence = lbCurr.value;
+            nwk->iters = i;
+            nwk->evidence = lbCurr.value;
             break;
         }
-        evidence = lbCurr.value;
+        nwk->evidence = lbCurr.value;
     }
 
-    for (size_t m = 0; m < numMixtures; ++m)
-    {
-        result.components[m] = Parameters<Gaussian>(mean.moments(m).mean * prec.moments(m).precision,
-                                                    prec.moments(m).precision);
-    }
-    result.weights = expv(dirichlet.moments().logProb);
+    nwk->meanPrior = new ConstGaussian(GAUSS_PRIOR_MEAN);
+    nwk->precPrior = new ConstGamma(GAUSS_PRIOR_PREC);
+    nwk->means = new GaussianArray<Gaussian, Gamma>(mean.parameters(), nwk->meanPrior, nwk->precPrior);
+    nwk->precs = new GammaArray(prec.parameters());
+    nwk->weightsPrior = new Dirichlet(dirichlet.parameters());
+    nwk->weights = new Discrete(nwk->weightsPrior);
 
-    return result;
+    return nwk;
 }
 

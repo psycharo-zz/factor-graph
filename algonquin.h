@@ -16,25 +16,19 @@
 #include <examples.h>
 #include <matlab/persistentobject.h>
 
-#include <memory>
+#include <thread>
 
 
 
 namespace vmp
 {
 
-static const double DIRICHLET_PRIOR = 1;
-static const double MEAN_PRIOR = 0;
-static const double PREC_PRIOR = 1e-3;
-static const double SHAPE_PRIOR = 1e-3;
-static const double RATE_PRIOR = 1e-3;
-
 
 //! compute the approximation at the given point
-inline double sumlog(double s, double n)
-{
-    return s + log(1 + exp(n - s));
-}
+//inline double logSum(double s, double n)
+//{
+////    return s + log(1 + exp(n - s));
+//}
 
 //! compute the jacobian \returns a pair(dg/ds, dg/dn)
 inline pair<double,double> sumlog_jacobian(double s, double n)
@@ -158,21 +152,19 @@ private:
 
     // the observed value. TODO: make this an array instead?
     double m_value;
-
-
 };
 
 
 
 
 
-class Network : public PersistentObject
+class AlgonquinNetwork : public PersistentObject
 {
 public:
     static const size_t MAX_NUM_ITERS = 100;
 
     // hyperparameters
-    Network(size_t numIters = MAX_NUM_ITERS):
+    AlgonquinNetwork(size_t numIters = MAX_NUM_ITERS):
         m_speech(NULL),
         m_noise(NULL),
         m_speechNetwork(NULL),
@@ -181,104 +173,32 @@ public:
         m_numIters(MAX_NUM_ITERS)
     {}
 
-    virtual ~Network()
+    virtual ~AlgonquinNetwork()
     {
         delete m_speech;
         delete m_noise;
         delete m_algonquin;
     }
 
-    // TODO: use tuple/real network instead
-    struct MixtureNetwork
+    void train(const double *framesS, size_t numFramesS, size_t numCompsS,
+               const double *framesN, size_t numFramesN, size_t numCompsN,
+                     size_t numIters)
     {
-        Dirichlet *weightsPrior;
-        Discrete *weights;
-        ConstGaussian *meanPrior;
-        ConstGamma *precPrior;
-        VariableArray<Gaussian> *means;
-        VariableArray<Gamma> *precs;
-
-        MixtureNetwork():
-            weightsPrior(NULL),
-            weights(NULL),
-            meanPrior(NULL),
-            precPrior(NULL),
-            means(NULL),
-            precs(NULL)
-        {}
-
-        virtual ~MixtureNetwork()
-        {
-            delete weightsPrior;
-            delete weights;
-            delete meanPrior;
-            delete precPrior;
-            delete means;
-            delete precs;
-        }
-    };
-
-    static MixtureNetwork *trainMixture(const double *points, size_t numPoints, size_t numMixtures, size_t maxNumIters)
-    {
-
-
-        auto dirichlet = Dirichlet(numMixtures, DIRICHLET_PRIOR);
-        auto selector = DiscreteArray(numPoints, &dirichlet);
-        selector.initialize(randomv(numPoints, numMixtures));
-
-        auto meanPrior = ConstGaussian(MEAN_PRIOR);
-        auto precPrior = ConstGamma(PREC_PRIOR);
-        // distributions over parameters
-        auto mean = GaussianArray<Gaussian, Gamma>(numMixtures, &meanPrior, &precPrior);
-        auto prec = GammaArray(numMixtures, Parameters<Gamma>(GAMMA_PRIOR_RATE, GAMMA_PRIOR_SHAPE));
-        auto data = MoGArray(numPoints, &mean, &prec, &selector);
-
-        // messages
-        data.observe(points);
-
-        auto sequence = make_tuple(make_pair(&data, &mean),
-                                   make_pair(&data, &prec),
-                                   make_pair(&data, &selector),
-                                   make_pair(&selector, &dirichlet));
-
-        // running inference
-        for (size_t i = 0; i < maxNumIters; i++)
-            for_each(sequence, SendToParent());
-
-        // initialising the resulting network
-        MixtureNetwork *nwk = new MixtureNetwork;
-
-        nwk->meanPrior = new ConstGaussian(MEAN_PRIOR);
-        nwk->precPrior = new ConstGamma(PREC_PRIOR);
-        nwk->means = new GaussianArray<Gaussian, Gamma>(mean.parameters(), nwk->meanPrior, nwk->precPrior);
-        nwk->precs = new GammaArray(prec.parameters());
-        nwk->weightsPrior = new Dirichlet(dirichlet.parameters());
-        nwk->weights = new Discrete(nwk->weightsPrior);
-
-        return nwk;
-    }
-
-    void trainSpeech(const double *frames, size_t numFrames, size_t numComps, size_t numIters)
-    {
-        m_speechNetwork = trainMixture(frames, numFrames, numComps, numIters);
+        m_speechNetwork = trainMixture(framesS, numFramesS, numCompsS, numIters);
         m_speech = new MoG(m_speechNetwork->means,
                            m_speechNetwork->precs,
                            m_speechNetwork->weights);
-    }
 
-    void trainNoise(const double *frames, size_t numFrames, size_t numComps, size_t numIters)
-    {
-        m_noiseNetwork = trainMixture(frames, numFrames, numComps, numIters);
+        m_noiseNetwork = trainMixture(framesN, numFramesN, numCompsN, numIters);
         m_noise = new MoG(m_noiseNetwork->means,
                           m_noiseNetwork->precs,
                           m_noiseNetwork->weights);
+
+        m_algonquin = new AlgonquinVariable(m_speech, m_noise);
     }
 
-
-    pair<double, double> process(double frame)
+    const pair<double, double> &process(double frame)
     {
-        if (m_algonquin == NULL)
-            m_algonquin = new AlgonquinVariable(m_speech, m_noise);
         m_algonquin->observe(frame);
         m_algonquin->updatePosterior();
         return m_algonquin->m_fakeMoments;
@@ -291,7 +211,6 @@ public:
     const MoG *speechDistr() const { return m_speech; }
     const MoG *noiseDistr() const { return m_noise; }
 
-
 private:
     MoG *m_speech;
     MoG *m_noise;
@@ -301,6 +220,54 @@ private:
     AlgonquinVariable *m_algonquin;
 
     size_t m_numIters;
+};
+
+
+
+class NetworkArray : public PersistentObject
+{
+public:
+    NetworkArray(size_t numBins):
+        m_networks(numBins),
+        m_speech(numBins, 0.0),
+        m_noise(numBins, 0.0)
+    {}
+
+    size_t numBins() const { return m_networks.size(); }
+
+    //! train an array of networks
+    void train(double *speech, size_t numSpeechFrames, size_t numSpeechComps,
+               double *noise, size_t numNoiseFrames, size_t numNoiseComps,
+               size_t numIters)
+    {
+        for (size_t bin = 0; bin < numBins(); ++bin)
+        {
+            m_networks[bin].train(&speech[numSpeechFrames * bin], numSpeechFrames, numSpeechComps,
+                                  &noise[numNoiseFrames * bin], numNoiseFrames, numNoiseComps,
+                                  numIters);
+        }
+    }
+
+    pair<double*, double*> process(double *frame)
+    {
+        for (size_t bin = 0; bin < numBins(); ++bin)
+        {
+            auto result = m_networks[bin].process(frame[bin]);
+            m_speech[bin] = result.first;
+            m_noise[bin] = result.second;
+        }
+        return make_pair(m_speech.data(), m_noise.data());
+    }
+
+    const MoG *speechDistr(size_t m) const { return m_networks[m].speechDistr(); }
+    const MoG *noiseDistr(size_t m) const { return m_networks[m].noiseDistr(); }
+
+private:
+    vector<AlgonquinNetwork> m_networks;
+
+    vector<double> m_speech;
+    vector<double> m_noise;
+
 
 };
 

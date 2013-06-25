@@ -44,7 +44,7 @@ OBJECTS_DIR = ./.obj
 
 # TODO: matlab support
 # LIBS += -lgsl -lblas
-LIBS += -lprofiler
+LIBS += -lprofiler -lpthread
 
 
 

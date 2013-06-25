@@ -6,6 +6,7 @@ using namespace std;
 #include <gperftools/profiler.h>
 #include <cfloat>
 #include <vector>
+#include <thread>
 
 #include <variable.h>
 #include <gaussian.h>
@@ -69,47 +70,40 @@ means = [0.442826 -3.69693 3.92595 0 ]
 precs = [0.421325 0.246173 0.92228 1 ]
 weights = [0.209986	0.303197	0.486256	0.000560864	]
 0.3 seconds.
-
  *
  */
 
-
 using namespace vmp;
 
-void testSpeechGMM()
+void testSpeechGMM(const vector<double> &bin)
 {
-    auto speechBins = read_bins("speechbin.txt");
-    vector<double> bin = speechBins[0];
-
     const size_t numPoints = 999;
-    const size_t maxNumIters = 456;
-    const size_t numMixtures = 4;
+    const size_t maxNumIters = 400;
+    const size_t numMixtures = 8;
 
-    double evidence = 0;
-    size_t iters;
-
-
-    clock_t startTime = clock();
-    Parameters<MoG> params = trainGMM(bin.data(), numPoints,
-                                      maxNumIters, numMixtures,
-                                      1, GaussianParameters(0, 1e-3), GammaParameters(1e-3, 1e-3),
-                                      evidence, iters);
-    double runTime = double(clock() - startTime) / (double) CLOCKS_PER_SEC;
+    auto mixture = trainMixture(bin.data(), numPoints, numMixtures, maxNumIters);
 
     cout << "points: " << numPoints << endl
-         << "iters:  " << iters << endl
+         << "iters:  " << mixture->iters << endl
          << "mixtures:" << numMixtures << endl
-         << "evidence:" << evidence << endl
-         << params
-         << runTime << " seconds." << endl;
+         << "evidence:" << mixture->evidence << endl
+         << mixture->parameters() << endl;
 }
-
 
 
 int main()
 {
-    testSpeechGMM();
+    auto speechBins = read_bins("speechbin.txt");
 
+    clock_t startTime;
+    double runTime;
+
+    startTime = clock();
+
+    testSpeechGMM(speechBins[0]);
+
+    runTime = double(clock() - startTime) / (double) CLOCKS_PER_SEC;
+    cout << runTime << " seconds." << endl;
 
     return 0;
 }

@@ -22,13 +22,13 @@ void AlgonquinVariable::updatePosterior()
 
                 // tmpS = (prec_s .* (muS(:,c_s) - meanS) + dg_s .* inv_psi .* (y - gFunc(meanS, meanN)));
                 double tmpS = priorPrecSpeech(s) * (priorMeanSpeech(s) - meanS)
-                        + jacob.first * m_postPrec[i] * (m_value - sumlog(meanS, meanN));
+                        + jacob.first * m_postPrec[i] * (m_value - logSum(meanS, meanN));
 
                 // etaS(:,c_s,c_n) = meanS + phiS(:,c_s,c_n) .* tmpS
                 m_speechMeans[i] += m_speechVars[i] * tmpS;
 
                 double tmpN = priorPrecNoise(n) * (priorMeanNoise(n) - meanN)
-                        + jacob.second * m_postPrec[i] * (m_value - sumlog(meanS, meanN));
+                        + jacob.second * m_postPrec[i] * (m_value - logSum(meanS, meanN));
 
                 m_noiseMeans[i] += m_noiseVars[i] * tmpN;
             }
@@ -44,7 +44,7 @@ void AlgonquinVariable::updatePosterior()
 
             pair<double,double> jacob = sumlog_jacobian(meanS, meanN);
 
-            double means = sqr(m_value - sumlog(meanS, meanN)) * m_postPrec[i] +
+            double means = sqr(m_value - logSum(meanS, meanN)) * m_postPrec[i] +
                     sqr(meanS - priorMeanSpeech(s)) * priorPrecSpeech(s) +
                     sqr(meanN - priorMeanNoise(n)) * priorPrecNoise(n);
 

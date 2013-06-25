@@ -1,4 +1,4 @@
-function runAlgonquin(nwks)
+function runAlgonquin(arr)
 %RUNALGONQUIN run algonquin algorithm
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -6,7 +6,7 @@ function runAlgonquin(nwks)
 SIGNAL_LEN = length(speech);
 [noise, freqN] = wavread('white');
 noise = repeatSignal(noise, length(speech));
-inSNR = 20;
+inSNR = 10;
 noisySpeech = addNoise(speech, noise, inSNR);
 
 FRAME_LEN = 256; 
@@ -28,40 +28,37 @@ noiseLog = log(abs(fftNoise).^2);
 fftNoisy = spectrogram(noisySpeech(:), WINDOW, OVERLAP_LEN, FFT_SIZE);
 noisyLog = log(abs(fftNoisy).^2);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-NUM_FRAMES = length(noisyLog);
+    NUM_FRAMES = length(noisyLog);
 
-estPowS = zeros(NUM_BINS, NUM_FRAMES);
-estPowN = zeros(NUM_BINS, NUM_FRAMES);
- 
-for f = 1:NUM_FRAMES
-    for bin = 1:NUM_BINS
-        frame = noisyLog(bin, f);
-        [logS, logN] = nwks{bin}.process(frame);
-        estPowS(bin, f) = exp(logS);
-        estPowN(bin, f) = exp(logN);
+    t = cputime;
+    
+    estPowS = zeros(NUM_BINS, NUM_FRAMES);
+    estPowN = zeros(NUM_BINS, NUM_FRAMES);
+
+    for f = 1:NUM_FRAMES
+        frame = noisyLog(:, f);
+        [logS, logN] = arr.process(frame);
+
+        estPowS(:,f) = exp(logS);
+        estPowN(:,f) = exp(logN);
     end
-end
-
-    T = 1:size(estPowS,2);
-    F = 1:size(estPowS,1);
-    subplot(4,1,1);
-    plotSpectrogram(T,F,estPowS);
+    
+    elapsed = cputime-t
+    
+    CAXIS_COMMON = [-80, 30];
     
     T = 1:size(estPowS,2);
     F = 1:size(estPowS,1);
+    subplot(4,1,1);
+    plotSpectrogram(T,F,estPowS, CAXIS_COMMON);
     subplot(4,1,2);
-    plotSpectrogram(T,F,estPowN);
-
+    plotSpectrogram(T,F,estPowN, CAXIS_COMMON);
     subplot(4,1,3);
-    [SS,FS,TS,powS] = spectrogram(noisySpeech, FRAME_LEN, OVERLAP_LEN, FFT_SIZE);
-    plotSpectrogram(TS,FS,powS);
-
-
+    plotSpectrogram(T,F,exp(noisyLog),CAXIS_COMMON);
     subplot(4,1,4);
-    [SS,FS,TS,powS] = spectrogram(speech, FRAME_LEN, OVERLAP_LEN, FFT_SIZE);
-    plotSpectrogram(TS,FS,powS);
-
-
-
+    plotSpectrogram(T,F,exp(speechLog),CAXIS_COMMON);
+    subplot(4,1,4);
+    plotSpectrogram(T,F,exp(noiseLog),CAXIS_COMMON);
+    
 end
 
