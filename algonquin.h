@@ -24,56 +24,82 @@ namespace vmp
 {
 
 
-//! compute the approximation at the given point
-//inline double logSum(double s, double n)
-//{
-////    return s + log(1 + exp(n - s));
-//}
+class AlgonquinVariable;
 
-//! compute the jacobian \returns a pair(dg/ds, dg/dn)
-inline pair<double,double> sumlog_jacobian(double s, double n)
+
+/**
+ * contain variational parameters of the approx posterior
+ */
+template<>
+class Parameters<AlgonquinVariable>
 {
-    double tmp = exp(n - s) / (1 + exp(n - s));
-    return make_pair(1 - tmp, tmp);
-}
+public:
+    Parameters(size_t _numSpeech, size_t _numNoise):
+        dims(_numSpeech * _numNoise),
+        meansSpeech(dims, 0.0), meansNoise(dims, 0.0),
+        varsSpeech(dims, 1.0), varsNoise(dims, 1.0),
+        weights(dims, 1.0 / dims),
+        precision(dims, 1.0)
+    {}
 
-static const size_t DEFAULT_NUM_ITERATIONS = 4;
+    //! the number of variational parameters
+    const size_t dims;
 
-
-// TODO: implement
+    //
+    vector<double> meansSpeech;
+    vector<double> meansNoise;
+    vector<double> varsSpeech;
+    vector<double> varsNoise;
+    // component weights
+    vector<double> weights;
+    // constant posterior precision
+    vector<double> precision;
+};
 
 /**
  * @brief The AlgonquinVariable class
  * scalar deterministic (?) node implementing algonquin inference
  */
-class AlgonquinVariable : public BaseVariable
+class AlgonquinVariable : public BaseVariable,
+                          public HasParent<VariableArray<Gaussian> >,
+                          public HasParent<VariableArray<Gamma> >,
+                          public HasParent<Discrete>
 {
 public:
+    const size_t DEFAULT_NUM_ITERATIONS = 20;
+
+
     AlgonquinVariable(MoG *_speechParent, MoG *_noiseParent):
         m_speechParent(_speechParent),
         m_noiseParent(_noiseParent),
         m_numIters(DEFAULT_NUM_ITERATIONS),
-        m_speechMeans(numParameters(), 0.0), m_noiseMeans(numParameters(), 0.0),
-        m_speechVars(numParameters(), 1.0), m_noiseVars(numParameters(), 1.0),
-        m_weightParams(numParameters(), 1.0 / numParameters()),
-        m_postPrec(numParameters(), 1.0)
+        m_parameters(numSpeech(), numNoise())
     {
         // intialising variational parameters
         for (size_t s = 0; s < numSpeech(); ++s)
             for (size_t n = 0; n < numNoise(); ++n)
             {
                 size_t i = index(s,n);
-                m_speechMeans[i] = priorMeanSpeech(s);
-                m_speechVars[i] = 1.0 / priorPrecSpeech(s);
-                m_noiseMeans[i] = priorMeanNoise(n);
-                m_noiseVars[i] = 1.0 / priorPrecNoise(n);
-                m_weightParams[i] = priorWeightSpeech(s) * priorWeightNoise(n);
+                m_parameters.meansSpeech[i] = priorMeanSpeech(s);
+                m_parameters.varsSpeech[i] = 1.0 / priorPrecSpeech(s);
+                m_parameters.meansNoise[i] = priorMeanNoise(n);
+                m_parameters.varsNoise[i] = 1.0 / priorPrecNoise(n);
+                m_parameters.weights[i] = priorWeightSpeech(s) * priorWeightNoise(n);
             }
     }
 
-    inline void setNumIterations(size_t numIters) { m_numIters = numIters; }
-
     virtual ~AlgonquinVariable() {}
+
+    inline size_t numSpeech() const { return m_speechParent->dims(); }
+    inline size_t numNoise() const { return m_noiseParent->dims(); }
+    inline size_t numParameters() const { return numSpeech() * numNoise(); }
+
+    inline void observe(double value) { m_value = value; }
+
+    inline size_t index(size_t s, size_t n) const { return numSpeech() * n + s; }
+
+
+    inline void setNumIterations(size_t numIters) { m_numIters = numIters; }
 
     inline double priorMeanSpeech(size_t s) const { return m_speechParent->meanMoments(s).mean; }
     inline double priorMeanNoise(size_t n) const { return m_noiseParent->meanMoments(n).mean; }
@@ -85,16 +111,6 @@ public:
     inline double priorWeightNoise(size_t n) const { return m_noiseParent->weight(n); }
 
 
-    inline size_t numSpeech() const { return m_speechParent->dims(); }
-    inline size_t numNoise() const { return m_noiseParent->dims(); }
-
-
-    //! observe
-    void observe(double value)
-    {
-        m_value = value;
-    }
-
     //! override TODO: Variable/BaseVariable
     virtual void updatePosterior();
 
@@ -104,18 +120,19 @@ public:
     // messages
     // TODO: this looks weird: direct parents are MoG's, while here we are directly updating priors
     // the reason is that MoGs are in fact not real distributions ( since updatePosterior() is not implemented)
-
-    void messageToParent(VariableArray<Gaussian>::TParameters *vparams)
+    void messageToParent(VariableArray<Gaussian>::TParameters *vparams) const
     {
         throw NotImplementedException;
     }
 
-    void messageToParent(VariableArray<Gamma>::TParameters *vparams)
+    //! override HasParent<GammaArray>
+    void messageToParent(VariableArray<Gamma>::TParameters *vparams) const
     {
         throw NotImplementedException;
     }
 
-    void messageToParent(Discrete::TParameters *params)
+    //! override HasParent<Discrete>
+    void messageToParent(Discrete::TParameters *params) const
     {
         throw NotImplementedException;
     }
@@ -125,30 +142,16 @@ public:
 
 
 private:
-    inline size_t index(size_t s, size_t n) const { return numSpeech() * n + s; }
-
-    inline double meanSpeech(size_t index) const {  return m_speechMeans[index]; }
-    inline double meanNoise(size_t index) const { return m_noiseMeans[index]; }
-    inline size_t numParameters() const { return numSpeech() * numNoise(); }
-
-
     MoG *m_speechParent;
     MoG *m_noiseParent;
 
     size_t m_numIters;
 
     // variational parameters
-    vector<double> m_speechMeans;
-    vector<double> m_noiseMeans;
-
-    vector<double> m_speechVars;
-    vector<double> m_noiseVars;
-
-    // \rho
-    vector<double> m_weightParams;
+    Parameters<AlgonquinVariable> m_parameters;
 
     // constant posterior precision
-    vector<double> m_postPrec;
+    vector<double> precision;
 
     // the observed value. TODO: make this an array instead?
     double m_value;
@@ -156,117 +159,103 @@ private:
 
 
 
-
-
-class AlgonquinNetwork : public PersistentObject
+/**
+ * this is an experimental node supporting online inference
+ * TODO: meaning that Discrete should also be online-like?
+ */
+class AlgonquinArray : public BaseVariable,
+                       public HasParent<VariableArray<Gaussian> >,
+                       public HasParent<VariableArray<Gamma> >,
+                       public HasParent<DiscreteArray>
 {
 public:
-    static const size_t MAX_NUM_ITERS = 100;
+    typedef Parameters<AlgonquinVariable> TParameters;
 
-    // hyperparameters
-    AlgonquinNetwork(size_t numIters = MAX_NUM_ITERS):
-        m_speech(NULL),
-        m_noise(NULL),
-        m_speechNetwork(NULL),
-        m_noiseNetwork(NULL),
-        m_algonquin(NULL),
-        m_numIters(MAX_NUM_ITERS)
+
+    AlgonquinArray(MoG *_speechParent,
+                   MoG *_noiseParent,
+                   DiscreteArray *_selector,
+                   size_t _maxSize):
+        m_speechParent(_speechParent),
+        m_noiseParent(_noiseParent)
     {}
 
-    virtual ~AlgonquinNetwork()
+    //! the maximum possible size of the
+    size_t maxSize() const { throw NotImplementedException; }
+
+    size_t size() const { throw NotImplementedException; }
+
+    void observe(double value)
     {
-        delete m_speech;
-        delete m_noise;
-        delete m_algonquin;
+        m_moments.mean = value;
+        m_moments.mean2 = value;
     }
 
-    void train(const double *framesS, size_t numFramesS, size_t numCompsS,
-               const double *framesN, size_t numFramesN, size_t numCompsN,
-                     size_t numIters)
+    inline size_t numSpeech() const { return m_speechParent->dims(); }
+    inline size_t numNoise() const { return m_noiseParent->dims(); }
+    inline size_t numParameters() const { return numSpeech() * numNoise(); }
+
+
+    // this only updates the last (maxSize-1) parameter
+    void updatePosterior()
     {
-        m_speechNetwork = trainMixture(framesS, numFramesS, numCompsS, numIters);
-        m_speech = new MoG(m_speechNetwork->means,
-                           m_speechNetwork->precs,
-                           m_speechNetwork->weights);
-
-        m_noiseNetwork = trainMixture(framesN, numFramesN, numCompsN, numIters);
-        m_noise = new MoG(m_noiseNetwork->means,
-                          m_noiseNetwork->precs,
-                          m_noiseNetwork->weights);
-
-        m_algonquin = new AlgonquinVariable(m_speech, m_noise);
+        throw NotImplementedException;
     }
+    void updateMoments() { throw NotImplementedException; }
 
-    const pair<double, double> &process(double frame)
+
+    void messageToParent(VariableArray<Gaussian>::TParameters *v) const
     {
-        m_algonquin->observe(frame);
-        m_algonquin->updatePosterior();
-        return m_algonquin->m_fakeMoments;
-    }
-
-
-    //! check whether the network is already trained
-    bool trained() const { return m_speech != NULL && m_noise != NULL; }
-
-    const MoG *speechDistr() const { return m_speech; }
-    const MoG *noiseDistr() const { return m_noise; }
-
-private:
-    MoG *m_speech;
-    MoG *m_noise;
-    MixtureNetwork *m_speechNetwork;
-    MixtureNetwork *m_noiseNetwork;
-
-    AlgonquinVariable *m_algonquin;
-
-    size_t m_numIters;
-};
-
-
-
-class NetworkArray : public PersistentObject
-{
-public:
-    NetworkArray(size_t numBins):
-        m_networks(numBins),
-        m_speech(numBins, 0.0),
-        m_noise(numBins, 0.0)
-    {}
-
-    size_t numBins() const { return m_networks.size(); }
-
-    //! train an array of networks
-    void train(double *speech, size_t numSpeechFrames, size_t numSpeechComps,
-               double *noise, size_t numNoiseFrames, size_t numNoiseComps,
-               size_t numIters)
-    {
-        for (size_t bin = 0; bin < numBins(); ++bin)
+        auto &params = v->params;
+        Gaussian::TParameters tmp;
+        for (size_t m = 0; m < numNoise(); ++m)
         {
-            m_networks[bin].train(&speech[numSpeechFrames * bin], numSpeechFrames, numSpeechComps,
-                                  &noise[numNoiseFrames * bin], numNoiseFrames, numNoiseComps,
-                                  numIters);
+            auto &precMsg = m_noiseParent->precMoments(m);
+            for (size_t i = 0; i < size(); ++i)
+            {
+                Gaussian::messageToParent(&tmp, m_moments, precMsg);
+                tmp *= m_selector->weight(i, m);
+                params[m] += tmp;
+            }
         }
     }
 
-    pair<double*, double*> process(double *frame)
+    void messageToParent(VariableArray<Gamma>::TParameters *v) const
     {
-        for (size_t bin = 0; bin < numBins(); ++bin)
+        auto &params = v->params;
+        Gamma::TParameters tmp;
+        for (size_t m = 0; m < numNoise(); ++m)
         {
-            auto result = m_networks[bin].process(frame[bin]);
-            m_speech[bin] = result.first;
-            m_noise[bin] = result.second;
+            auto &meanMsg = m_noiseParent->meanMoments(m);
+            for (size_t i = 0; i < size(); ++i)
+            {
+                Gaussian::messageToParent(&tmp, m_moments, meanMsg);
+                tmp *= m_selector->weight(i, m);
+                params[m] += tmp;
+            }
         }
-        return make_pair(m_speech.data(), m_noise.data());
     }
 
-    const MoG *speechDistr(size_t m) const { return m_networks[m].speechDistr(); }
-    const MoG *noiseDistr(size_t m) const { return m_networks[m].noiseDistr(); }
+    void messageToParent(DiscreteArray::TParameters *v) const
+    {
+        throw NotImplementedException;
+    }
 
 private:
-    vector<AlgonquinNetwork> m_networks;
+    // TODO: MoGs are used for convenience only
+    MoG *m_speechParent;
+    MoG *m_noiseParent;
+    DiscreteArray *m_selector;
 
-    vector<double> m_speech;
-    vector<double> m_noise;
+
+    //! posterior parameters for all
+    vector<TParameters> m_variational;
+
+    //! averaged parameters used to construct messages to parents
+    vector<Gaussian::TParameters> m_parameters;
+
+    //! observed values
+    Gaussian::TMoments m_moments;
 
 
 };

@@ -27,7 +27,7 @@ public:
     {}
 
     //! initialise with given parameters
-    GaussianArray(const TParamsVector &_params, TMeanParent *mean, TPrecParent *precision):
+    GaussianArray(const TParameters &_params, TMeanParent *mean, TPrecParent *precision):
         VariableArray<Gaussian>(_params),
         m_meanParent(mean),
         m_precParent(precision)
@@ -65,10 +65,10 @@ public:
     virtual double logNormalizationParents() const;
 
     //! override VariableArray. see implemtations below
-    virtual TParameters parametersFromParents(size_t idx) const;
+    virtual TBaseParameters parametersFromParents(size_t idx) const;
 
     //! override VariableArray
-    vector<double> logProbabilityDensity(const vector<TMoments> &_moments) const
+    vector<double> logProbabilityDensity(const vector<TBaseMoments> &_moments) const
     {
         throw NotImplementedException;
         // not sure if this assert is right
@@ -94,7 +94,7 @@ protected:
 
 // log probabilities
 template<>
-inline vector<double> GaussianArray<Gaussian, Gamma>::logProbabilityDensity(const vector<TMoments> &_moments) const
+inline vector<double> GaussianArray<Gaussian, Gamma>::logProbabilityDensity(const vector<TBaseMoments> &_moments) const
 {
     throw NotImplementedException;
 }
@@ -166,7 +166,7 @@ inline void GaussianArray<Gaussian, Gamma>::messageToParent(Parameters<Gamma> *p
 
 
 template<>
-inline void GaussianArray<VariableArray<Gaussian>, Gamma>::messageToParent(VariableArray<Gaussian>::TParamsVector *v) const
+inline void GaussianArray<VariableArray<Gaussian>, Gamma>::messageToParent(VariableArray<Gaussian>::TParameters *v) const
 {
     const Moments<Gamma> &msg = m_precParent->moments();
     assert(v->params.size() == size());
@@ -179,7 +179,7 @@ inline void GaussianArray<VariableArray<Gaussian>, Gamma>::messageToParent(Varia
 
 // from a vector to _vector gamma_ having _single gaussian_ parent
 template<>
-inline void GaussianArray<Gaussian, VariableArray<Gamma> >::messageToParent(VariableArray<Gamma>::TParamsVector *v) const
+inline void GaussianArray<Gaussian, VariableArray<Gamma> >::messageToParent(VariableArray<Gamma>::TParameters *v) const
 {
     const Moments<Gaussian> &msg = m_meanParent->moments();
     assert(v->params.size() == size());
@@ -193,7 +193,7 @@ inline void GaussianArray<Gaussian, VariableArray<Gamma> >::messageToParent(Vari
 
 // from a vector to _vector gaussian_, both parents are vectors
 template<>
-inline void GaussianArray<VariableArray<Gaussian>, VariableArray<Gamma> >::messageToParent(VariableArray<Gaussian>::TParamsVector *v) const
+inline void GaussianArray<VariableArray<Gaussian>, VariableArray<Gamma> >::messageToParent(VariableArray<Gaussian>::TParameters *v) const
 {
     const vector<GammaMoments> &msgs = m_precParent->moments();
     assert(v->params.size() == msgs.size());
@@ -206,7 +206,7 @@ inline void GaussianArray<VariableArray<Gaussian>, VariableArray<Gamma> >::messa
 
 // from a vector to _vector gamma_, both parents are vectors
 template<>
-inline void GaussianArray<VariableArray<Gaussian>, VariableArray<Gamma> >::messageToParent(VariableArray<Gamma>::TParamsVector *v) const
+inline void GaussianArray<VariableArray<Gaussian>, VariableArray<Gamma> >::messageToParent(VariableArray<Gamma>::TParameters *v) const
 {
     const vector<GaussianMoments> &msgs = m_meanParent->moments();
     assert(v->params.size() == msgs.size());

@@ -15,12 +15,12 @@ namespace vmp
 class GammaArray : public VariableArray<Gamma>
 {
 public:
-    GammaArray(size_t _size, const TParameters &_prior):
+    GammaArray(size_t _size, const TBaseParameters &_prior):
         VariableArray<Gamma>(_size, _prior),
         m_priors(_size, _prior)
     {}
 
-    GammaArray(const TParamsVector &_priors):
+    GammaArray(const TParameters &_priors):
         VariableArray<Gamma>(_priors),
         m_priors(_priors)
     {}
@@ -28,7 +28,7 @@ public:
 //    void messageToParent();
 
     //! override VariableArray
-    inline TParameters parametersFromParents(size_t idx) const { return m_priors[idx]; }
+    inline TBaseParameters parametersFromParents(size_t idx) const { return m_priors[idx]; }
 
     //! override VariableArray
     void updateMoments()
@@ -55,7 +55,7 @@ public:
         return result;
     }
 private:
-    TParamsVector m_priors;
+    TParameters m_priors;
 
 };
 

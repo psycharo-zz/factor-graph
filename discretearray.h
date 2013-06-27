@@ -16,7 +16,7 @@ class DiscreteArray : public VariableArray<Discrete>,
 {
 public:
     DiscreteArray(size_t _size, Dirichlet *_parent):
-        VariableArray(_size, TParameters(_parent->dims())),
+        VariableArray(_size, TBaseParameters(_parent->dims())),
         m_parent(_parent)
     {}
 
@@ -34,6 +34,13 @@ public:
             m_moments[i].probs[values[i]] = 1.0;
         }
     }
+
+    //! get moment
+    double weight(size_t i, size_t m) const
+    {
+        return m_moments[i].probs[m];
+    }
+
 
     //! set initial values
     void initialize(const vector<size_t> &values)
@@ -70,7 +77,7 @@ public:
 
 
     //! override VariableArray
-    inline TParameters parametersFromParents(size_t /*idx*/) const
+    inline TBaseParameters parametersFromParents(size_t /*idx*/) const
     {
         return Discrete::parametersFromParents(m_parent->moments());
     }

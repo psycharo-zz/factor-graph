@@ -9,27 +9,17 @@
 #include <gaussian.h>
 #include <mixture.h>
 
-template <typename T>
-void deleteAll(std::vector<T*> &vec)
-{
-    for (size_t i = 0; i < vec.size(); ++i)
-        delete vec[i];
-}
-
 
 namespace vmp {
 
 
+
+//
 const double DIRICHLET_PRIOR = 1;
 const double GAMMA_PRIOR_SHAPE = 1e-3;
 const double GAMMA_PRIOR_RATE = 1e-3;
 const double GAUSS_PRIOR_MEAN = 0;
 const double GAUSS_PRIOR_PREC = 1e-3;
-
-
-//vmp::Parameters<vmp::MoG> trainGMM(const double *trainingData, size_t numPoints, size_t maxNumIters, size_t numMixtures,
-//                                   double dirichletPrior, const vmp::Parameters<vmp::Gaussian> &priorMean, const vmp::Parameters<vmp::Gamma> &priorGamma,
-//                                   double &evidence, size_t &iters);
 
 
 // TODO: use tuple/real network instead
@@ -38,11 +28,10 @@ struct MixtureNetwork
     MixtureNetwork():
         weightsPrior(NULL),
         weights(NULL),
-        meanPrior(NULL),
-        precPrior(NULL),
-        means(NULL),
-        precs(NULL),
-        evidence(LB_INIT)
+        meanPrior(NULL), precPrior(NULL),
+        means(NULL), precs(NULL),
+        evidence(LB_INIT),
+        iters(0)
     {}
 
     virtual ~MixtureNetwork()
@@ -54,7 +43,6 @@ struct MixtureNetwork
         delete means;
         delete precs;
     }
-
 
     Parameters<MoG> parameters() const
     {

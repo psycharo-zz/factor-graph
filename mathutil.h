@@ -43,7 +43,19 @@ void ResetSeed(void);
 void SetSeed(long new_ix, long new_iy, long new_iz);
 void GetSeed(long *ix_out, long *iy_out, long *iz_out);
 
+//! sum in log domain, 1-st order taylor expansion
 double logSum(double a, double b);
+
+//! compute the jacobian \returns a pair(dg/ds, dg/dn)
+inline pair<double,double> logSumJacobian(double s, double n)
+{
+    double tmp = exp(n - s);
+    tmp /= (1 + tmp);
+    return make_pair(1 - tmp, tmp);
+}
+
+
+
 double pochhammer(double x, int n);
 double di_pochhammer(double x, int n);
 double tri_pochhammer(double x, int n);

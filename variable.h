@@ -226,10 +226,12 @@ class VariableArray : public BaseVariable
 {
 public:
     typedef VariableArray<TDistribution> Type;
-    typedef Parameters<VariableArray<TDistribution> > TParamsVector;
+    typedef Parameters<VariableArray<TDistribution> > TParameters;
 
-    typedef Parameters<TDistribution> TParameters;
-    typedef Moments<TDistribution> TMoments;
+    // Base meaning base distribution
+    typedef TDistribution TBase;
+    typedef Parameters<TDistribution> TBaseParameters;
+    typedef Moments<TDistribution> TBaseMoments;
 
     //! create a variable array with _uninitialized_ moments parameters. TODO: this should not be necessart
     VariableArray(size_t _size):
@@ -239,20 +241,20 @@ public:
     {}
 
     //! create a variable array with identical initial values of parameters
-    VariableArray(size_t _size, const TParameters &_params):
+    VariableArray(size_t _size, const TBaseParameters &_params):
         m_parameters(_size, _params),
-        m_moments(_size, TMoments(_params)),
+        m_moments(_size, TBaseMoments(_params)),
         m_observed(false)
     {}
 
     //! create a variable array with different parameter values for each elements
-    VariableArray(const TParamsVector &_params):
+    VariableArray(const TParameters &_params):
         m_parameters(_params),
         m_observed(false)
     {
         // TODO: funcitonal-style?
         for (size_t i = 0; i < _params.size(); ++i)
-            m_moments.push_back(TMoments(_params[i]));
+            m_moments.push_back(TBaseMoments(_params[i]));
     }
 
 
@@ -260,7 +262,7 @@ public:
     virtual ~VariableArray() {}
 
     //! register as a child, returns a place to store message for this child
-    TParamsVector *addChild(BaseVariable *var)
+    TParameters *addChild(BaseVariable *var)
     {
         // TODO: is such initialisation bad?
         pair<MessageIt, bool> it = m_messages.insert(make_pair(var->id(), m_parameters));
@@ -274,10 +276,10 @@ public:
     inline size_t size() const { return m_moments.size(); }
 
     //! message 1-1
-    inline const TMoments &moments(size_t idx) const { return m_moments[idx]; }
+    inline const TBaseMoments &moments(size_t idx) const { return m_moments[idx]; }
 
     //! all the moments
-    inline const vector<TMoments> &moments() const { return m_moments; }
+    inline const vector<TBaseMoments> &moments() const { return m_moments; }
 
     //! update parameters for each separate distribution
     virtual void updatePosterior()
@@ -290,7 +292,7 @@ public:
         // going through all the messages
         for (MessageIt it = m_messages.begin(); it != m_messages.end(); ++it)
         {
-            const TParamsVector &params = it->second;
+            const TParameters &params = it->second;
             for (size_t i = 0; i < size(); ++i)
                 m_parameters[i] += params[i];
         }
@@ -302,21 +304,21 @@ public:
     virtual void updateMoments() = 0;
 
     //! get the parameters for a specific variable
-    virtual TParameters parametersFromParents(size_t idx) const = 0;
+    virtual TBaseParameters parametersFromParents(size_t idx) const = 0;
 
     //! normalization
     virtual double logNormalization() const = 0;
     virtual double logNormalizationParents() const = 0;
 
     //! get parameters for a specific point
-    inline virtual const TParameters &parameters(size_t idx) const
+    inline virtual const TBaseParameters &parameters(size_t idx) const
     {
         assert(!isObserved());
         return m_parameters.params[idx];
     }
 
     //! get all the parameters vector
-    inline virtual const TParamsVector &parameters() const
+    inline virtual const TParameters &parameters() const
     {
         assert(!isObserved());
         return m_parameters;
@@ -346,22 +348,22 @@ public:
     }
 
     //! probability densities vector
-    inline virtual vector<double> logProbabilityDensity(const TMoments &_moments) const { throw NotImplementedException; }
+    inline virtual vector<double> logProbabilityDensity(const TBaseMoments &_moments) const { throw NotImplementedException; }
 
 
 protected:
     //! parameters TODO: should it actually have this? -only if hidden, and non-deterministic
-    TParamsVector m_parameters;
+    TParameters m_parameters;
 
     //! moments/observations
-    vector<TMoments> m_moments;
+    vector<TBaseMoments> m_moments;
 
     //! observed/hidden flag
     bool m_observed;
 
     //! messages received from children, indexed by node ids
-    map<size_t, TParamsVector> m_messages;
-    typedef typename map<size_t, TParamsVector>::iterator MessageIt;
+    map<size_t, TParameters> m_messages;
+    typedef typename map<size_t, TParameters>::iterator MessageIt;
 
 
 };

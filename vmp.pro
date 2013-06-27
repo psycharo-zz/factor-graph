@@ -31,7 +31,8 @@ HEADERS += \
     matlab/convert.h \
     gaussianarray.h \
     discretearray.h \
-    gammaarray.h
+    gammaarray.h \
+    algonquinnetwork.h
 
 OTHER_FILES += \
     TODO.md \

@@ -5,6 +5,7 @@
 using namespace std;
 
 #include "../algonquin.h"
+#include "../algonquinnetwork.h"
 #include "convert.h"
 
 
@@ -123,12 +124,6 @@ inline void processNetworkArray(const std::string &functionName,
     else if (functionName == "delete")
         delete arr;
 }
-
-
-
-
-
-
 
 
 

@@ -7,6 +7,7 @@ using namespace std;
 #include <cfloat>
 #include <vector>
 #include <thread>
+#include <future>
 
 #include <variable.h>
 #include <gaussian.h>
@@ -78,7 +79,7 @@ using namespace vmp;
 void testSpeechGMM(const vector<double> &bin)
 {
     const size_t numPoints = 999;
-    const size_t maxNumIters = 400;
+    const size_t maxNumIters = 456;
     const size_t numMixtures = 8;
 
     auto mixture = trainMixture(bin.data(), numPoints, numMixtures, maxNumIters);
@@ -99,6 +100,7 @@ int main()
     double runTime;
 
     startTime = clock();
+
 
     testSpeechGMM(speechBins[0]);
 

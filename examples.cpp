@@ -59,6 +59,7 @@ vmp::MixtureNetwork *vmp::trainMixture(const double *points, size_t numPoints, s
             break;
         }
         nwk->evidence = lbCurr.value;
+        nwk->iters = i;
     }
 
     nwk->meanPrior = new ConstGaussian(GAUSS_PRIOR_MEAN);

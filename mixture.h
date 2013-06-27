@@ -109,7 +109,7 @@ public:
     }
 
     // message to mean mixtures
-    void messageToParent(VariableArray<Gaussian>::TParamsVector *v) const
+    void messageToParent(VariableArray<Gaussian>::TParameters *v) const
     {
         vector<Gaussian::TParameters> &params = v->params;
 
@@ -122,7 +122,7 @@ public:
     }
 
     // message to variance mixtures
-    void messageToParent(VariableArray<Gamma>::TParamsVector *v) const
+    void messageToParent(VariableArray<Gamma>::TParameters *v) const
     {
         vector<Gamma::TParameters> &params = v->params;
         for (size_t m = 0; m < dims(); ++m)
@@ -208,7 +208,7 @@ public:
 
 
     // message to discrete variables TODO: VariableArray<Discrete>
-    void messageToParent(DiscreteArray::TParamsVector *v) const
+    void messageToParent(DiscreteArray::TParameters *v) const
     {
         assert(v->params.size() == size());
         vector<Discrete::TParameters> &params = v->params;
@@ -221,7 +221,7 @@ public:
     }
 
     // message to mean mixtures
-    void messageToParent(VariableArray<Gaussian>::TParamsVector *v) const
+    void messageToParent(VariableArray<Gaussian>::TParameters *v) const
     {
         vector<Gaussian::TParameters> &params = v->params;
 
@@ -241,7 +241,7 @@ public:
     }
 
     // message to variance mixtures
-    void messageToParent(VariableArray<Gamma>::TParamsVector *v) const
+    void messageToParent(VariableArray<Gamma>::TParameters *v) const
     {
         vector<Gamma::TParameters> &params = v->params;
 
@@ -303,7 +303,7 @@ public:
     }
 
     // TODO: link instead of copying
-    vector<double> logProbabilityDensity(const TMoments &value) const
+    vector<double> logProbabilityDensity(const TBaseMoments &value) const
     {
         vector<double> result(dims());
         for (size_t m = 0; m < dims(); ++m)
