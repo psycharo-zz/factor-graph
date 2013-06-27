@@ -63,17 +63,8 @@ public:
         updateMoments();
     }
 
-
-    //! override VariableArray.
-    void updateMoments()
-    {
-        for (size_t i = 0; i < size(); ++i)
-            Discrete::updateMoments(m_moments[i], m_parameters[i]);
-    }
-
-
-    double logNormalization() const { return 0; }
-    double logNormalizationParents() const { return 0; }
+    double logNorm() const { return 0; }
+    double logNormParents() const { return 0; }
 
 
     //! override VariableArray

@@ -30,8 +30,12 @@ public:
         rate(_rate)
     {}
 
-    double shape;
-    double rate;
+
+    inline void clear()
+    {
+        shape = 0;
+        rate = 0;
+    }
 
     Parameters &operator+=(const Parameters &other)
     {
@@ -46,6 +50,9 @@ public:
         rate *= value;
         return *this;
     }
+
+    double shape;
+    double rate;
 };
 
 inline ostream &operator<<(ostream &out, const Parameters<Gamma> &params)
@@ -96,10 +103,16 @@ public:
         logPrecision(_logPrecision)
     {}
 
-    Moments(const Parameters<Gamma> &params):
-        precision(params.shape / params.rate),
-        logPrecision(digamma(params.shape) - log(params.rate))
-    {}
+    Moments(const Parameters<Gamma> &params)
+    {
+        fromParameters(*this, params);
+    }
+
+    static void fromParameters(Moments &ms, Parameters<Gamma> const &ps)
+    {
+        ms.precision = ps.shape / ps.rate;
+        ms.logPrecision = digamma(ps.shape) - log(ps.rate);
+    }
 
     double precision;
     double logPrecision;
@@ -139,28 +152,22 @@ public:
     virtual ~Gamma() {}
 
     //! override Variable
-    double logNormalization() const
+    double logNorm() const
     {
         return parameters().shape * log(parameters().rate) - gammaln(parameters().shape);
     }
 
     //! override Variable
-    double logNormalizationParents() const
+    double logNormParents() const
     {
 //        Parameters<Gamma> params = parametersFromParents();
         return m_shapeMsg * log(m_rateMsg) - gammaln(m_shapeMsg);
     }
 
     //! override ContinuousVariable
-    double logProbabilityDensity(const TMoments &/*ms*/) const
+    double logPDF(const TMoments &/*ms*/) const
     {
         throw NotImplementedException;
-    }
-
-    //! override Variable
-    inline void updateMoments()
-    {
-        Gamma::updateMoments(m_moments, parameters());
     }
 
     //! override Variable. simply a constant for gamma distribution
@@ -169,23 +176,14 @@ public:
         return TParameters(m_shapeMsg, m_rateMsg);
     }
 
-
-    // static
-    inline static void updateMoments(TMoments &moments, const TParameters &params)
-    {
-        moments.precision = params.shape / params.rate;
-        moments.logPrecision = digamma(params.shape) - log(params.rate);
-    }
-
-
     //! override Variable
-    inline static double logNormalization(const TParameters &params)
+    inline static double logNorm(const TParameters &params)
     {
         return params.shape * log(params.rate) - gammaln(params.shape);
     }
 
     //! override Variable
-    inline static double logNormalizationParents(double shape, double rate)
+    inline static double logNormParents(double shape, double rate)
     {
         return shape * log(rate) - gammaln(shape);
     }

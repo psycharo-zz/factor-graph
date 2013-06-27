@@ -24,8 +24,7 @@ class Parameters<Discrete>
 public:
     Parameters(size_t _dims):
         logProb(_dims, log(1./_dims))
-    {
-    }
+    {}
 
     Parameters(const vector<double> &_logProb):
         logProb(_logProb)
@@ -36,6 +35,8 @@ public:
         logProb += other.logProb;
         return *this;
     }
+
+    inline void clear() { throw NotImplementedException; }
 
     inline size_t dims() const { return logProb.size(); }
 
@@ -138,7 +139,7 @@ public:
     {
         Variable<Discrete>::updatePosterior();
         m_params.logProb -= lognorm(m_params.logProb);
-        updateMoments();
+        Variable<Discrete>::updateMoments();
     }
 
 
@@ -159,20 +160,11 @@ public:
     inline size_t dims() const { return m_moments.probs.size(); }
 
     //! override Variable
-    virtual void updateMoments()
-    {
-        Discrete::updateMoments(m_moments, parameters());
-    }
-
-    //! override Variable
-    inline bool hasParents() const { return m_parent != NULL; }
-
-    //! override Variable
-    inline double logNormalization() const { return 0.0; }
+    inline double logNorm() const { return 0.0; }
     // TODO: return lognorm(parameters.logProb);
 
     //! override Variable
-    inline double logNormalizationParents() const { return 0.0; }
+    inline double logNormParents() const { return 0.0; }
 
     //! override HasForm<Discrete>
     inline Parameters<Discrete> parametersFromParents() const
@@ -186,7 +178,7 @@ public:
         params->U = moments().probs;
     }
 
-    double logProbabilityDensity(const TMoments &/*moments*/) const { throw NotImplementedException; }
+    double logPDF(const TMoments &/*moments*/) const { throw NotImplementedException; }
 
     // static versions
     inline static Parameters<Discrete> parametersFromParents(const Moments<Dirichlet> &dirMsg)
@@ -194,17 +186,10 @@ public:
         return dirMsg.logProb;
     }
 
-    inline static void updateMoments(Moments<Discrete> &moments, const Parameters<Discrete> &params)
-    {
-        for (size_t i = 0; i < moments.probs.size(); ++i)
-            moments.probs[i] = exp(params.logProb[i]);
-    }
-
-
-    inline static double logNormalization(const TParameters &params) { return 0.0; }
+    inline static double logNorm(const TParameters &params) { return 0.0; }
 
     //! override Variable
-    inline static double logNormalizationParents(const Moments<Dirichlet> &moments) { return 0.0; }
+    inline static double logNormParents(const Moments<Dirichlet> &moments) { return 0.0; }
 
 protected:
     //! check whether the value is within the limits TODO: rename the function
@@ -212,9 +197,6 @@ protected:
 
     //! the (only) dirichlet parent
     Dirichlet *m_parent;
-
-    //! the message from its dirichlet parent
-//    Moments<Dirichlet> m_parentMsg;
 };
 
 

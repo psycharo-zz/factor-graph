@@ -34,6 +34,8 @@ public:
         return *this;
     }
 
+    inline void clear() { throw NotImplementedException; }
+
     inline size_t dims() const { return U.size(); }
 
     //! the concentration parameter
@@ -123,9 +125,7 @@ public:
     Dirichlet(const TParameters &_params):
         Variable(_params), // TODO: decent initialisation
         m_priorU(_params.U)
-    {
-        updatePosterior();
-    }
+    {}
 
     Dirichlet(size_t _dims, const double value):
         Variable(TParameters(_dims, value)),
@@ -138,33 +138,20 @@ public:
     inline size_t dims() const { return m_priorU.size(); }
 
     //! override Variable
-    inline double logNormalization() const
-    {
-        return gammaln(sumv(parameters().U)) - sumv(gammalnv(parameters().U));
-    }
-
-    //! override Variable
-    inline double logNormalizationParents() const
+    inline double logNormParents() const
     {
         Parameters<Dirichlet> params = parametersFromParents();
         return gammaln(sumv(params.U)) - sumv(gammalnv(params.U));
     }
 
-
-    //! override Variable
-    inline void updateMoments()
-    {
-        // lambda functions/matrices?
-        double dgSumU = digamma(sumv(parameters().U));
-        for (size_t i = 0; i < dims(); ++i)
-            m_moments.logProb[i] = digamma(parameters().U[i]) - dgSumU;
-        // TODO: is normalization required here?
-        m_moments.logProb -= lognorm(m_moments.logProb);
-    }
-
     inline Parameters<Dirichlet> parametersFromParents() const { return m_priorU; }
 
-    double logProbabilityDensity(const TMoments &/*moments*/) const { throw NotImplementedException; }
+    inline static double logNorm(const TParameters &ps)
+    {
+        return gammaln(sumv(ps.U)) - sumv(gammalnv(ps.U));
+    }
+
+    double logPDF(const TMoments &/*moments*/) const { throw NotImplementedException; }
 
 
 protected:

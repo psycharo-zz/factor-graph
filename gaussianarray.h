@@ -33,51 +33,22 @@ public:
         m_precParent(precision)
     {}
 
-
     //! TODO: generic?
     inline void observe(const vector<double> &values)
     {
         for (size_t i = 0; i < size(); ++i)
-        {
-            m_moments[i].mean = values[i];
-            m_moments[i].mean2 = sqr(values[i]);
-        }
+            m_moments[i] = TBaseMoments::fromValue(values[i]);
         m_observed = true;
     }
 
-    //! override VariableArray. TODO: generic?
-    void updateMoments()
-    {
-        for (size_t i = 0; i < size(); ++i)
-            Gaussian::updateMoments(m_moments[i], m_parameters[i]);
-    }
-
-    //! override VariableArray
-    virtual double logNormalization() const
-    {
-        double result = 0.0;
-        for (size_t i = 0; i < size(); ++i)
-            result += Gaussian::logNormalization(m_parameters[i]);
-        return result;
-    }
-
     //! override VariableArray. implementations below
-    virtual double logNormalizationParents() const;
+    virtual double logNormParents() const;
 
     //! override VariableArray. see implemtations below
     virtual TBaseParameters parametersFromParents(size_t idx) const;
 
     //! override VariableArray
-    vector<double> logProbabilityDensity(const vector<TBaseMoments> &_moments) const
-    {
-        throw NotImplementedException;
-        // not sure if this assert is right
-        assert(_moments.size() == size());
-        // TODO: allocate memory only once?
-        vector<double> result(size());
-        return result;
-    }
-
+    vector<double> logProbabilityDensity(const vector<TBaseMoments> &_moments) const { throw NotImplementedException; }
 
     // TODO: shouldn't this have some default implementation?
     //! override HasParent<TMeanParent>
@@ -119,21 +90,21 @@ inline Parameters<Gaussian> GaussianArray<VariableArray<Gaussian>, VariableArray
 
 // computing log evidence
 template <>
-inline double GaussianArray<Gaussian, Gamma>::logNormalizationParents() const
+inline double GaussianArray<Gaussian, Gamma>::logNormParents() const
 {
     double result = 0.0;
     for (size_t i = 0; i < size(); ++i)
-        result += Gaussian::logNormalizationParents(m_meanParent->moments(), m_precParent->moments());
+        result += Gaussian::logNormParents(m_meanParent->moments(), m_precParent->moments());
     return result;
 }
 
 
 template <>
-inline double GaussianArray<VariableArray<Gaussian>, VariableArray<Gamma> >::logNormalizationParents() const
+inline double GaussianArray<VariableArray<Gaussian>, VariableArray<Gamma> >::logNormParents() const
 {
     double result = 0.0;
     for (size_t i = 0; i < size(); ++i)
-        result += Gaussian::logNormalizationParents(m_meanParent->moments(i), m_precParent->moments(i));
+        result += Gaussian::logNormParents(m_meanParent->moments(i), m_precParent->moments(i));
     return result;
 }
 
@@ -208,7 +179,7 @@ inline void GaussianArray<VariableArray<Gaussian>, VariableArray<Gamma> >::messa
 template<>
 inline void GaussianArray<VariableArray<Gaussian>, VariableArray<Gamma> >::messageToParent(VariableArray<Gamma>::TParameters *v) const
 {
-    const vector<GaussianMoments> &msgs = m_meanParent->moments();
+    const vector<Gaussian::TMoments> &msgs = m_meanParent->moments();
     assert(v->params.size() == msgs.size());
     for (size_t i = 0; i < size(); ++i)
     {

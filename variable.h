@@ -65,9 +65,7 @@ public:
     typedef Moments<TDistribution> TMoments;
     typedef TDistribution TVariableType;
 
-    Variable():
-        m_observed(false)
-    {}
+    // TODO: either moments or parameters should be initialised
 
     Variable(const TParameters &_params, const TMoments &_moments):
         m_observed(false),
@@ -79,6 +77,11 @@ public:
         m_observed(false),
         m_params(_params),
         m_moments(_params)
+    {}
+
+    Variable(const TMoments &_moments):
+        m_observed(false),
+        m_moments(_moments)
     {}
 
     virtual ~Variable() {}
@@ -94,56 +97,15 @@ public:
         return &it.first->second;
     }
 
-    //! update the moments
-    virtual void updateMoments() = 0;
-
     //! get the updated moments
     inline virtual const TMoments &moments() const { return m_moments; }
-
-    //! prior parameters, received from the parents
-    virtual TParameters parametersFromParents() const = 0;
 
     //! posterior parameters of the distribution
     inline virtual const TParameters &parameters() const { return m_params; }
 
 
-    //! compute the constitute to the lower bound on the log-evidence
-    virtual double logEvidence() const
-    {
-        return isObserved() ? logEvidenceObserved() :
-                              logEvidenceHidden();
-    }
-
-    //! compute LB in case the variable is observed
-    double logEvidenceObserved() const
-    {
-        // TODO: m_params SHOULD NOT BE USED for the observed variables!
-        return parametersFromParents() * moments() + logNormalizationParents();
-    }
-
-    //! compute LB in case the variable is hidden
-    double logEvidenceHidden() const
-    {
-        // TODO: change to updatedMoments() in case it fails
-        return parametersFromParents() * moments() - parameters() * moments()
-               + logNormalizationParents()
-               - logNormalization();
-    }
-
-    //! compute the log-normalization (the g() function) based on the current distribution
-    virtual double logNormalization() const = 0;
-
-    //! compute the log-normalization based from parents
-    virtual double logNormalizationParents() const = 0;
-
-    //! compute the log-probability function
-    virtual double logProbabilityDensity(const TMoments &moments) const = 0;
-
-    // TODO: the log-??something?? to compute the f() function
-    // virtual double computeF() const = 0;
-
     //! updating the posterior w.r.t to the current messages
-    virtual void updatePosterior()
+    inline virtual void updatePosterior()
     {
         assert(!isObserved());
         m_params = parametersFromParents();
@@ -152,7 +114,45 @@ public:
         updateMoments();
     }
 
+    //! update the moments
+    virtual void updateMoments() { TMoments::fromParameters(m_moments, parameters()); }
 
+    //! prior parameters, received from the parents
+    virtual TParameters parametersFromParents() const = 0;
+
+    //! compute the constitute to the lower bound on the log-evidence
+    virtual double logEvidence() const
+    {
+        return isObserved() ? logEvidenceObserved() : logEvidenceHidden();
+    }
+
+    //! compute LB in case the variable is observed
+    double logEvidenceObserved() const
+    {
+        // TODO: m_params SHOULD NOT BE USED for the observed variables!
+        return parametersFromParents() * moments() + logNormParents();
+    }
+
+    //! compute LB in case the variable is hidden
+    double logEvidenceHidden() const
+    {
+        // TODO: change to updatedMoments() in case it fails
+        return parametersFromParents() * moments() - parameters() * moments()
+               + logNormParents()
+               - logNorm();
+    }
+
+    //! compute the log-normalization (the g() function) based on the current distribution
+    virtual double logNorm() const { return TDistribution::logNorm(parameters()); }
+
+    //! compute the log-normalization based from parents
+    virtual double logNormParents() const = 0;
+
+    //! compute the log-probability function
+    virtual double logPDF(const TMoments &moments) const = 0;
+
+    // TODO: the log-??something?? to compute the f() function
+    // virtual double computeF() const = 0;
 
 protected:
     //! flag whether the variable is observed or not
@@ -184,7 +184,6 @@ public:
     // TODO: here there is no need to have the second parameter,
     // since it is assumed that there is only one parent of this type
     // mb introduce yet another class like HasMultipleParents
-//    virtual void receiveFromParent(const Moments<TParent> &ms, TParent *parent) = 0;
     virtual void messageToParent(Parameters<TParent> *params) const = 0;
 };
 
@@ -233,13 +232,6 @@ public:
     typedef Parameters<TDistribution> TBaseParameters;
     typedef Moments<TDistribution> TBaseMoments;
 
-    //! create a variable array with _uninitialized_ moments parameters. TODO: this should not be necessart
-    VariableArray(size_t _size):
-        m_parameters(_size),
-        m_moments(_size),
-        m_observed(false)
-    {}
-
     //! create a variable array with identical initial values of parameters
     VariableArray(size_t _size, const TBaseParameters &_params):
         m_parameters(_size, _params),
@@ -256,8 +248,6 @@ public:
         for (size_t i = 0; i < _params.size(); ++i)
             m_moments.push_back(TBaseMoments(_params[i]));
     }
-
-
 
     virtual ~VariableArray() {}
 
@@ -301,14 +291,26 @@ public:
     }
 
     //! update moments
-    virtual void updateMoments() = 0;
+    virtual void updateMoments()
+    {
+        for (size_t i = 0; i < size(); ++i)
+            TBaseMoments::fromParameters(m_moments[i], m_parameters[i]);
+    }
+
 
     //! get the parameters for a specific variable
     virtual TBaseParameters parametersFromParents(size_t idx) const = 0;
 
     //! normalization
-    virtual double logNormalization() const = 0;
-    virtual double logNormalizationParents() const = 0;
+    virtual double logNorm() const
+    {
+        double result = 0.0;
+        for (size_t i = 0; i < size(); ++i)
+            result += TBase::logNorm(m_parameters[i]);
+        return result;
+    }
+
+    virtual double logNormParents() const = 0;
 
     //! get parameters for a specific point
     inline virtual const TBaseParameters &parameters(size_t idx) const
@@ -335,7 +337,7 @@ public:
         double result = 0.0;
         for (size_t i = 0; i < size(); ++i)
             result += parametersFromParents(i) * m_moments[i];
-        return result + logNormalizationParents();
+        return result + logNormParents();
     }
 
     double logEvidenceHidden() const
@@ -344,7 +346,7 @@ public:
         double result = 0.0;
         for (size_t i = 0; i < size(); ++i)
             result += parametersFromParents(i) * moments(i) - parameters(i) * moments(i);
-        return result + logNormalizationParents() - logNormalization();
+        return result + logNormParents() - logNorm();
     }
 
     //! probability densities vector

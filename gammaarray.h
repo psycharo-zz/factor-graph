@@ -25,38 +25,19 @@ public:
         m_priors(_priors)
     {}
 
-//    void messageToParent();
-
     //! override VariableArray
     inline TBaseParameters parametersFromParents(size_t idx) const { return m_priors[idx]; }
 
-    //! override VariableArray
-    void updateMoments()
-    {
-        for (size_t i = 0; i < size(); ++i)
-            Gamma::updateMoments(m_moments[i], m_parameters[i]);
-    }
-
-    //! override VariableArray
-    inline double logNormalization() const
-    {
-        double result = 0.0;
-        for (size_t i = 0; i < size(); ++i)
-            result += Gamma::logNormalization(m_parameters[i]);
-        return result;
-    }
-
     //! override Variable
-    inline double logNormalizationParents() const
+    inline double logNormParents() const
     {
         double result = 0.0;
         for (size_t i = 0; i < size(); ++i)
-            result += Gamma::logNormalizationParents(m_priors[i].shape, m_priors[i].rate);
+            result += TBase::logNormParents(m_priors[i].shape, m_priors[i].rate);
         return result;
     }
 private:
     TParameters m_priors;
-
 };
 
 

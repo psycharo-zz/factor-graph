@@ -10,11 +10,11 @@
 #include <mixture.h>
 
 
-namespace vmp {
+namespace vmp
+{
 
 
 
-//
 const double DIRICHLET_PRIOR = 1;
 const double GAMMA_PRIOR_SHAPE = 1e-3;
 const double GAMMA_PRIOR_RATE = 1e-3;
@@ -23,6 +23,7 @@ const double GAUSS_PRIOR_PREC = 1e-3;
 
 
 // TODO: use tuple/real network instead
+// TODO: at least parameterize using templates
 struct MixtureNetwork
 {
     MixtureNetwork():
@@ -52,7 +53,7 @@ struct MixtureNetwork
         result.weights.resize(means->size());
 
         for (size_t m = 0; m < means->size(); ++m)
-            result.components[m] = Parameters<Gaussian>(means->moments(m).mean * precs->moments(m).precision,
+            result.components[m] = Parameters<Gaussian>(precs->moments(m).precision * means->moments(m).mean,
                                                         precs->moments(m).precision);
         result.weights = weights->moments().probs;
 
@@ -70,8 +71,18 @@ struct MixtureNetwork
 
 };
 
+//! univariate mixture training
 MixtureNetwork *trainMixture(const double *points, size_t numPoints, size_t numMixtures, size_t maxNumIters);
 
+// TODO: add some return type
+void trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
+                    vector<vec> &means, vector<mat> &sigmas, vector<double> &weights);
+
+
+// various tests
+void testLogPDF();
+void testMVMoG();
+void testSpeechGMM(const vector<double> &bin);
 
 
 } // namespace vmp

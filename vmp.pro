@@ -9,7 +9,6 @@ SOURCES += main.cpp \
     examples.cpp \
     algonquin.cpp \
     mathutil.cpp \
-    gaussian.cpp \
     matlab/persistentobject.cpp \
     gaussianarray.cpp \
     discretearray.cpp
@@ -32,7 +31,10 @@ HEADERS += \
     gaussianarray.h \
     discretearray.h \
     gammaarray.h \
-    algonquinnetwork.h
+    algonquinnetwork.h \
+    wishart.h \
+    mvgaussian.h \
+    mvalgonquin.h
 
 OTHER_FILES += \
     TODO.md \
@@ -45,7 +47,7 @@ OBJECTS_DIR = ./.obj
 
 # TODO: matlab support
 # LIBS += -lgsl -lblas
-LIBS += -lprofiler -lpthread
+LIBS += -lprofiler -larmadillo -llapack -lblas
 
 
 

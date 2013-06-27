@@ -10,7 +10,9 @@
 #include <numeric>
 #include <functional>
 #include <algorithm>
+#include <armadillo>
 using namespace std;
+using namespace arma;
 
 
 // x^2
@@ -46,16 +48,6 @@ void GetSeed(long *ix_out, long *iy_out, long *iz_out);
 //! sum in log domain, 1-st order taylor expansion
 double logSum(double a, double b);
 
-//! compute the jacobian \returns a pair(dg/ds, dg/dn)
-inline pair<double,double> logSumJacobian(double s, double n)
-{
-    double tmp = exp(n - s);
-    tmp /= (1 + tmp);
-    return make_pair(1 - tmp, tmp);
-}
-
-
-
 double pochhammer(double x, int n);
 double di_pochhammer(double x, int n);
 double tri_pochhammer(double x, int n);
@@ -68,8 +60,63 @@ double tetragamma(double x);
 #endif
 
 
-namespace vmp {
 
+
+
+//! compute the jacobian \returns a pair(dg/ds, dg/dn)
+inline pair<double,double> logSumJacobian(double s, double n)
+{
+    double tmp = exp(n - s);
+    tmp /= (1 + tmp);
+    return make_pair(1 - tmp, tmp);
+}
+
+
+//! a special version of digamma
+inline double digamma_d(double x, double dims)
+{
+    double result = 0;
+    for (size_t i = 0; i < dims; ++i)
+        result += digamma(x + 0.5 * (1 - i));
+    return result;
+}
+
+
+namespace vmp
+{
+
+
+inline mat mvrandn(size_t num, const vec &means, const vec &sigmas)
+{
+    default_random_engine gen;
+    normal_distribution<double> distrs[sigmas.size()];
+    for (size_t i = 0; i < means.size(); ++i)
+        distrs[i] = normal_distribution<double>(means[i], sqrt(sigmas[i]));
+
+    mat result(num, means.size());
+    for (size_t i = 0; i < num; ++i)
+    {
+        for (size_t d = 0; d < means.size(); ++d)
+            result(i, d) = distrs[d](gen);
+    }
+    return result;
+}
+
+inline mat gmmrand(size_t numPoints, const vector<vec> &MU, const vector<vec> &SIGMA, const vec &weights)
+{
+    const size_t dims = MU[0].n_rows;
+
+    uvec counts(MU.size());
+    for (size_t i = 0; i < MU.size(); ++i)
+        counts(i) = floor(weights(i) * numPoints);
+    counts(0) += numPoints - sum(counts);
+
+    mat result(0, dims);
+    for (size_t i = 0; i < MU.size(); ++i)
+        result = join_cols(result, mvrandn(counts(i), MU[i], SIGMA[i]));
+
+    return result;
+}
 
 
 //! random vector of integers i in [0;max)
@@ -239,7 +286,7 @@ const double EPSILON = 1e-3;
 // initial value for the lower bound
 const double LB_INIT = -DBL_MAX;
 
-}
+} // namespace vmp
 
 
 
