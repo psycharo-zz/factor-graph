@@ -241,3 +241,21 @@ void vmp::testSpeechGMM(const vector<double> &bin)
 }
 
 
+void vmp::testLogSum()
+{
+    vec a = {-0.5911,1.9281,-1.5054,2.9966,-2.7622,-0.2766,-0.3826, 0.2686, 0.4302,-0.8913};
+    vec b = {0.4159, -1.7199, -0.8560, 1.5157, 0.9344, -1.0388, 1.5259, -0.1821, 0.0425, 0.4759};
+
+    vec EXP_LOGSUM = {0.7273,1.9539,-0.4357,3.2015,0.9589,0.1064,1.6642,0.7616,0.9482,0.7029};
+    assert(fabs(sum(EXP_LOGSUM - vmp::logSumV(a, b))) < 1e-3);
+
+
+    pair<vec,vec> EXP_JACOB = {{0.2676,0.9746,0.3431,0.8147,0.0242,0.6818,0.1291,0.6108,0.5957,0.2031},
+                               {0.7324,0.0254,0.6569,0.1853,0.9758,0.3182,0.8709,0.3892,0.4043,0.7969}};
+    auto result = vmp::logSumVJacobian(a, b);
+
+    assert(fabs(sum(EXP_JACOB.first - result.first)) < 1e-3);
+    assert(fabs(sum(EXP_JACOB.second - result.second)) < 1e-3);
+}
+
+

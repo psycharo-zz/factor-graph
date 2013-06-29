@@ -34,11 +34,18 @@ vector<vector<double> > read_bins(const string &fileName)
 
 
 
+
 int main()
 {
     using namespace vmp;
 //    vmp::testSpeechGMM(read_bins("speechbin.txt")[0]);
 //    vmp::testMVMoG();
+
+    mat a = {1,2,3,4};
+    a.reshape(2,2);
+
+
+    cout << accu(a) << endl;
 
 
 

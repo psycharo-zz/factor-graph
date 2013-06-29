@@ -13,8 +13,6 @@
 namespace vmp
 {
 
-
-
 const double DIRICHLET_PRIOR = 1;
 const double GAMMA_PRIOR_SHAPE = 1e-3;
 const double GAMMA_PRIOR_RATE = 1e-3;
@@ -83,10 +81,11 @@ void trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
 void testLogPDF();
 void testMVMoG();
 void testSpeechGMM(const vector<double> &bin);
+void testLogSum();
+
+
 
 
 } // namespace vmp
-
-
 
 #endif // EXAMPLES_H

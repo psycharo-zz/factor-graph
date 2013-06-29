@@ -16,10 +16,10 @@ template<>
 class Parameters<MVAlgonquin>
 {
 public:
-    mat meansSpeech;
-    mat meansNoise;
-    mat varsSpeech;
-    mat varsNoise;
+    vector<vec> meansSpeech;
+    vector<vec> meansNoise;
+    vector<vec> varsSpeech;
+    vector<vec> varsNoise;
     // component weights
     mat weights;
     // constant posterior precision
@@ -51,7 +51,7 @@ public:
     inline size_t numNoise() const { return m_noiseParent->dims(); }
     inline size_t numParameters() const { return numSpeech() * numNoise(); }
 
-    inline void observe(double value) { m_value = value; }
+    inline void observe(const vec &value) { m_value = value; }
 
     inline size_t index(size_t s, size_t n) const { return numSpeech() * n + s; }
 
@@ -86,9 +86,8 @@ private:
     // variational parameters
     Parameters<MVAlgonquin> m_parameters;
     // constant posterior precision
-
     // the observed value. TODO: make this an array instead?
-    double m_value;
+    vec m_value;
 };
 
 

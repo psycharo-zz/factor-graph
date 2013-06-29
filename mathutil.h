@@ -61,8 +61,6 @@ double tetragamma(double x);
 
 
 
-
-
 //! compute the jacobian \returns a pair(dg/ds, dg/dn)
 inline pair<double,double> logSumJacobian(double s, double n)
 {
@@ -84,6 +82,19 @@ inline double digamma_d(double x, double dims)
 
 namespace vmp
 {
+
+inline vec logSumV(const vec &s, const vec &n)
+{
+    return s + log(1 + exp(n-s));
+}
+
+inline pair<vec, vec> logSumVJacobian(const vec &s, const vec &n)
+{
+    vec tmp = exp(n - s);
+    for (size_t i = 0; i < tmp.size(); ++i)
+        tmp(i) /= (1 + tmp(i));
+    return {1 - tmp, tmp};
+}
 
 
 inline mat mvrandn(size_t num, const vec &means, const vec &sigmas)
