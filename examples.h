@@ -45,10 +45,10 @@ struct MixtureNetwork
         delete precs;
     }
 
-    Parameters<MoG> parameters() const
+    Parameters<UnivariateMixture> parameters() const
     {
         assert(means != NULL);
-        Parameters<MoG> result;
+        Parameters<UnivariateMixture> result;
         result.components.resize(means->size());
         result.weights.resize(means->size());
 

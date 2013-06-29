@@ -151,6 +151,31 @@ void processGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     plhs[2] = toMxArray(mixture->weights->moments().probs.data(), 1, numMixtures);
 }
 
+void processMVGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    double *data = NULL;
+    size_t numPoints;
+    size_t dims;
+    mxArrayToDoubleArray(prhs[POINTER_IDX], data, numPoints, dims);
+
+    size_t numMixtures = mxArrayTo<int>(prhs[POINTER_IDX+1]);
+    size_t numIters = mxArrayTo<int>(prhs[POINTER_IDX+2]);
+
+
+    mat POINTS(data, numPoints, dims, false, true);
+
+    vector<vec> means;
+    vector<mat> sigmas;
+    vector<double> weights;
+    trainMVMixture(POINTS, numMixtures, numIters,
+                   means, sigmas, weights);
+
+    for (size_t i = 0; i < means.size(); ++i)
+        cout << means[i] << sigmas[i];
+    cout << weights << endl;
+
+}
+
 
 
 
@@ -175,6 +200,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             processNetworkArray(functionName, nlhs, plhs, nrhs, prhs);
         else if (typeName == "GMM")
             processGMM(nlhs, plhs, nrhs, prhs);
+        else if (typeName == "MVGMM")
+            processMVGMM(nlhs, plhs, nrhs, prhs);
         else
             mexErrMsgTxt("Unsupported operation\n");
     }

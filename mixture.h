@@ -3,12 +3,12 @@
 
 
 #include <vector>
-#include <cassert>
 using namespace std;
 
 
 #include <variable.h>
 #include <gaussian.h>
+#include <mvgaussian.h>
 #include <discrete.h>
 #include "discretearray.h"
 #include "gaussianarray.h"
@@ -18,11 +18,18 @@ namespace vmp
 {
 
 
-
+template <typename TDistr = Gaussian,
+          typename TMean = Gaussian,
+          typename TPrec = Gamma>
 class MoG;
 
-template<>
-class Parameters<MoG>
+typedef MoG<Gaussian, Gaussian, Gamma> UnivariateMixture;
+typedef MoG<MVGaussian, MVGaussian, Wishart> MultivariateMixture;
+
+
+
+template <>
+class Parameters<UnivariateMixture>
 {
 public:
     Parameters()
@@ -44,18 +51,24 @@ public:
 
 
 
-
 // TODO: finish it
-class MoG : public Variable<Gaussian>,
-            public HasParent<VariableArray<Gaussian> >,
-            public HasParent<VariableArray<Gamma> >,
+template <typename TDistr, typename TMean, typename TPrec>
+class MoG : public Variable<TDistr>,
+            public HasParent<VariableArray<TMean> >,
+            public HasParent<VariableArray<TPrec> >,
             public HasParent<Discrete>
 {
 public:
-    MoG(VariableArray<Gaussian> *_meanComps,
-        VariableArray<Gamma> *_precComps,
+    typedef VariableArray<TMean> TMeanArray;
+    typedef VariableArray<TPrec> TPrecArray;
+    typedef Parameters<TDistr> TParameters;
+    typedef Moments<TDistr> TMoments;
+
+
+    MoG(TMeanArray *_meanComps,
+        TPrecArray *_precComps,
         Discrete *_selector):
-        Variable<Gaussian>(TParameters()), // FIXME
+        Variable<TDistr>(TParameters()), // FIXME
         m_meanComps(_meanComps),
         m_precComps(_precComps),
         m_selector(_selector)
@@ -67,8 +80,8 @@ public:
     size_t dims() const { return m_selector->dims(); }
 
     // utility functions to access separate mixtures
-    const Moments<Gaussian> &meanMoments(size_t m) const { return m_meanComps->moments(m); }
-    const Moments<Gamma> &precMoments(size_t m) const { return m_precComps->moments(m); }
+    const Moments<TMean> &meanMsg(size_t m) const { return m_meanComps->moments(m); }
+    const Moments<TPrec> &precMsg(size_t m) const { return m_precComps->moments(m); }
     double weight(size_t idx) const { return m_selector->moments().probs[idx]; }
 
     //! TODO:
@@ -80,8 +93,8 @@ public:
 
     void observe(double value)
     {
-        m_moments = TMoments::fromValue(value);
-        m_observed = true;
+        this->m_moments = TMoments::fromValue(value);
+        this->m_observed = true;
     }
 
     //! override Variable
@@ -101,30 +114,28 @@ public:
     void messageToParent(Discrete::TParameters *params) const
     {
         for (size_t m = 0; m < dims(); ++m)
-            params->logProb[m] = logPDF(m_moments);
+            params->logProb[m] = logPDF(this->m_moments);
         params->logProb -= lognorm(params->logProb);
     }
 
     // message to mean mixtures
-    void messageToParent(VariableArray<Gaussian>::TParameters *v) const
+    void messageToParent(Parameters<TMeanArray> *v) const
     {
-        vector<Gaussian::TParameters> &params = v->params;
-
-        Gaussian::TParameters tmp;
+        vector<Parameters<TMean> > &params = v->params;
         for (size_t m = 0; m < dims(); ++m)
         {
-            TVariableType::messageToParent(&params[m], m_moments, precMoments(m));
+            TDistr::messageToParent(&params[m], this->m_moments, precMsg(m));
             params[m] *= weight(m);
         }
     }
 
     // message to variance mixtures
-    void messageToParent(VariableArray<Gamma>::TParameters *v) const
+    void messageToParent(Parameters<TPrecArray> *v) const
     {
-        vector<Gamma::TParameters> &params = v->params;
+        vector<Parameters<TPrec> > &params = v->params;
         for (size_t m = 0; m < dims(); ++m)
         {
-            TVariableType::messageToParent(&params[m], m_moments, meanMoments(m));
+            TDistr::messageToParent(&params[m], this->m_moments, meanMsg(m));
             params[m] *= weight(m);
         }
     }
@@ -133,7 +144,7 @@ public:
     {
         double result = 0.0;
         for (size_t m = 0; m < dims(); ++m)
-            result += weight(m) * TVariableType::logPDF(moments, meanMoments(m), precMoments(m));
+            result += weight(m) * TDistr::logPDF(moments, meanMsg(m), precMsg(m));
         return result;
     }
 
@@ -143,10 +154,11 @@ public:
 
 
 private:
-    VariableArray<Gaussian> *m_meanComps;
-    VariableArray<Gamma> *m_precComps;
+    TMeanArray *m_meanComps;
+    TPrecArray *m_precComps;
     Discrete *m_selector;
 };
+
 
 
 
@@ -333,7 +345,7 @@ private:
 
 
 
-inline ostream &operator<<(ostream &out, const Parameters<MoG> &params)
+inline ostream &operator<<(ostream &out, const Parameters<MoG<> > &params)
 {
     out << "means = [";
     for (size_t m = 0; m < params.dims(); ++m)

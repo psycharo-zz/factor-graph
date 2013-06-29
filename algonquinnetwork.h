@@ -36,16 +36,12 @@ public:
                      size_t numIters)
     {
         m_speechNetwork = trainMixture(framesS, numFramesS, numCompsS, numIters);
-        m_speech = new MoG(m_speechNetwork->means,
-                           m_speechNetwork->precs,
-                           m_speechNetwork->weights);
+        m_speech = new UnivariateMixture(m_speechNetwork->means, m_speechNetwork->precs, m_speechNetwork->weights);
 
         m_noiseNetwork = trainMixture(framesN, numFramesN, numCompsN, numIters);
-        m_noise = new MoG(m_noiseNetwork->means,
-                          m_noiseNetwork->precs,
-                          m_noiseNetwork->weights);
+        m_noise = new UnivariateMixture(m_noiseNetwork->means, m_noiseNetwork->precs, m_noiseNetwork->weights);
 
-        m_algonquin = new AlgonquinVariable(m_speech, m_noise);
+        m_algonquin = new Algonquin(m_speech, m_noise);
     }
 
     const pair<double, double> &process(double frame)
@@ -59,16 +55,16 @@ public:
     //! check whether the network is already trained
     bool trained() const { return m_speech != NULL && m_noise != NULL; }
 
-    const MoG *speechDistr() const { return m_speech; }
-    const MoG *noiseDistr() const { return m_noise; }
+    const UnivariateMixture *speechDistr() const { return m_speech; }
+    const UnivariateMixture *noiseDistr() const { return m_noise; }
 
 private:
-    MoG *m_speech;
-    MoG *m_noise;
+    UnivariateMixture *m_speech;
+    UnivariateMixture *m_noise;
     MixtureNetwork *m_speechNetwork;
     MixtureNetwork *m_noiseNetwork;
 
-    AlgonquinVariable *m_algonquin;
+    Algonquin *m_algonquin;
 
     size_t m_numIters;
 };
@@ -111,8 +107,8 @@ public:
         return make_pair(m_speech.data(), m_noise.data());
     }
 
-    const MoG *speechDistr(size_t m) const { return m_networks[m].speechDistr(); }
-    const MoG *noiseDistr(size_t m) const { return m_networks[m].noiseDistr(); }
+    const UnivariateMixture *speechDistr(size_t m) const { return m_networks[m].speechDistr(); }
+    const UnivariateMixture *noiseDistr(size_t m) const { return m_networks[m].noiseDistr(); }
 
 private:
     vector<AlgonquinNetwork> m_networks;

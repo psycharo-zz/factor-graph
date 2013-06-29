@@ -24,14 +24,14 @@ namespace vmp
 {
 
 
-class AlgonquinVariable;
+class Algonquin;
 
 
 /**
  * contain variational parameters of the approx posterior
  */
 template<>
-class Parameters<AlgonquinVariable>
+class Parameters<Algonquin>
 {
 public:
     Parameters(size_t _numSpeech, size_t _numNoise):
@@ -60,7 +60,7 @@ public:
  * @brief The AlgonquinVariable class
  * scalar deterministic (?) node implementing algonquin inference
  */
-class AlgonquinVariable : public BaseVariable,
+class Algonquin : public BaseVariable,
                           public HasParent<VariableArray<Gaussian> >,
                           public HasParent<VariableArray<Gamma> >,
                           public HasParent<Discrete>
@@ -68,8 +68,7 @@ class AlgonquinVariable : public BaseVariable,
 public:
     const size_t DEFAULT_NUM_ITERATIONS = 20;
 
-
-    AlgonquinVariable(MoG *_speechParent, MoG *_noiseParent):
+    Algonquin(UnivariateMixture *_speechParent, UnivariateMixture *_noiseParent):
         m_speechParent(_speechParent),
         m_noiseParent(_noiseParent),
         m_numIters(DEFAULT_NUM_ITERATIONS),
@@ -88,7 +87,7 @@ public:
             }
     }
 
-    virtual ~AlgonquinVariable() {}
+    virtual ~Algonquin() {}
 
     inline size_t numSpeech() const { return m_speechParent->dims(); }
     inline size_t numNoise() const { return m_noiseParent->dims(); }
@@ -101,10 +100,10 @@ public:
 
     inline void setNumIterations(size_t numIters) { m_numIters = numIters; }
 
-    inline double priorMeanSpeech(size_t s) const { return m_speechParent->meanMoments(s).mean; }
-    inline double priorMeanNoise(size_t n) const { return m_noiseParent->meanMoments(n).mean; }
-    inline double priorPrecSpeech(size_t s) const { return m_speechParent->precMoments(s).precision; }
-    inline double priorPrecNoise(size_t n) const { return m_noiseParent->precMoments(n).precision; }
+    inline double priorMeanSpeech(size_t s) const { return m_speechParent->meanMsg(s).mean; }
+    inline double priorMeanNoise(size_t n) const { return m_noiseParent->meanMsg(n).mean; }
+    inline double priorPrecSpeech(size_t s) const { return m_speechParent->precMsg(s).precision; }
+    inline double priorPrecNoise(size_t n) const { return m_noiseParent->precMsg(n).precision; }
 
     // prior weights
     inline double priorWeightSpeech(size_t s) const { return m_speechParent->weight(s); }
@@ -113,46 +112,26 @@ public:
 
     //! override TODO: Variable/BaseVariable
     virtual void updatePosterior();
-
     //! override
     virtual void updateMoments();
-
     // messages
     // TODO: this looks weird: direct parents are MoG's, while here we are directly updating priors
     // the reason is that MoGs are in fact not real distributions ( since updatePosterior() is not implemented)
-    void messageToParent(VariableArray<Gaussian>::TParameters *vparams) const
-    {
-        throw NotImplementedException;
-    }
-
+    void messageToParent(VariableArray<Gaussian>::TParameters *vparams) const { throw NotImplementedException; }
     //! override HasParent<GammaArray>
-    void messageToParent(VariableArray<Gamma>::TParameters *vparams) const
-    {
-        throw NotImplementedException;
-    }
-
+    void messageToParent(VariableArray<Gamma>::TParameters *vparams) const { throw NotImplementedException; }
     //! override HasParent<Discrete>
-    void messageToParent(Discrete::TParameters *params) const
-    {
-        throw NotImplementedException;
-    }
-
+    void messageToParent(Discrete::TParameters *params) const { throw NotImplementedException; }
     // TODO: fixme
     pair<double, double> m_fakeMoments;
-
-
 private:
-    MoG *m_speechParent;
-    MoG *m_noiseParent;
-
+    UnivariateMixture *m_speechParent;
+    UnivariateMixture *m_noiseParent;
     size_t m_numIters;
-
     // variational parameters
-    Parameters<AlgonquinVariable> m_parameters;
-
+    Parameters<Algonquin> m_parameters;
     // constant posterior precision
     vector<double> precision;
-
     // the observed value. TODO: make this an array instead?
     double m_value;
 };
@@ -169,11 +148,11 @@ class AlgonquinArray : public BaseVariable,
                        public HasParent<DiscreteArray>
 {
 public:
-    typedef Parameters<AlgonquinVariable> TParameters;
+    typedef Parameters<Algonquin> TParameters;
 
 
-    AlgonquinArray(MoG *_speechParent,
-                   MoG *_noiseParent,
+    AlgonquinArray(UnivariateMixture *_speechParent,
+                   UnivariateMixture *_noiseParent,
                    DiscreteArray *_selector,
                    size_t _maxSize):
         m_speechParent(_speechParent),
@@ -210,7 +189,7 @@ public:
         Gaussian::TParameters tmp;
         for (size_t m = 0; m < numNoise(); ++m)
         {
-            auto &precMsg = m_noiseParent->precMoments(m);
+            auto &precMsg = m_noiseParent->precMsg(m);
             for (size_t i = 0; i < size(); ++i)
             {
                 Gaussian::messageToParent(&tmp, m_moments, precMsg);
@@ -226,7 +205,7 @@ public:
         Gamma::TParameters tmp;
         for (size_t m = 0; m < numNoise(); ++m)
         {
-            auto &meanMsg = m_noiseParent->meanMoments(m);
+            auto &meanMsg = m_noiseParent->meanMsg(m);
             for (size_t i = 0; i < size(); ++i)
             {
                 Gaussian::messageToParent(&tmp, m_moments, meanMsg);
@@ -243,8 +222,8 @@ public:
 
 private:
     // TODO: MoGs are used for convenience only
-    MoG *m_speechParent;
-    MoG *m_noiseParent;
+    UnivariateMixture *m_speechParent;
+    UnivariateMixture *m_noiseParent;
     DiscreteArray *m_selector;
 
 

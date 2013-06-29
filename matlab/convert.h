@@ -168,9 +168,9 @@ inline Parameters<Discrete> mxStructTo(const mxArray *msg)
 
 
 template<>
-inline Parameters<MoG> mxStructTo(const mxArray *msg)
+inline Parameters<UnivariateMixture> mxStructTo(const mxArray *msg)
 {
-    Parameters<MoG> result;
+    Parameters<UnivariateMixture> result;
     const size_t count = mxGetN(msg);
 
     result.components.resize(count);
@@ -229,7 +229,7 @@ mxArray *toMxStruct(const Parameters<Discrete> &params)
 
 
 // TODO: also use Parameters<MoG> instead
-mxArray *toMxStruct(const MoG *mog)
+mxArray *toMxStruct(const UnivariateMixture *mog)
 {
     mxArray *result = mxCreateStructMatrix(1, mog->dims(), 4, FIELDS_GMM);
     for (size_t i = 0; i < mog->dims(); ++i)

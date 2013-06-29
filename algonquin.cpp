@@ -5,7 +5,7 @@
 using namespace vmp;
 
 
-void AlgonquinVariable::updatePosterior()
+void Algonquin::updatePosterior()
 {
     vector<double> &meansSpeech = m_parameters.meansSpeech;
     vector<double> &meansNoise = m_parameters.meansNoise;
@@ -82,7 +82,7 @@ void AlgonquinVariable::updatePosterior()
 }
 
 
-void AlgonquinVariable::updateMoments()
+void Algonquin::updateMoments()
 {
     m_fakeMoments = make_pair(0, 0);
     for (size_t i = 0; i < numParameters(); ++i)

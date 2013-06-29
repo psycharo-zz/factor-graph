@@ -8,6 +8,7 @@ using namespace std;
 #include <vector>
 
 #include <examples.h>
+#include <mvalgonquin.h>
 
 
 
@@ -35,8 +36,11 @@ vector<vector<double> > read_bins(const string &fileName)
 
 int main()
 {
+    using namespace vmp;
 //    vmp::testSpeechGMM(read_bins("speechbin.txt")[0]);
-    vmp::testMVMoG();
+//    vmp::testMVMoG();
+
+
 
 
     return 0;
