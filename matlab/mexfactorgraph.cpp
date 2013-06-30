@@ -38,9 +38,6 @@ void processNetwork(const std::string &functionName,
 
         size_t maxNumIters = mxArrayTo<int>(prhs[POINTER_IDX+5]);
 
-        cout << speech
-             << noise << endl;
-
         nwk->train(speech, numSpeechComps, noise, numNoiseComps, maxNumIters);
 //        plhs[0] = toMxStruct(nwk->speechDistr());
 //        plhs[1] = toMxStruct(nwk->noiseDistr());
@@ -108,10 +105,8 @@ void processMVGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     trainMVMixture(POINTS, numMixtures, numIters,
                    means, sigmas, weights);
-    cout << weights << endl;
-
-//    for (size_t i = 0; i < means.size(); ++i)
-//        cout << means[i] << sigmas[i] << endl;
+    for (size_t i = 0; i < 2; ++i)
+        cout << means[i] << endl;
 //    cout << weights << endl;
 
 }

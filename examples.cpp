@@ -131,7 +131,6 @@ void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIte
                                make_pair(&data, &selector),
                                make_pair(&selector, &dirichlet));
 
-
     auto msgMean = mean.addChild(&data);
     auto msgPrec = prec.addChild(&data);
     auto msgDiscr = selector.addChild(&data);
@@ -154,8 +153,6 @@ void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIte
         cout << expv(dirichlet.moments().logProb) << endl;
     }
 
-//    for (size_t iter = 0; iter < maxNumIters; ++iter)
-//        for_each(sequence, SendToParent());
 
     weights = expv(dirichlet.moments().logProb);
     for (size_t m = 0; m < numMixtures; ++m)
@@ -169,16 +166,42 @@ void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIte
 
 MVMixtureNetwork *vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters)
 {
-//    MVMixtureNetwork *nwk = new MVMixtureNetwork;
+    MVMixtureNetwork *nwk = new MVMixtureNetwork;
 
+    const size_t numPoints = POINTS.n_rows;
+    const size_t dims = POINTS.n_cols;
 
-    return nullptr;
+    auto meanPrecPrior = ConstWishart(diagmat(1e-2 * eye(dims,dims)));
+    auto meanMeanPrior = ConstMVGaussian(zeros(dims,1));
+    auto mean = MVGaussianArray<MVGaussian, Wishart>(numMixtures, &meanMeanPrior, &meanPrecPrior);
+    auto prec = WishartArray(numMixtures, Wishart::TParameters(dims+1, 10 * eye(dims,dims)));
+
+    auto dirichlet = Dirichlet(numMixtures, 1.0);
+    auto selector = DiscreteArray(numPoints, &dirichlet);
+    selector.initialize(vmp::randomv(numPoints, numMixtures));
+
+    auto data = MoGArray<MVGaussian, MVGaussian, Wishart>(numPoints, &mean, &prec, &selector);
+    data.observe(POINTS);
+    auto sequence = make_tuple(make_pair(&data, &mean),
+                               make_pair(&data, &prec),
+                               make_pair(&data, &selector),
+                               make_pair(&selector, &dirichlet));
+    // inference
+    for (size_t iter = 0; iter < maxNumIters; ++iter)
+        for_each(sequence, SendToParent());
+
+    nwk->precPrior = new ConstWishart(diagmat(1e-2 * eye(dims,dims)));
+    nwk->meanPrior = new ConstMVGaussian(zeros(dims,1));
+
+    // TODO: initialise from array
+    nwk->means = new MVGaussianArray<MVGaussian, Wishart>(mean.parameters(), &meanMeanPrior, &meanPrecPrior);
+    nwk->precs = new WishartArray(prec.parameters());
+
+    nwk->weightsPrior = new Dirichlet(dirichlet.parameters());
+    nwk->weights = new Discrete(&dirichlet);
+
+    return nwk;
 }
-
-
-
-
-
 
 
 
@@ -220,21 +243,17 @@ void vmp::testMVMoG()
 {
     clock_t startTime = clock();
 
-    auto MU1 = {1.0, 2.0};
-    auto MU2 = {-3.0, -5.0};
-    auto MU3 = {-11.0, -2.0};
-    auto SIGMA1 = {2.0, 0.5};
-    auto SIGMA2 = {1.0, 1.0};
-    auto SIGMA3 = {1.0, 1.0};
-
-    vector<vec> MU = { MU1, MU2, MU3 };
-    vector<vec> SIGMA = {SIGMA1, SIGMA2, SIGMA3};
+    vector<vec> MU = { {1.0, 2.0},
+                       {-3.0, -5.0},
+                       {-11.0, -2.0} };
+    vector<vec> SIGMA = {{2.0, 0.5},
+                         {1.0, 1.0},
+                         {1.0, 1.0}};
 
     vec WEIGHTS = {0.25, 0.5, 0.25};
     size_t numPoints = 1001;
     size_t numMixtures = 6;
     size_t maxIters = 40;
-
     auto POINTS = gmmrand(numPoints, MU, SIGMA, WEIGHTS);
 
     vector<vec> means;

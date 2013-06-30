@@ -61,7 +61,6 @@ public:
 
     inline size_t index(size_t s, size_t n) const { return numSpeech() * n + s; }
 
-
     inline void setNumIterations(size_t numIters) { m_numIters = numIters; }
 
     inline const vec &priorMeanSpeech(size_t s) const { return m_speechParent->meanMsg(s).mean; }

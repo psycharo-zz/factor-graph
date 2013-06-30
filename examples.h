@@ -84,6 +84,16 @@ struct MVMixtureNetwork
         means(NULL), precs(NULL),
         evidence(LB_INIT), iters(0)
     {}
+
+    virtual ~MVMixtureNetwork()
+    {
+        delete weightsPrior;
+        delete weights;
+        delete meanPrior;
+        delete precPrior;
+        delete means;
+    }
+
     Dirichlet *weightsPrior;
     Discrete *weights;
     ConstMVGaussian *meanPrior;
