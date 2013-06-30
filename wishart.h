@@ -30,7 +30,7 @@ public:
 
     Parameters(double _degrees, const mat &_scale):
         degrees(_degrees),
-        scale(_scale)
+        scale(trimatu(_scale))
     {
         assert(scale.is_square() && _degrees >= scale.n_rows);
     }
@@ -73,7 +73,7 @@ public:
     }
 
     Moments(const mat &_prec, double _logDet):
-        prec(_prec),
+        prec(trimatu(_prec)),
         logDet(_logDet)
     {}
 
@@ -87,11 +87,8 @@ public:
     inline static void fromParameters(Moments &moments, const Parameters<Wishart> &params)
     {
         const size_t K = moments.dims();
-        const mat phi0 = -0.5 * params.scale;
+        const mat phi0 = trimatu(-0.5 * params.scale);
         const double phi1 = 0.5 * params.degrees;
-//        double logDet;
-//        double logDetSign;
-//        log_det(logDet, logDetSign, -phi0);
 
         moments.prec = -phi1 * inv(phi0);
         moments.logDet = -log(det(-phi0)) + digamma_d(phi1, K);

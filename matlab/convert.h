@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <cstring>
 #include <vector>
+#include <armadillo>
 
 using namespace vmp;
 
@@ -30,18 +31,15 @@ inline mxArray *ptrToMxArray(T *ptr)
 }
 
 
-
 template <typename T>
-mxArray *toMxArray(T value);
+mxArray *toMxArray(const T &value);
 
 
-template<>
 inline mxArray *toMxArray(double value)
 {
     return mxCreateDoubleScalar(value);
 }
 
-template<>
 inline mxArray *toMxArray(void *ptr)
 {
     mxArray *result = mxCreateNumericMatrix(1, 1, mxUINT64_CLASS, mxREAL);
@@ -49,10 +47,15 @@ inline mxArray *toMxArray(void *ptr)
     return result;
 }
 
-template<>
 inline mxArray *toMxArray(const char *str)
 {
     return mxCreateString(str);
+}
+
+template<>
+inline mxArray *toMxArray(const std::string &str)
+{
+    return mxCreateString(str.data());
 }
 
 template<>
@@ -68,6 +71,24 @@ inline mxArray *toMxArray(const double *src, size_t rows, size_t cols)
 {
     mxArray *result = mxCreateDoubleMatrix(rows, cols, mxREAL);
     memcpy(mxGetPr(result), src, sizeof(double) * rows * cols);
+    return result;
+}
+
+
+template<>
+inline mxArray *toMxArray(const vec &v)
+{
+    mxArray *result = mxCreateDoubleMatrix(v.n_rows, v.n_cols, mxREAL);
+    memcpy(mxGetPr(result), v.mem, sizeof(double) * v.n_elem);
+    return result;
+}
+
+
+template<>
+inline mxArray *toMxArray(const mat &mx)
+{
+    mxArray *result = mxCreateDoubleMatrix(mx.n_rows, mx.n_cols, mxREAL);
+    memcpy(mxGetPr(result), mx.mem, sizeof(double) * mx.n_elem);
     return result;
 }
 
@@ -100,6 +121,26 @@ template<>
 inline double mxArrayTo(const mxArray *array)
 {
     return *static_cast<double*>(mxGetData(array));
+}
+
+template<>
+inline mat mxArrayTo(const mxArray *array)
+{
+    double *data = static_cast<double*>(mxGetData(array));
+    size_t rows = mxGetM(array);
+    size_t cols = mxGetN(array);
+    // TODO: test whether it is possible to avoid copying
+    return mat(data, rows, cols);
+}
+
+template<>
+inline vec mxArrayTo(const mxArray *array)
+{
+    double *data = static_cast<double*>(mxGetData(array));
+    size_t rows = mxGetM(array);
+    size_t cols = mxGetN(array);
+    assert(cols == 1);
+    return vec(data, rows);
 }
 
 
@@ -238,6 +279,21 @@ mxArray *toMxStruct(const UnivariateMixture *mog)
         mxSetField(result, i, MEX_MEANPREC, toMxArray(mog->parameters(i).meanPrecision));
         mxSetField(result, i, MEX_PREC, toMxArray(mog->parameters(i).precision));
         mxSetField(result, i, MEX_WEIGHT, toMxArray(mog->weight(i)));
+    }
+    return result;
+}
+
+
+// TODO: also use Parameters<MoG> instead
+mxArray *toMxStruct(const MultivariateMixture *mog)
+{
+    mxArray *result = mxCreateStructMatrix(1, mog->dims(), 4, FIELDS_GMM);
+    for (size_t i = 0; i < mog->dims(); ++i)
+    {
+        mxSetField(result, i, MEX_TYPE, toMxArray("MoG"));
+//        mxSetField(result, i, MEX_MEANPREC, toMxArray(mog->parameters(i).meanPrecision));
+//        mxSetField(result, i, MEX_PREC, toMxArray(mog->parameters(i).precision));
+//        mxSetField(result, i, MEX_WEIGHT, toMxArray(mog->weight(i)));
     }
     return result;
 }

@@ -30,28 +30,26 @@ void processNetwork(const std::string &functionName,
     AlgonquinNetwork *nwk = mxArrayToPtr<AlgonquinNetwork>(prhs[POINTER_IDX]);
     if (functionName == "train")
     {
-        size_t maxNumIters = mxArrayTo<int>(prhs[POINTER_IDX+5]);
-
-        double *speech;
-        size_t rows_s, cols_s;
-        mxArrayToDoubleArray(prhs[POINTER_IDX+1], speech, rows_s, cols_s);
+        mat speech = mxArrayTo<mat>(prhs[POINTER_IDX+1]);
         size_t numSpeechComps = mxArrayTo<int>(prhs[POINTER_IDX+2]);
 
-        double *noise;
-        size_t rows_n, cols_n;
-        mxArrayToDoubleArray(prhs[POINTER_IDX+3], noise, rows_n, cols_n);
+        mat noise = mxArrayTo<mat>(prhs[POINTER_IDX+3]);
         size_t numNoiseComps = mxArrayTo<int>(prhs[POINTER_IDX+4]);
 
-        nwk->train(speech, cols_s, numSpeechComps, noise, cols_n, numNoiseComps, maxNumIters);
+        size_t maxNumIters = mxArrayTo<int>(prhs[POINTER_IDX+5]);
 
-        plhs[0] = toMxStruct(nwk->speechDistr());
-        plhs[1] = toMxStruct(nwk->noiseDistr());
+        cout << speech
+             << noise << endl;
+
+        nwk->train(speech, numSpeechComps, noise, numNoiseComps, maxNumIters);
+//        plhs[0] = toMxStruct(nwk->speechDistr());
+//        plhs[1] = toMxStruct(nwk->noiseDistr());
     }
     else if (functionName == "process")
     {
-        pair<double,double> result = nwk->process(mxArrayTo<double>(prhs[POINTER_IDX+1]));
-        plhs[0] = toMxArray(result.first);
-        plhs[1] = toMxArray(result.second);
+        pair<vec,vec> result = nwk->process(mxArrayTo<vec>(prhs[POINTER_IDX+1]));
+        plhs[0] = toMxArray<vec>(result.first);
+        plhs[1] = toMxArray<vec>(result.second);
     }
     else if (functionName == "setDistrs")
     {
@@ -61,69 +59,16 @@ void processNetwork(const std::string &functionName,
     }
     else if (functionName == "distrs")
     {
-        if (nwk->trained())
-        {
-            plhs[0] = toMxStruct(nwk->speechDistr());
-            plhs[1] = toMxStruct(nwk->noiseDistr());
-        }
+//        if (nwk->trained())
+//        {
+//            plhs[0] = toMxStruct(nwk->speechDistr());
+//            plhs[1] = toMxStruct(nwk->noiseDistr());
+//        }
     }
     else if (functionName == "delete")
         delete nwk;
 }
 
-
-
-
-
-inline void processNetworkArray(const std::string &functionName,
-                                int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
-{
-
-    if (functionName == "create")
-    {
-        plhs[0] = ptrToMxArray(new NetworkArray(mxArrayTo<int>(prhs[POINTER_IDX])));
-        return;
-    }
-
-    NetworkArray *arr = mxArrayToPtr<NetworkArray>(prhs[POINTER_IDX]);
-    if (functionName == "train")
-    {
-        double *speech;
-        size_t numFramesS, numBinsS;
-        mxArrayToDoubleArray(prhs[POINTER_IDX+1], speech, numFramesS, numBinsS);
-        size_t numSpeechComps = mxArrayTo<int>(prhs[POINTER_IDX+2]);
-
-        double *noise;
-        size_t numFramesN, numBinsN;
-        mxArrayToDoubleArray(prhs[POINTER_IDX+3], noise, numFramesN, numBinsN);
-        size_t numNoiseComps = mxArrayTo<int>(prhs[POINTER_IDX+4]);
-
-        size_t maxIters = mxArrayTo<int>(prhs[POINTER_IDX+5]);
-
-        arr->train(speech, numFramesS, numSpeechComps,
-                   noise, numFramesN, numNoiseComps,
-                   maxIters);
-    }
-    else if (functionName == "speechDistr")
-    {
-        plhs[0] = toMxStruct(arr->speechDistr(mxArrayTo<int>(prhs[POINTER_IDX+1])));
-    }
-    else if (functionName == "noiseDistr")
-    {
-        plhs[0] = toMxStruct(arr->noiseDistr(mxArrayTo<int>(prhs[POINTER_IDX+1])));
-    }
-    else if (functionName == "process")
-    {
-        double *frame;
-        size_t rows, cols;
-        mxArrayToDoubleArray(prhs[POINTER_IDX+1], frame, rows, cols);
-        auto result = arr->process(frame);
-        plhs[0] = toMxArray(result.first, rows, cols);
-        plhs[1] = toMxArray(result.second, rows, cols);
-    }
-    else if (functionName == "delete")
-        delete arr;
-}
 
 
 
@@ -153,26 +98,21 @@ void processGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 void processMVGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-    double *data = NULL;
-    size_t numPoints;
-    size_t dims;
-    mxArrayToDoubleArray(prhs[POINTER_IDX], data, numPoints, dims);
-
+    mat POINTS = mxArrayTo<mat>(prhs[POINTER_IDX]);
     size_t numMixtures = mxArrayTo<int>(prhs[POINTER_IDX+1]);
     size_t numIters = mxArrayTo<int>(prhs[POINTER_IDX+2]);
-
-
-    mat POINTS(data, numPoints, dims, false, true);
 
     vector<vec> means;
     vector<mat> sigmas;
     vector<double> weights;
+
     trainMVMixture(POINTS, numMixtures, numIters,
                    means, sigmas, weights);
-
-    for (size_t i = 0; i < means.size(); ++i)
-        cout << means[i] << sigmas[i];
     cout << weights << endl;
+
+//    for (size_t i = 0; i < means.size(); ++i)
+//        cout << means[i] << sigmas[i] << endl;
+//    cout << weights << endl;
 
 }
 
@@ -196,8 +136,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         // here the only possible typeName is Network
         if (typeName == "Network")
             processNetwork(functionName, nlhs, plhs, nrhs, prhs);
-        else if (typeName == "NetworkArray")
-            processNetworkArray(functionName, nlhs, plhs, nrhs, prhs);
         else if (typeName == "GMM")
             processGMM(nlhs, plhs, nrhs, prhs);
         else if (typeName == "MVGMM")

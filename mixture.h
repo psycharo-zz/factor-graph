@@ -245,7 +245,7 @@ public:
         // TODO: checkme, implement logProbabilityDensity
         for (size_t i = 0; i < this->size(); ++i)
         {
-            params[i].logProb = logProbabilityDensity(this->m_moments[i]);
+            params[i].logProb = logPDF(this->m_moments[i]);
             params[i].logProb -= lognorm(params[i].logProb);
         }
     }
@@ -323,7 +323,7 @@ public:
     }
 
     // TODO: link instead of copying
-    vector<double> logProbabilityDensity(const Moments<TDistr> &value) const
+    vector<double> logPDF(const Moments<TDistr> &value) const
     {
         vector<double> result(dims());
         for (size_t m = 0; m < dims(); ++m)

@@ -110,14 +110,15 @@ vmp::MixtureNetwork *vmp::trainMixture(const double *points, size_t numPoints, s
 
 
 void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
-                          vector<vec> &means, vector<mat> &sigmas, vector<double> &weights)
+                         vector<vec> &means, vector<mat> &sigmas, vector<double> &weights)
 {
-    size_t numPoints = POINTS.n_rows;
+    const size_t numPoints = POINTS.n_rows;
+    const size_t dims = POINTS.n_cols;
 
-    auto meanPrecPrior = ConstWishart(1e-2 * eye(2,2));
-    auto meanMeanPrior = ConstMVGaussian({1, 1});
+    auto meanPrecPrior = ConstWishart(diagmat(1e-2 * eye(dims,dims)));
+    auto meanMeanPrior = ConstMVGaussian(zeros(dims,1));
     auto mean = MVGaussianArray<MVGaussian, Wishart>(numMixtures, &meanMeanPrior, &meanPrecPrior);
-    auto prec = WishartArray(numMixtures, Wishart::TParameters(3.0, 10 * eye(2,2)));
+    auto prec = WishartArray(numMixtures, Wishart::TParameters(dims+1, 10 * eye(dims,dims)));
 
     auto dirichlet = Dirichlet(numMixtures, 1.0);
     auto selector = DiscreteArray(numPoints, &dirichlet);
@@ -131,8 +132,30 @@ void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIte
                                make_pair(&selector, &dirichlet));
 
 
+    auto msgMean = mean.addChild(&data);
+    auto msgPrec = prec.addChild(&data);
+    auto msgDiscr = selector.addChild(&data);
+    auto msgDir = dirichlet.addChild(&selector);
+
     for (size_t iter = 0; iter < maxNumIters; ++iter)
-        for_each(sequence, SendToParent());
+    {
+        data.messageToParent(msgMean);
+        mean.updatePosterior();
+
+        data.messageToParent(msgPrec);
+        prec.updatePosterior();
+
+        data.messageToParent(msgDiscr);
+        selector.updatePosterior();
+
+        selector.messageToParent(msgDir);
+        dirichlet.updatePosterior();
+
+        cout << expv(dirichlet.moments().logProb) << endl;
+    }
+
+//    for (size_t iter = 0; iter < maxNumIters; ++iter)
+//        for_each(sequence, SendToParent());
 
     weights = expv(dirichlet.moments().logProb);
     for (size_t m = 0; m < numMixtures; ++m)
@@ -141,6 +164,17 @@ void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIte
         sigmas.push_back(inv(prec.moments(m).prec));
     }
 }
+
+
+
+MVMixtureNetwork *vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters)
+{
+//    MVMixtureNetwork *nwk = new MVMixtureNetwork;
+
+
+    return nullptr;
+}
+
 
 
 
@@ -198,8 +232,8 @@ void vmp::testMVMoG()
 
     vec WEIGHTS = {0.25, 0.5, 0.25};
     size_t numPoints = 1001;
-    size_t numMixtures = 32;
-    size_t maxIters = 30;
+    size_t numMixtures = 6;
+    size_t maxIters = 40;
 
     auto POINTS = gmmrand(numPoints, MU, SIGMA, WEIGHTS);
 

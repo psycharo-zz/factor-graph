@@ -24,7 +24,7 @@ public:
 
     Parameters(const vec &_precMean, const mat &_prec):
         precMean(_precMean),
-        prec(_prec)
+        prec(diagmat(_prec)) // no diagmat?
     {}
 
     inline size_t dims() const { return precMean.n_rows; }
@@ -184,8 +184,9 @@ public:
         auto &logDet = precMsg.logDet;
         double D = value.dims();
 
-        return as_scalar(- 0.5 * x.t() * prec * x + x.t() * prec * mu - 0.5 * mu.t() * prec * mu)
-                         + 0.5 * logDet - 0.5 * D * LN_2PI;
+        double result = as_scalar(- 0.5 * x.t() * prec * x + x.t() * prec * mu - 0.5 * mu.t() * prec * mu)
+                                   + 0.5 * logDet - 0.5 * D * LN_2PI;
+        return result;
     }
 
 

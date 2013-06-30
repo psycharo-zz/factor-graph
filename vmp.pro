@@ -37,6 +37,8 @@ HEADERS += \
     mvgaussian.h \
     mvalgonquin.h
 
+INCLUDEPATH += ./matlab
+
 OTHER_FILES += \
     TODO.md \
     speechbin.txt \
@@ -48,7 +50,7 @@ OBJECTS_DIR = ./.obj
 
 # TODO: matlab support
 # LIBS += -lgsl -lblas
-LIBS += -lprofiler -larmadillo -llapack -lblas
+LIBS += -lprofiler -larmadillo
 
 
 

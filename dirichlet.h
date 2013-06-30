@@ -95,7 +95,7 @@ public:
         moments.logProb -= lognorm(moments.logProb);
     }
 
-    //! log-probabilities
+    //! log-probabilities TODO: substitute this with vector?
     vector<double> logProb;
 };
 

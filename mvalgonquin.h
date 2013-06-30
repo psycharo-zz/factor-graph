@@ -16,6 +16,8 @@ template<>
 class Parameters<MVAlgonquin>
 {
 public:
+    // TODO: the number of components
+
     vector<vec> meansSpeech;
     vector<vec> meansNoise;
     vector<vec> varsSpeech;
@@ -42,7 +44,11 @@ public:
     const size_t DEFAULT_NUM_ITERATIONS = 20;
 
 
-    MVAlgonquin()
+    MVAlgonquin(MultivariateMixture *_speechParent, MultivariateMixture *_noiseParent):
+        m_speechParent(_speechParent),
+        m_noiseParent(_noiseParent),
+        m_numIters(DEFAULT_NUM_ITERATIONS)
+      //        m_parameters(numSpeech(), numNoise())
     {}
 
     virtual ~MVAlgonquin() {}

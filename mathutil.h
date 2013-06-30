@@ -149,13 +149,20 @@ inline vector<double> digammav(const vector<double> &v)
 
 
 
-
 inline vector<double> gammalnv(const vector<double> &v)
 {
     vector<double> result(v.size(), 0);
     transform(v.begin(), v.end(), result.begin(), gammaln);
     return result;
 }
+
+inline vec gammalnv(const vec &v)
+{
+    vec result = v;
+    transform(v.begin(), v.end(), result.begin(), gammaln);
+    return result;
+}
+
 
 inline double sumv(const vector<double> &v)
 {
@@ -190,13 +197,26 @@ inline void normalize(vector<double> &v)
         *it /= norm;
 }
 
-//! get the normalization factor (summand) for the vector in log-domain
+inline double lognorm(const vec &a)
+{
+    double _min = min(a);
+    return as_scalar(log(sum(exp(a - _min)))) + _min;
+}
+
+inline double lognorm2(const vec &a)
+{
+    return as_scalar(log(sum(exp(a))));
+}
+
+
+
 inline double lognorm(const vector<double> &v)
 {
     double result = 0.0;
+    double _min = *std::min(v.begin(), v.end());
     for (vector<double>::const_iterator it = v.begin(); it != v.end(); ++it)
-        result += exp(*it);
-    return log(result);
+        result += exp(*it - _min);
+    return log(result) + _min;
 }
 
 

@@ -66,15 +66,41 @@ struct MixtureNetwork
     VariableArray<Gamma> *precs;
     double evidence;
     size_t iters;
-
 };
 
 //! univariate mixture training
 MixtureNetwork *trainMixture(const double *points, size_t numPoints, size_t numMixtures, size_t maxNumIters);
 
+
+
+
+
+
+struct MVMixtureNetwork
+{
+    MVMixtureNetwork():
+        weightsPrior(NULL), weights(NULL),
+        meanPrior(NULL), precPrior(NULL),
+        means(NULL), precs(NULL),
+        evidence(LB_INIT), iters(0)
+    {}
+    Dirichlet *weightsPrior;
+    Discrete *weights;
+    ConstMVGaussian *meanPrior;
+    ConstWishart *precPrior;
+    VariableArray<MVGaussian> *means;
+    VariableArray<Wishart> *precs;
+    double evidence;
+    size_t iters;
+};
+
+
 // TODO: add some return type
 void trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
                     vector<vec> &means, vector<mat> &sigmas, vector<double> &weights);
+
+MVMixtureNetwork *trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters);
+
 
 
 // various tests
