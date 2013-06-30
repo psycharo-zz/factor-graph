@@ -9,10 +9,11 @@ classdef Network < CppObject
             this = this@CppObject(type);
         end
         
-        function [speechPrior, noisePrior] = train(this, speech, numSpeechComps, noise, numNoiseComps, maxNumIters)
-            [speechPrior, noisePrior] = mexfactorgraph('train', this.type_name, this.cpp_handle, ...
-                                                       speech, numSpeechComps, ...
-                                                       noise, numNoiseComps, maxNumIters);
+        function train(this, speech, numSpeechComps, noise, numNoiseComps, maxNumIters)
+            % [speechPrior, noisePrior]              
+            mexfactorgraph('train', this.type_name, this.cpp_handle, ...
+                           speech, numSpeechComps, ...
+                           noise, numNoiseComps, maxNumIters);
         end
         
         function setDistributions(this, speech, noise)

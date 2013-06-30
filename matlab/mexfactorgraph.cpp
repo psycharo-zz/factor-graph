@@ -48,20 +48,6 @@ void processNetwork(const std::string &functionName,
         plhs[0] = toMxArray<vec>(result.first);
         plhs[1] = toMxArray<vec>(result.second);
     }
-    else if (functionName == "setDistrs")
-    {
-        cout << "not supported" << endl;
-//        nwk->setDistributions(mxStructTo<MoG>(prhs[POINTER_IDX+1]),
-//                              mxStructTo<MoG>(prhs[POINTER_IDX+2]));
-    }
-    else if (functionName == "distrs")
-    {
-//        if (nwk->trained())
-//        {
-//            plhs[0] = toMxStruct(nwk->speechDistr());
-//            plhs[1] = toMxStruct(nwk->noiseDistr());
-//        }
-    }
     else if (functionName == "delete")
         delete nwk;
 }
@@ -105,8 +91,8 @@ void processMVGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     trainMVMixture(POINTS, numMixtures, numIters,
                    means, sigmas, weights);
-    for (size_t i = 0; i < 2; ++i)
-        cout << means[i] << endl;
+//    for (size_t i = 0; i < 2; ++i)
+//        cout << means[i] << endl;
 //    cout << weights << endl;
 
 }

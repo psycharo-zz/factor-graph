@@ -25,12 +25,12 @@ public:
 
     Parameters(size_t size):
         degrees(size),
-        scale(size, size)
+        scale(symmatu(mat(size, size)))
     {}
 
     Parameters(double _degrees, const mat &_scale):
         degrees(_degrees),
-        scale(trimatu(_scale))
+        scale(symmatu(_scale))
     {
         assert(scale.is_square() && _degrees >= scale.n_rows);
     }
@@ -73,7 +73,7 @@ public:
     }
 
     Moments(const mat &_prec, double _logDet):
-        prec(trimatu(_prec)),
+        prec(symmatu(_prec)),
         logDet(_logDet)
     {}
 
@@ -81,17 +81,17 @@ public:
 
     inline static Moments fromValue(const mat &_prec)
     {
-        return Moments(_prec, log(det(_prec)));
+        return Moments(_prec, logdet(_prec));
     }
 
     inline static void fromParameters(Moments &moments, const Parameters<Wishart> &params)
     {
         const size_t K = moments.dims();
-        const mat phi0 = trimatu(-0.5 * params.scale);
+        const mat phi0 = symmatu(-0.5 * params.scale);
         const double phi1 = 0.5 * params.degrees;
 
         moments.prec = -phi1 * inv(phi0);
-        moments.logDet = -log(det(-phi0)) + digamma_d(phi1, K);
+        moments.logDet = -logdet(-phi0) + digamma_d(phi1, K);
     }
 
 
@@ -115,7 +115,7 @@ public:
     // TODO: implement fake parents for wishart distribution?
     Wishart(double _degrees, const mat &_scale):
         Variable(TParameters(_degrees, _scale)),
-        m_prior(_degrees, _scale)
+        m_prior(_degrees, symmatu(_scale))
     {}
 
     //! override Variable

@@ -38,9 +38,11 @@ public:
     {
         m_speechNetwork = trainMVMixture(framesS, numCompsS, numIters);
         m_speech = new MultivariateMixture(m_speechNetwork->means, m_speechNetwork->precs, m_speechNetwork->weights);
+        cout << "speech weights:" << m_speechNetwork->weights->moments().probs << endl;
 
         m_noiseNetwork = trainMVMixture(framesN, numCompsN, numIters);
         m_noise = new MultivariateMixture(m_noiseNetwork->means, m_noiseNetwork->precs, m_noiseNetwork->weights);
+        cout << "noise weights:" << m_noiseNetwork->weights->moments().probs << endl;
 
         m_algonquin = new MVAlgonquin(m_speech, m_noise);
     }
@@ -52,7 +54,6 @@ public:
         return make_pair(m_algonquin->m_speech,
                          m_algonquin->m_noise);
     }
-
 
     //! check whether the network is already trained
     bool trained() const { return m_speech != NULL && m_noise != NULL; }

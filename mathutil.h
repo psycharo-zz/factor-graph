@@ -199,24 +199,28 @@ inline void normalize(vector<double> &v)
 
 inline double lognorm(const vec &a)
 {
-    double _min = min(a);
-    return as_scalar(log(sum(exp(a - _min)))) + _min;
+    double _max = max(a);
+    return as_scalar(log(sum(exp(a + _max)))) + _max;
 }
 
-inline double lognorm2(const vec &a)
+inline double logdet(const mat &mx)
 {
-    return as_scalar(log(sum(exp(a))));
+    double result;
+    double sign;
+    log_det(result, sign, mx);
+    return result;
 }
+
 
 
 
 inline double lognorm(const vector<double> &v)
 {
     double result = 0.0;
-    double _min = *std::min(v.begin(), v.end());
+    double _max = *std::max_element(v.begin(), v.end());
     for (vector<double>::const_iterator it = v.begin(); it != v.end(); ++it)
-        result += exp(*it - _min);
-    return log(result) + _min;
+        result += exp(*it - _max);
+    return log(result) + _max;
 }
 
 
