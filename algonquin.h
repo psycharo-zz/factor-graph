@@ -89,8 +89,8 @@ public:
 
     virtual ~Algonquin() {}
 
-    inline size_t numSpeech() const { return m_speechParent->dims(); }
-    inline size_t numNoise() const { return m_noiseParent->dims(); }
+    inline size_t numSpeech() const { return m_speechParent->numComps(); }
+    inline size_t numNoise() const { return m_noiseParent->numComps(); }
     inline size_t numParameters() const { return numSpeech() * numNoise(); }
 
     inline void observe(double value) { m_value = value; }
@@ -100,10 +100,10 @@ public:
 
     inline void setNumIterations(size_t numIters) { m_numIters = numIters; }
 
-    inline double priorMeanSpeech(size_t s) const { return m_speechParent->meanMsg(s).mean; }
-    inline double priorMeanNoise(size_t n) const { return m_noiseParent->meanMsg(n).mean; }
-    inline double priorPrecSpeech(size_t s) const { return m_speechParent->precMsg(s).precision; }
-    inline double priorPrecNoise(size_t n) const { return m_noiseParent->precMsg(n).precision; }
+    inline double priorMeanSpeech(size_t s) const { return m_speechParent->meanMoment(s).mean; }
+    inline double priorMeanNoise(size_t n) const { return m_noiseParent->meanMoment(n).mean; }
+    inline double priorPrecSpeech(size_t s) const { return m_speechParent->precMoment(s).precision; }
+    inline double priorPrecNoise(size_t n) const { return m_noiseParent->precMoment(n).precision; }
 
     // prior weights
     inline double priorWeightSpeech(size_t s) const { return m_speechParent->weight(s); }
@@ -170,8 +170,8 @@ public:
         m_moments.mean2 = value;
     }
 
-    inline size_t numSpeech() const { return m_speechParent->dims(); }
-    inline size_t numNoise() const { return m_noiseParent->dims(); }
+    inline size_t numSpeech() const { return m_speechParent->numComps(); }
+    inline size_t numNoise() const { return m_noiseParent->numComps(); }
     inline size_t numParameters() const { return numSpeech() * numNoise(); }
 
 
@@ -189,7 +189,7 @@ public:
         Gaussian::TParameters tmp;
         for (size_t m = 0; m < numNoise(); ++m)
         {
-            auto &precMsg = m_noiseParent->precMsg(m);
+            auto &precMsg = m_noiseParent->precMoment(m);
             for (size_t i = 0; i < size(); ++i)
             {
                 Gaussian::messageToParent(&tmp, m_moments, precMsg);
@@ -205,7 +205,7 @@ public:
         Gamma::TParameters tmp;
         for (size_t m = 0; m < numNoise(); ++m)
         {
-            auto &meanMsg = m_noiseParent->meanMsg(m);
+            auto &meanMsg = m_noiseParent->meanMoment(m);
             for (size_t i = 0; i < size(); ++i)
             {
                 Gaussian::messageToParent(&tmp, m_moments, meanMsg);

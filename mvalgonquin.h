@@ -57,27 +57,27 @@ public:
 
         for (size_t s = 0; s < numSpeech(); ++s)
         {
-            cout << diagvec(m_speechParent->precMsg(s).prec).t() << endl;
+            cout << diagvec(m_speechParent->precMoment(s).prec).t() << endl;
             for (size_t n = 0; n < numNoise(); ++n)
             {
                 size_t i = index(s,n);
-                m_params.meansSpeech[i] = m_speechParent->meanMsg(s).mean;
-                m_params.meansNoise[i] = m_noiseParent->meanMsg(n).mean;
-                m_params.varsSpeech[i] = 1.0 / diagvec(m_speechParent->precMsg(s).prec);
-                m_params.varsNoise[i] = 1.0 / diagvec(m_noiseParent->precMsg(n).prec);
+                m_params.meansSpeech[i] = m_speechParent->meanMoment(s).mean;
+                m_params.meansNoise[i] = m_noiseParent->meanMoment(n).mean;
+                m_params.varsSpeech[i] = 1.0 / diagvec(m_speechParent->precMoment(s).prec);
+                m_params.varsNoise[i] = 1.0 / diagvec(m_noiseParent->precMoment(n).prec);
                 m_params.weights[i] = m_speechParent->weight(s) * m_noiseParent->weight(n);
             }
         }
         m_params.precision.fill(1e-3);
-        m_speech.resize(m_speechParent->meanMsg(0).mean.n_rows);
-        m_noise.resize(m_speechParent->meanMsg(0).mean.n_rows);
+        m_speech.resize(m_speechParent->meanMoment(0).mean.n_rows);
+        m_noise.resize(m_speechParent->meanMoment(0).mean.n_rows);
 
     }
 
     virtual ~MVAlgonquin() {}
 
-    inline size_t numSpeech() const { return m_speechParent->dims(); }
-    inline size_t numNoise() const { return m_noiseParent->dims(); }
+    inline size_t numSpeech() const { return m_speechParent->numComps(); }
+    inline size_t numNoise() const { return m_noiseParent->numComps(); }
     inline size_t numParameters() const { return numSpeech() * numNoise(); }
 
     inline void observe(const vec &value)
@@ -89,10 +89,10 @@ public:
 
     inline void setNumIterations(size_t numIters) { m_numIters = numIters; }
 
-    inline const vec &priorMeanSpeech(size_t s) const { return m_speechParent->meanMsg(s).mean; }
-    inline const vec &priorMeanNoise(size_t n) const { return m_noiseParent->meanMsg(n).mean; }
-    inline vec priorPrecSpeech(size_t s) const { return diagvec(m_speechParent->precMsg(s).prec); }
-    inline vec priorPrecNoise(size_t n) const { return diagvec(m_noiseParent->precMsg(n).prec); }
+    inline const vec &priorMeanSpeech(size_t s) const { return m_speechParent->meanMoment(s).mean; }
+    inline const vec &priorMeanNoise(size_t n) const { return m_noiseParent->meanMoment(n).mean; }
+    inline vec priorPrecSpeech(size_t s) const { return diagvec(m_speechParent->precMoment(s).prec); }
+    inline vec priorPrecNoise(size_t n) const { return diagvec(m_noiseParent->precMoment(n).prec); }
 
     // prior weights
     inline double priorWeightSpeech(size_t s) const { return m_speechParent->weight(s); }

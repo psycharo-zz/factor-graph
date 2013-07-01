@@ -165,6 +165,7 @@ void mxArrayToDoubleArray(const mxArray *input, double* &data, size_t &rows, siz
 
 static const char *MEX_TYPE = "type";
 static const char *MEX_MEANPREC = "meanPrecision";
+static const char *MEX_MEANS = "means";
 static const char *MEX_PREC = "precision";
 static const char *MEX_SHAPE = "shape";
 static const char *MEX_RATE = "rate";
@@ -175,6 +176,7 @@ static const char *FIELDS_GAUSSIAN[] = {MEX_TYPE, MEX_MEANPREC, MEX_PREC};
 static const char *FIELDS_GAMMA[] = {MEX_TYPE, MEX_SHAPE, MEX_RATE};
 static const char *FIELDS_DISCRETE[] = {MEX_TYPE, MEX_LOGPROB};
 static const char *FIELDS_GMM[] = {MEX_TYPE, MEX_MEANPREC, MEX_PREC, MEX_WEIGHT};
+static const char *FIELDS_MVGMM[]= {MEX_TYPE, MEX_MEANS, MEX_PREC, MEX_WEIGHT};
 
 
 
@@ -264,7 +266,7 @@ mxArray *toMxStruct(const Parameters<Discrete> &params)
 {
     mxArray *result = mxCreateStructMatrix(1, 1, 2, FIELDS_DISCRETE);
     mxSetField(result, 0, MEX_TYPE, mxCreateString("Discrete"));
-    mxSetField(result, 0, MEX_LOGPROB, toMxArray(params.logProb.data(), 1, params.logProb.size()));
+    mxSetField(result, 0, MEX_LOGPROB, toMxArray(params.logProb));
     return result;
 }
 
@@ -272,8 +274,8 @@ mxArray *toMxStruct(const Parameters<Discrete> &params)
 // TODO: also use Parameters<MoG> instead
 mxArray *toMxStruct(const UnivariateMixture *mog)
 {
-    mxArray *result = mxCreateStructMatrix(1, mog->dims(), 4, FIELDS_GMM);
-    for (size_t i = 0; i < mog->dims(); ++i)
+    mxArray *result = mxCreateStructMatrix(1, mog->numComps(), 4, FIELDS_GMM);
+    for (size_t i = 0; i < mog->numComps(); ++i)
     {
         mxSetField(result, i, MEX_TYPE, toMxArray("MoG"));
         mxSetField(result, i, MEX_MEANPREC, toMxArray(mog->parameters(i).meanPrecision));
@@ -283,17 +285,32 @@ mxArray *toMxStruct(const UnivariateMixture *mog)
     return result;
 }
 
-
 // TODO: also use Parameters<MoG> instead
+
+
 mxArray *toMxStruct(const MultivariateMixture *mog)
 {
-    mxArray *result = mxCreateStructMatrix(1, mog->dims(), 4, FIELDS_GMM);
-    for (size_t i = 0; i < mog->dims(); ++i)
+    mxArray *result = mxCreateStructMatrix(1, mog->numComps(), 4, FIELDS_MVGMM);
+
+    size_t dims = mog->meanMoment(0).mean.n_rows;
+
+    mat means(dims, mog->numComps());
+    mat precs(dims, mog->numComps());
+    vec weights(mog->numComps());
+    for (size_t m = 0; m < mog->numComps(); ++m)
     {
-        mxSetField(result, i, MEX_TYPE, toMxArray("MoG"));
-//        mxSetField(result, i, MEX_MEANPREC, toMxArray(mog->parameters(i).meanPrecision));
-//        mxSetField(result, i, MEX_PREC, toMxArray(mog->parameters(i).precision));
-//        mxSetField(result, i, MEX_WEIGHT, toMxArray(mog->weight(i)));
+        means.col(m) = mog->meanMoment(m).mean;
+        precs.col(m) = diagvec(mog->precMoment(m).prec);
+        weights(m) = mog->weight(m);
+    }
+
+
+    for (size_t i = 0; i < mog->numComps(); ++i)
+    {
+        mxSetField(result, i, MEX_TYPE, toMxArray("MVMixture"));
+        mxSetField(result, i, MEX_MEANS, toMxArray(means));
+        mxSetField(result, i, MEX_PREC, toMxArray(precs));
+        mxSetField(result, i, MEX_WEIGHT, toMxArray(weights));
     }
     return result;
 }

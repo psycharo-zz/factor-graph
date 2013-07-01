@@ -110,7 +110,7 @@ vmp::MixtureNetwork *vmp::trainMixture(const double *points, size_t numPoints, s
 
 
 void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
-                         vector<vec> &means, vector<mat> &sigmas, vec &weights)
+                         mat &_means, mat &_sigmas, vec &_weights)
 {
     const size_t numPoints = POINTS.n_rows;
     const size_t dims = POINTS.n_cols;
@@ -153,11 +153,13 @@ void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIte
         cout << exp(dirichlet.moments().logProb).t() << endl;
     }
 
-    weights = exp(dirichlet.moments().logProb);
+    _weights = exp(dirichlet.moments().logProb);
+    _means.resize(dims, numMixtures);
+    _sigmas.resize(dims, numMixtures);
     for (size_t m = 0; m < numMixtures; ++m)
     {
-        means.push_back(mean.moments(m).mean);
-        sigmas.push_back(inv(prec.moments(m).prec));
+        _means.col(m) = mean.moments(m).mean;
+        _sigmas.col(m) = diagvec(inv(prec.moments(m).prec));
     }
 }
 
@@ -247,29 +249,24 @@ void vmp::testMVMoG()
                        {4,9,4,9,4,9, 4, 9, 4, 9, 9} };
 
     const size_t DIMS = MU[0].n_rows;
-    vector<vec> SIGMA = {{13*ones(DIMS,1)},
+    vector<vec> SIGMA = {{2*ones(DIMS,1)},
                          {4*ones(DIMS,1)},
-                         {9*ones(DIMS,1)}};
+                         {5*ones(DIMS,1)}};
 
-    vec WEIGHTS = {0.3, 0.3, 0.4};
-    size_t numPoints = 2001;
-    size_t numMixtures = 16;
-    size_t maxIters = 40;
+    vec WEIGHTS = {0.25, 0.25, 0.5};
+    size_t numPoints = 1001;
+    size_t numMixtures = 12;
+    size_t maxIters = 50;
     auto POINTS = gmmrand(numPoints, MU, SIGMA, WEIGHTS);
 
-    vector<vec> means;
-    vector<mat> sigmas;
+    mat means, precs;
     vec weights;
-    trainMVMixture(POINTS, numMixtures, maxIters, means, sigmas, weights);
+
+    trainMVMixture(POINTS, numMixtures, maxIters, means, precs, weights);
 
     cout << weights.t() << endl;
-    for (size_t m = 0; m < numMixtures; ++m)
-    {
-        cout << means[m].t() << " "
-             << diagvec(sigmas[m]).t() << endl;
-    }
-
-    cout << double(clock() - startTime) / (double) CLOCKS_PER_SEC << " seconds." << endl;
+    cout << means << endl;
+    cout << precs << endl;
 }
 
 void vmp::testSpeechGMM(const vector<double> &bin)

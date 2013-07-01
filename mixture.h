@@ -77,11 +77,11 @@ public:
                _precComps->size() == _selector->dims());
     }
 
-    size_t dims() const { return m_selector->dims(); }
+    size_t numComps() const { return m_selector->dims(); }
 
     // utility functions to access separate mixtures
-    const Moments<TMean> &meanMsg(size_t m) const { return m_meanComps->moments(m); }
-    const Moments<TPrec> &precMsg(size_t m) const { return m_precComps->moments(m); }
+    const Moments<TMean> &meanMoment(size_t m) const { return m_meanComps->moments(m); }
+    const Moments<TPrec> &precMoment(size_t m) const { return m_precComps->moments(m); }
     double weight(size_t idx) const { return m_selector->moments().probs[idx]; }
 
     //! TODO:
@@ -113,7 +113,7 @@ public:
     // message to discrete variables TODO: VariableArray<Discrete>
     void messageToParent(Discrete::TParameters *params) const
     {
-        for (size_t m = 0; m < dims(); ++m)
+        for (size_t m = 0; m < numComps(); ++m)
             params->logProb[m] = logPDF(this->m_moments);
         params->logProb -= lognorm(params->logProb);
     }
@@ -122,9 +122,9 @@ public:
     void messageToParent(Parameters<TMeanArray> *v) const
     {
         vector<Parameters<TMean> > &params = v->params;
-        for (size_t m = 0; m < dims(); ++m)
+        for (size_t m = 0; m < numComps(); ++m)
         {
-            TDistr::messageToParent(&params[m], this->m_moments, precMsg(m));
+            TDistr::messageToParent(&params[m], this->m_moments, precMoment(m));
             params[m] *= weight(m);
         }
     }
@@ -133,9 +133,9 @@ public:
     void messageToParent(Parameters<TPrecArray> *v) const
     {
         vector<Parameters<TPrec> > &params = v->params;
-        for (size_t m = 0; m < dims(); ++m)
+        for (size_t m = 0; m < numComps(); ++m)
         {
-            TDistr::messageToParent(&params[m], this->m_moments, meanMsg(m));
+            TDistr::messageToParent(&params[m], this->m_moments, meanMoment(m));
             params[m] *= weight(m);
         }
     }
@@ -143,8 +143,8 @@ public:
     double logPDF(const TMoments &moments) const
     {
         double result = 0.0;
-        for (size_t m = 0; m < dims(); ++m)
-            result += weight(m) * TDistr::logPDF(moments, meanMsg(m), precMsg(m));
+        for (size_t m = 0; m < numComps(); ++m)
+            result += weight(m) * TDistr::logPDF(moments, meanMoment(m), precMoment(m));
         return result;
     }
 

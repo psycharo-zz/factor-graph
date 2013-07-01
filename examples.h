@@ -95,6 +95,9 @@ struct MVMixtureNetwork
         delete means;
     }
 
+    size_t numComps() const { return weights->dims(); }
+    size_t dims() const { return meanPrior->dims(); }
+
     Dirichlet *weightsPrior;
     Discrete *weights;
     ConstMVGaussian *meanPrior;
@@ -108,7 +111,7 @@ struct MVMixtureNetwork
 
 // TODO: add some return type
 void trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
-                    vector<vec> &means, vector<mat> &sigmas, vec &weights);
+                    mat &means, mat &sigmas, vec &weights);
 
 MVMixtureNetwork *trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters);
 

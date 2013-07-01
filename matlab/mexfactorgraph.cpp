@@ -39,8 +39,8 @@ void processNetwork(const std::string &functionName,
         size_t maxNumIters = mxArrayTo<int>(prhs[POINTER_IDX+5]);
 
         nwk->train(speech, numSpeechComps, noise, numNoiseComps, maxNumIters);
-//        plhs[0] = toMxStruct(nwk->speechDistr());
-//        plhs[1] = toMxStruct(nwk->noiseDistr());
+        plhs[0] = toMxStruct(nwk->speechDistr());
+        plhs[1] = toMxStruct(nwk->noiseDistr());
     }
     else if (functionName == "process")
     {
@@ -77,7 +77,7 @@ void processGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
     plhs[0] = toMxArray(means, 1, numMixtures);
     plhs[1] = toMxArray(precs, 1, numMixtures);
-    plhs[2] = toMxArray(mixture->weights->moments().probs.data(), 1, numMixtures);
+    plhs[2] = toMxArray(mixture->weights->moments().probs);
 }
 
 void processMVGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -86,12 +86,13 @@ void processMVGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     size_t numMixtures = mxArrayTo<int>(prhs[POINTER_IDX+1]);
     size_t numIters = mxArrayTo<int>(prhs[POINTER_IDX+2]);
 
-    vector<vec> means;
-    vector<mat> sigmas;
-    vector<double> weights;
-
-    trainMVMixture(POINTS, numMixtures, numIters,
-                   means, sigmas, weights);
+    mat means;
+    mat sigmas;
+    vec weights;
+    trainMVMixture(POINTS, numMixtures, numIters, means, sigmas, weights);
+    plhs[0] = toMxArray(means);
+    plhs[1] = toMxArray(sigmas);
+    plhs[2] = toMxArray(weights);
 }
 
 
