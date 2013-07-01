@@ -44,7 +44,8 @@ void processNetwork(const std::string &functionName,
     }
     else if (functionName == "process")
     {
-        pair<vec,vec> result = nwk->process(mxArrayTo<vec>(prhs[POINTER_IDX+1]));
+        vec frame = mxArrayTo<vec>(prhs[POINTER_IDX+1]);
+        pair<vec,vec> result = nwk->process(frame);
         plhs[0] = toMxArray<vec>(result.first);
         plhs[1] = toMxArray<vec>(result.second);
     }
@@ -91,10 +92,6 @@ void processMVGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     trainMVMixture(POINTS, numMixtures, numIters,
                    means, sigmas, weights);
-//    for (size_t i = 0; i < 2; ++i)
-//        cout << means[i] << endl;
-//    cout << weights << endl;
-
 }
 
 

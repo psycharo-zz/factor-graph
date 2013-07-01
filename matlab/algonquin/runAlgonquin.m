@@ -1,31 +1,34 @@
-function runAlgonquin(arr)
+function runAlgonquin(nwk)
 %RUNALGONQUIN run algonquin algorithm
 
 P = defaultParams;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    [speech, freqS] = wavread('data/speech-testing/bigtips_16'); 
-    [noise, freqN] = wavread('data/noise/white');
+    [speech, freqS] = audioread('bbcnews.wav'); 
+    [noise, freqN] = audioread('white.wav');
+    
     noise = repeatSignal(noise, length(speech));
     inSNR = 0;
     [noisySpeech, noise] = addNoise(speech, noise, inSNR);
-%     soundsc(noisySpeech, freqS);
-    speechLog = logPowerDomain(speech, P);
+    speechLog = logPowerDomain(speech, P)';
     noiseLog = logPowerDomain(noise, P);
     noisyLog = logPowerDomain(noisySpeech, P);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+    speech
     NUM_FRAMES = length(noisyLog);
 
     t = cputime;
     
+    % training network
+    
+   
     estPowS = zeros(P.NUM_BINS, NUM_FRAMES);
     estPowN = zeros(P.NUM_BINS, NUM_FRAMES);
 
-    for f = 1:NUM_FRAMES
-        frame = noisyLog(:, f);
-        [logS, logN] = arr.process(frame);
-        estPowS(:,f) = exp(logS);
-        estPowN(:,f) = exp(logN);
+    for f = 1:2
+        frame = noisyLog(f, :);
+        [logS, logN] = nwk.process(frame);
+%         estPowS(:,f) = exp(logS);
+%         estPowN(:,f) = exp(logN);
     end
     
     elapsed = cputime-t

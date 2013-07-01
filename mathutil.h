@@ -200,7 +200,7 @@ inline void normalize(vector<double> &v)
 inline double lognorm(const vec &a)
 {
     double _max = max(a);
-    return as_scalar(log(sum(exp(a + _max)))) + _max;
+    return as_scalar(log(sum(exp(a - _max)))) + _max;
 }
 
 inline double logdet(const mat &mx)

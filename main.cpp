@@ -38,18 +38,7 @@ vector<vector<double> > read_bins(const string &fileName)
 int main()
 {
     using namespace vmp;
-//    vmp::testSpeechGMM(read_bins("speechbin.txt")[0]);
-
     vmp::testMVMoG();
-
-//    delete nwk;
-
-//    cout << lognorm(vector<double>({1200, 2300}));
-
-//    cout << logp - log(sum(exp(logp))) << endl;
-//    cout << lognorm(ln) << endl;
-
-//    cout << lognorm(ln) << endl;
 
     return 0;
 }

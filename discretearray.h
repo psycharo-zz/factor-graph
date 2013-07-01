@@ -48,8 +48,8 @@ public:
         assert(values.size() == size());
         for (size_t i = 0; i < size(); ++i)
         {
-            m_moments[i].probs.assign(dims(), 1e-2);
-            m_moments[i].probs[values[i]] = 1.0 - 1e-2 * (dims()-1);
+            m_moments[i].probs.assign(dims(), 0);
+            m_moments[i].probs[values[i]] = 1.0;
             m_parameters[i].logProb = logv(m_moments[i].probs);
         }
     }

@@ -118,7 +118,7 @@ void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIte
     auto meanPrecPrior = ConstWishart(diagmat(1e-2 * eye(dims,dims)));
     auto meanMeanPrior = ConstMVGaussian(zeros(dims,1));
     auto mean = MVGaussianArray<MVGaussian, Wishart>(numMixtures, &meanMeanPrior, &meanPrecPrior);
-    auto prec = WishartArray(numMixtures, Wishart::TParameters(dims+1, 10 * eye(dims,dims)));
+    auto prec = WishartArray(numMixtures, Wishart::TParameters(dims+1, 10 * (dims+1) * eye(dims,dims)));
 
     auto dirichlet = Dirichlet(numMixtures, 1.0);
     auto selector = DiscreteArray(numPoints, &dirichlet);
@@ -153,7 +153,6 @@ void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIte
         cout << expv(dirichlet.moments().logProb) << endl;
     }
 
-
     weights = expv(dirichlet.moments().logProb);
     for (size_t m = 0; m < numMixtures; ++m)
     {
@@ -174,7 +173,7 @@ MVMixtureNetwork *vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, siz
     auto meanPrecPrior = ConstWishart(diagmat(1e-2 * eye(dims,dims)));
     auto meanMeanPrior = ConstMVGaussian(zeros(dims,1));
     auto mean = MVGaussianArray<MVGaussian, Wishart>(numMixtures, &meanMeanPrior, &meanPrecPrior);
-    auto prec = WishartArray(numMixtures, Wishart::TParameters(dims+1, 10 * eye(dims,dims)));
+    auto prec = WishartArray(numMixtures, Wishart::TParameters(dims+1, 10 * (dims + 1) * eye(dims,dims)));
 
     auto dirichlet = Dirichlet(numMixtures, 1.0);
     auto selector = DiscreteArray(numPoints, &dirichlet);

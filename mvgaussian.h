@@ -186,6 +186,8 @@ public:
 
         double result = as_scalar(- 0.5 * x.t() * prec * x + x.t() * prec * mu - 0.5 * mu.t() * prec * mu)
                                    + 0.5 * logDet - 0.5 * D * LN_2PI;
+
+
         return result;
     }
 

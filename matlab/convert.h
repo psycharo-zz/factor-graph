@@ -139,8 +139,8 @@ inline vec mxArrayTo(const mxArray *array)
     double *data = static_cast<double*>(mxGetData(array));
     size_t rows = mxGetM(array);
     size_t cols = mxGetN(array);
-    assert(cols == 1);
-    return vec(data, rows);
+    assert(cols == 1 || rows == 1);
+    return vec(data, max(rows, cols));
 }
 
 
