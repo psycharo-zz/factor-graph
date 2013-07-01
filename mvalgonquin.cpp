@@ -77,6 +77,8 @@ void MVAlgonquin::updatePosterior()
     }
     weights /= accu(weights);
 
+    cout << weights.t() << endl;
+
     updateMoments();
 }
 

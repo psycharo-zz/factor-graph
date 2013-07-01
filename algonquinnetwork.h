@@ -46,12 +46,11 @@ public:
 
     }
 
-    const pair<vec,vec> &process(const vec &frame)
+    pair<vec*,vec*> process(const vec &frame)
     {
         m_algonquin->observe(frame);
         m_algonquin->updatePosterior();
-        return make_pair(m_algonquin->m_speech,
-                         m_algonquin->m_noise);
+        return make_pair(&m_algonquin->m_speech, &m_algonquin->m_noise);
     }
 
     //! check whether the network is already trained

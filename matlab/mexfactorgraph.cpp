@@ -45,9 +45,9 @@ void processNetwork(const std::string &functionName,
     else if (functionName == "process")
     {
         vec frame = mxArrayTo<vec>(prhs[POINTER_IDX+1]);
-        pair<vec,vec> result = nwk->process(frame);
-        plhs[0] = toMxArray<vec>(result.first);
-        plhs[1] = toMxArray<vec>(result.second);
+        auto result = nwk->process(frame);
+        plhs[0] = toMxArray(*result.first);
+        plhs[1] = toMxArray(*result.second);
     }
     else if (functionName == "delete")
         delete nwk;

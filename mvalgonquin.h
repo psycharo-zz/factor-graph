@@ -69,6 +69,9 @@ public:
             }
         }
         m_params.precision.fill(1e-3);
+        m_speech.resize(m_speechParent->meanMsg(0).mean.n_rows);
+        m_noise.resize(m_speechParent->meanMsg(0).mean.n_rows);
+
     }
 
     virtual ~MVAlgonquin() {}
@@ -80,8 +83,6 @@ public:
     inline void observe(const vec &value)
     {
         m_value = value;
-        m_speech = m_value;
-        m_noise = m_value;
     }
 
     inline size_t index(size_t s, size_t n) const { return numSpeech() * n + s; }
