@@ -240,14 +240,10 @@ public:
     void messageToParent(Parameters<TDiscrArray> *v) const
     {
         assert(v->size() == this->size());
-
         vector<Parameters<Discrete> > &params = v->params;
         // TODO: checkme, implement logProbabilityDensity
         for (size_t i = 0; i < this->size(); ++i)
-        {
             params[i].logProb = logPDF(this->m_moments[i]);
-            params[i].logProb -= lognorm(params[i].logProb);
-        }
     }
 
     // message to mean mixtures

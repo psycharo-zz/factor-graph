@@ -40,12 +40,6 @@ int main()
     using namespace vmp;
     vmp::testMVMoG();
 
-    vec a;
-
-    a.resize(10);
-
-    cout << a << endl;
-
     return 0;
 }
 

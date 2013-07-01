@@ -53,7 +53,8 @@ struct MixtureNetwork
         for (size_t m = 0; m < means->size(); ++m)
             result.components[m] = Parameters<Gaussian>(precs->moments(m).precision * means->moments(m).mean,
                                                         precs->moments(m).precision);
-        result.weights = weights->moments().probs;
+        result.weights = vector<double>(weights->moments().probs.begin(),
+                                        weights->moments().probs.end());
 
         return result;
     }
@@ -107,7 +108,7 @@ struct MVMixtureNetwork
 
 // TODO: add some return type
 void trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
-                    vector<vec> &means, vector<mat> &sigmas, vector<double> &weights);
+                    vector<vec> &means, vector<mat> &sigmas, vec &weights);
 
 MVMixtureNetwork *trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters);
 

@@ -23,10 +23,12 @@ class Parameters<Discrete>
 {
 public:
     Parameters(size_t _dims):
-        logProb(_dims, log(1./_dims))
-    {}
+        logProb(_dims)
+    {
+        logProb.fill(log(1./_dims));
+    }
 
-    Parameters(const vector<double> &_logProb):
+    Parameters(const vec &_logProb):
         logProb(_logProb)
     {}
 
@@ -41,7 +43,7 @@ public:
     inline size_t dims() const { return logProb.size(); }
 
     //! log-probabilities of the discrete choices
-    vector<double> logProb;
+    vec logProb;
 };
 
 inline ostream &operator<<(ostream &out, const Parameters<Discrete> &params)
@@ -66,8 +68,9 @@ public:
     {}
 
     Moments(const Parameters<Discrete> &_params):
-        probs(_params.dims(), 1.0 / _params.dims())
+        probs(_params.dims())
     {
+        probs.fill(1.0 / _params.dims());
         fromParameters(*this, _params);
     }
 
@@ -77,19 +80,21 @@ public:
 
     // TODO: unnormalized distribution, not cool
     Moments(size_t _size):
-        probs(_size, 1.0 / _size)
-    {}
+        probs(_size)
+    {
+        probs.fill(1.0 / _size);
+    }
 
     inline size_t dims() const { return probs.size(); }
 
     //! probabilities of the discrete choices
-    vector<double> probs;
+    vec probs;
 
     //! needed for speed
     static void fromParameters(Moments<Discrete> &moments, const Parameters<Discrete> &params)
     {
-        for (size_t i = 0; i < moments.probs.size(); ++i)
-            moments.probs[i] = exp(params.logProb[i]);
+        moments.probs = exp(params.logProb - max(params.logProb));
+        moments.probs /= sum(moments.probs);
     }
 
 };
@@ -149,7 +154,7 @@ public:
         if (!validate(value))
             throw std::runtime_error("DiscreteVariable::observe(size_t): the value out of bounds");
         m_observed = true;
-        m_moments.probs.assign(dims(), 0);
+        m_moments.probs = zeros(dims(), 1);
         m_moments.probs[value] = 1.0;
     }
 

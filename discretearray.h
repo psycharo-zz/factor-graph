@@ -30,7 +30,7 @@ public:
         m_observed = true;
         for (size_t i = 0; i < values.size(); ++i)
         {
-            m_moments[i].probs.assign(dims(), 0);
+            m_moments[i].probs = zeros(dims(), 0);
             m_moments[i].probs[values[i]] = 1.0;
         }
     }
@@ -48,20 +48,20 @@ public:
         assert(values.size() == size());
         for (size_t i = 0; i < size(); ++i)
         {
-            m_moments[i].probs.assign(dims(), 0);
+            m_moments[i].probs = zeros(dims(), 1);
             m_moments[i].probs[values[i]] = 1.0;
-            m_parameters[i].logProb = logv(m_moments[i].probs);
+            m_parameters[i].logProb = log(m_moments[i].probs);
         }
     }
 
     //! override VariableArray
-    void updatePosterior()
-    {
-        VariableArray<Discrete>::updatePosterior();
-        for (size_t i = 0; i < size(); ++i)
-            m_parameters[i].logProb -= lognorm(m_parameters[i].logProb);
-        updateMoments();
-    }
+//    void updatePosterior()
+//    {
+//        VariableArray<Discrete>::updatePosterior();
+//        for (size_t i = 0; i < size(); ++i)
+//            m_parameters[i].logProb -= lognorm(m_parameters[i].logProb);
+//        updateMoments();
+//    }
 
     double logNorm() const { return 0; }
     double logNormParents() const { return 0; }
@@ -77,7 +77,7 @@ public:
     //! override HasParent<Dirichlet>
     void messageToParent(Parameters<Dirichlet> *params) const
     {
-        params->U.assign(dims(), 0);
+        params->U = zeros(dims(), 1);
         for (size_t i = 0; i < size(); ++i)
             params->U += moments(i).probs;
     }

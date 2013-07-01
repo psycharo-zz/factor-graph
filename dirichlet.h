@@ -21,10 +21,12 @@ class Parameters<Dirichlet>
 {
 public:
     Parameters(size_t _dims, double value = 1):
-        U(_dims, value)
-    {}
+        U(_dims)
+    {
+        U.fill(value);
+    }
 
-    Parameters(const vector<double> &_U):
+    Parameters(const vec &_U):
         U(_U)
     {}
 
@@ -39,7 +41,7 @@ public:
     inline size_t dims() const { return U.size(); }
 
     //! the concentration parameter
-    vector<double> U;
+    vec U;
 };
 
 
@@ -48,7 +50,6 @@ inline ostream &operator<<(ostream &out, const Parameters<Dirichlet> &params)
     out << "Dirichlet(" << params.U << ")";
     return out;
 }
-
 
 //inline Parameters<Dirichlet> operator+(const Parameters<Dirichlet> &a,
 //                                       const Parameters<Dirichlet> &b)
@@ -76,7 +77,7 @@ public:
         fromParameters(*this, _params);
     }
 
-    Moments(const vector<double> _logProb):
+    Moments(const vec _logProb):
         logProb(_logProb)
     {}
 
@@ -88,15 +89,13 @@ public:
 
     static void fromParameters(Moments &moments, const Parameters<Dirichlet> &params)
     {
-        double dgSumU = digamma(sumv(params.U));
+        double dgSumU = digamma(sum(params.U));
         for (size_t i = 0; i < moments.dims(); ++i)
             moments.logProb[i] = digamma(params.U[i]) - dgSumU;
-        // TODO: is normalization required here?
-        moments.logProb -= lognorm(moments.logProb);
     }
 
     //! log-probabilities TODO: substitute this with vector?
-    vector<double> logProb;
+    vec logProb;
 };
 
 
@@ -129,8 +128,10 @@ public:
 
     Dirichlet(size_t _dims, const double value):
         Variable(TParameters(_dims, value)),
-        m_priorU(_dims, value)
-    {}
+        m_priorU(_dims)
+    {
+        m_priorU.fill(value);
+    }
 
     virtual ~Dirichlet() {}
 
@@ -141,14 +142,14 @@ public:
     inline double logNormParents() const
     {
         Parameters<Dirichlet> params = parametersFromParents();
-        return gammaln(sumv(params.U)) - sumv(gammalnv(params.U));
+        return gammaln(sum(params.U)) - sum(gammalnv(params.U));
     }
 
     inline Parameters<Dirichlet> parametersFromParents() const { return m_priorU; }
 
     inline static double logNorm(const TParameters &ps)
     {
-        return gammaln(sumv(ps.U)) - sumv(gammalnv(ps.U));
+        return gammaln(sum(ps.U)) - sum(gammalnv(ps.U));
     }
 
     double logPDF(const TMoments &/*moments*/) const { throw NotImplementedException; }
@@ -156,14 +157,14 @@ public:
 
 protected:
     //! the prior parameter vector
-    const vector<double> m_priorU;
+    vec m_priorU;
 };
 
 
 class ConstDirichlet : public Dirichlet
 {
 public:
-    ConstDirichlet(const vector<double> &_logProb):
+    ConstDirichlet(const vec &_logProb):
         Dirichlet(_logProb),
         m_constMoments(_logProb)
     {}

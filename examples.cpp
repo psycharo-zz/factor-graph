@@ -110,7 +110,7 @@ vmp::MixtureNetwork *vmp::trainMixture(const double *points, size_t numPoints, s
 
 
 void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
-                         vector<vec> &means, vector<mat> &sigmas, vector<double> &weights)
+                         vector<vec> &means, vector<mat> &sigmas, vec &weights)
 {
     const size_t numPoints = POINTS.n_rows;
     const size_t dims = POINTS.n_cols;
@@ -150,10 +150,10 @@ void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIte
         selector.messageToParent(msgDir);
         dirichlet.updatePosterior();
 
-        cout << expv(dirichlet.moments().logProb) << endl;
+        cout << exp(dirichlet.moments().logProb) << endl;
     }
 
-    weights = expv(dirichlet.moments().logProb);
+    weights = exp(dirichlet.moments().logProb);
     for (size_t m = 0; m < numMixtures; ++m)
     {
         means.push_back(mean.moments(m).mean);
@@ -251,20 +251,20 @@ void vmp::testMVMoG()
 
     vec WEIGHTS = {0.25, 0.5, 0.25};
     size_t numPoints = 1001;
-    size_t numMixtures = 6;
-    size_t maxIters = 40;
+    size_t numMixtures = 4;
+    size_t maxIters = 30;
     auto POINTS = gmmrand(numPoints, MU, SIGMA, WEIGHTS);
 
     vector<vec> means;
     vector<mat> sigmas;
-    vector<double> weights;
+    vec weights;
     trainMVMixture(POINTS, numMixtures, maxIters, means, sigmas, weights);
 
     cout << weights << endl;
     for (size_t m = 0; m < numMixtures; ++m)
     {
         cout << means[m].t() << " "
-             << sigmas[m] << endl;
+             << diagvec(sigmas[m]).t() << endl;
     }
 
     cout << double(clock() - startTime) / (double) CLOCKS_PER_SEC << " seconds." << endl;
