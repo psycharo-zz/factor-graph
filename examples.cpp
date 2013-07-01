@@ -150,7 +150,7 @@ void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIte
         selector.messageToParent(msgDir);
         dirichlet.updatePosterior();
 
-        cout << exp(dirichlet.moments().logProb) << endl;
+        cout << exp(dirichlet.moments().logProb).t() << endl;
     }
 
     weights = exp(dirichlet.moments().logProb);
@@ -242,17 +242,19 @@ void vmp::testMVMoG()
 {
     clock_t startTime = clock();
 
-    vector<vec> MU = { {1.0, 2.0},
-                       {-3.0, -5.0},
-                       {-11.0, -2.0} };
-    vector<vec> SIGMA = {{2.0, 0.5},
-                         {1.0, 1.0},
-                         {1.0, 1.0}};
+    vector<vec> MU = { {1,2,3,4,5,6, 7, 8, 9,10,10},
+                       {4,5,6,7,8,9,10,11,12,10,10},
+                       {4,9,4,9,4,9, 4, 9, 4, 9, 9} };
 
-    vec WEIGHTS = {0.25, 0.5, 0.25};
-    size_t numPoints = 1001;
-    size_t numMixtures = 4;
-    size_t maxIters = 30;
+    const size_t DIMS = MU[0].n_rows;
+    vector<vec> SIGMA = {{13*ones(DIMS,1)},
+                         {4*ones(DIMS,1)},
+                         {9*ones(DIMS,1)}};
+
+    vec WEIGHTS = {0.3, 0.3, 0.4};
+    size_t numPoints = 2001;
+    size_t numMixtures = 16;
+    size_t maxIters = 40;
     auto POINTS = gmmrand(numPoints, MU, SIGMA, WEIGHTS);
 
     vector<vec> means;
@@ -260,7 +262,7 @@ void vmp::testMVMoG()
     vec weights;
     trainMVMixture(POINTS, numMixtures, maxIters, means, sigmas, weights);
 
-    cout << weights << endl;
+    cout << weights.t() << endl;
     for (size_t m = 0; m < numMixtures; ++m)
     {
         cout << means[m].t() << " "
