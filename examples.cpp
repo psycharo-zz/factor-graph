@@ -108,6 +108,140 @@ vmp::MixtureNetwork *vmp::trainMixture(const double *points, size_t numPoints, s
 }
 
 
+void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
+                           mat &_means, mat &_sigmas, vec &_weights)
+{
+    const size_t numPoints = POINTS.n_rows;
+    const size_t dims = POINTS.n_cols;
+
+    // u0
+    const double DIRICHLET_PRIOR = 1;
+    // a0
+    const double W_DEGREES_PRIOR = dims;
+    // B0
+    const mat W_VAR_PRIOR = 1e-2 * eye(dims, dims); // TODO: it says to use covariance = 0.01 I, that's weird
+    // m0
+    vec M_MEAN_PRIOR = mean(POINTS).t();
+    // b0
+    double M_BETA_PRIOR = 1;
+
+    // hyperparameters
+    // u
+    vec dirU(dims);
+    dirU.fill(DIRICHLET_PRIOR);
+    // a_s
+    vec Wdegrees(dims);
+    Wdegrees.fill(W_DEGREES_PRIOR);
+    // B_s
+    vector<mat> Wvar(numMixtures, W_VAR_PRIOR);
+
+    // m_s
+    vector<vec> Mmean(numMixtures, M_MEAN_PRIOR);
+    // b_s
+    vec Mbeta(numMixtures);
+    Mbeta.fill(M_BETA_PRIOR);
+
+
+    // indicators gamma
+    mat selector(numMixtures, numPoints);
+    mat logSelector(numMixtures, numPoints);
+
+    // weights pi
+    vec weights(numMixtures);
+    // counts Ns
+    vec counts(numMixtures);
+    // means mu_s
+    vector<vec> means(numMixtures, zeros(dims, 1));
+    // sigmas S_s
+    vector<mat> sigmas(numMixtures, eye(dims, dims));
+
+
+
+    for (size_t iter = 0; iter < 1; ++iter)
+    {
+        // E step - updating indicators
+        vec logPi = digammav(dirU) - digamma(sum(dirU));
+
+        for (size_t m = 0; m < numMixtures; ++m)
+        {
+            // G
+            mat prec = Wdegrees(m) * inv(Wvar[m]);
+            // logG~
+            double logPrec = digamma_d(0.5 * Wdegrees[m], dims) - logdet(Wvar[m]) + dims * log(2);
+            vec ms = Mmean[m];
+
+            for (size_t i = 0; i < numPoints; ++i)
+            {
+                vec y = POINTS.row(i).t();
+                // logPi_s + 0.5 * logG~ - 0.5(y -ms)T * G * (y - ms) - 0.5 * dims / b_s
+                logSelector(m, i) = as_scalar(-0.5 * (y - ms).t() * prec * (y - ms))
+                                    -0.5 * dims / Mbeta[m]
+                                    + logPi(m) + 0.5 * logPrec;
+            }
+            // TODO: normalize
+        }
+
+        for (size_t i = 0; i < numPoints; ++i)
+        {
+            double _max = max(logSelector.col(i));
+            vec _p = exp(logSelector.col(i) - _max);
+            selector.col(i) = _p / sum(_p);
+        }
+
+        cout << selector.col(0) << endl;
+
+        // M step
+        for (size_t m = 0; m < numMixtures; ++m)
+        {
+            // Ns = N * pi_s
+            counts(m) = sum(selector.row(m));
+            // pi_s = 1/N * \sum prob_s,n
+            weights(m) = counts(m) / numPoints;
+
+            // mu_s = 1/Ns * \sum prob_s,n * y_p
+            means[m] = zeros(dims, 1);
+            for (size_t i = 0; i < numPoints; ++i)
+            {
+                vec y = POINTS.row(i).t();
+                means[m] += selector(m, i) * y;
+            }
+            means[m] /= counts(m);
+
+
+            // S_s = 1/Ns \sum \prob (y_p - mu_s)(y_p - mu_s)^T
+            sigmas[m] = zeros(dims, dims);
+            for (size_t i = 0; i < numPoints; ++i)
+            {
+                vec y = POINTS.row(i).t();
+                sigmas[m] = selector(m, i) * (y - means[m]) * (y - means[m]).t();
+            }
+            sigmas[m] /= counts(m);
+
+            // updating hyperparameters
+            // dirichlet
+            dirU[m] = DIRICHLET_PRIOR + counts(m);
+
+            // beta
+            Mbeta[m] = M_BETA_PRIOR + counts(m);
+            // mean
+            Mmean[m] = (M_BETA_PRIOR * M_MEAN_PRIOR + counts(m) * means[m]) / Mbeta[m];
+
+            // wishart
+            vec deltaM = (means[m] - M_MEAN_PRIOR);
+
+            Wvar[m] = W_VAR_PRIOR +
+                      counts(m) * sigmas[m] +
+                      counts(m) * M_BETA_PRIOR * deltaM * deltaM.t() / (counts(m) + M_BETA_PRIOR);
+            Wdegrees[m] = W_DEGREES_PRIOR + counts(m);
+        }
+
+        cout << counts.t() << endl;
+    }
+
+
+}
+
+
 
 void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
                          mat &_means, mat &_sigmas, vec &_weights)
@@ -138,8 +272,12 @@ void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIte
 
     for (size_t iter = 0; iter < maxNumIters; ++iter)
     {
+        cout << "iteration:" << iter << endl;
         data.messageToParent(msgMean);
         mean.updatePosterior();
+
+        for (size_t m = 0; m < numMixtures; ++m)
+            cout << mean.moments(m).mean.t() << endl;
 
         data.messageToParent(msgPrec);
         prec.updatePosterior();
@@ -150,7 +288,6 @@ void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIte
         selector.messageToParent(msgDir);
         dirichlet.updatePosterior();
 
-        cout << exp(dirichlet.moments().logProb).t() << endl;
     }
 
     _weights = exp(dirichlet.moments().logProb);
@@ -249,24 +386,24 @@ void vmp::testMVMoG()
                        {4,9,4,9,4,9, 4, 9, 4, 9, 9} };
 
     const size_t DIMS = MU[0].n_rows;
-    vector<vec> SIGMA = {{2*ones(DIMS,1)},
-                         {4*ones(DIMS,1)},
-                         {5*ones(DIMS,1)}};
+    vector<vec> SIGMA = {{1*ones(DIMS,1)},
+                         {1*ones(DIMS,1)},
+                         {1*ones(DIMS,1)}};
 
     vec WEIGHTS = {0.25, 0.25, 0.5};
-    size_t numPoints = 1001;
-    size_t numMixtures = 12;
-    size_t maxIters = 50;
+    size_t numPoints = 300;
+    size_t numMixtures = 4;
+    size_t maxIters = 100;
     auto POINTS = gmmrand(numPoints, MU, SIGMA, WEIGHTS);
 
     mat means, precs;
     vec weights;
 
-    trainMVMixture(POINTS, numMixtures, maxIters, means, precs, weights);
+    trainMVMixtureVB(POINTS, numMixtures, maxIters, means, precs, weights);
 
-    cout << weights.t() << endl;
-    cout << means << endl;
-    cout << precs << endl;
+//    cout << weights.t() << endl;
+//    cout << means << endl;
+//    cout << precs << endl;
 }
 
 void vmp::testSpeechGMM(const vector<double> &bin)

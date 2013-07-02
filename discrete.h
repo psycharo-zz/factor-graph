@@ -48,7 +48,7 @@ public:
 
 inline ostream &operator<<(ostream &out, const Parameters<Discrete> &params)
 {
-    out << "Discrete(" << params.logProb << ")";
+    out << "Discrete(" << params.logProb.t() << ")";
     return out;
 }
 
@@ -98,6 +98,14 @@ public:
     }
 
 };
+
+
+inline ostream &operator<<(ostream &out, const Moments<Discrete> &params)
+{
+    out << "Discrete(" << params.probs.t() << ")";
+    return out;
+}
+
 
 typedef Moments<Discrete> DiscreteMoments;
 

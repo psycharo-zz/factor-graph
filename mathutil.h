@@ -139,6 +139,14 @@ inline vector<size_t> randomv(size_t _size, size_t _max)
     return result;
 }
 
+
+inline vec digammav(const vec &v)
+{
+    vec result(v);
+    transform(v.begin(), v.end(), result.begin(), digamma);
+    return result;
+}
+
 //! vector digamma
 inline vector<double> digammav(const vector<double> &v)
 {

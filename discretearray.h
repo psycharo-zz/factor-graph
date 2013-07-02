@@ -55,13 +55,18 @@ public:
     }
 
     //! override VariableArray
-//    void updatePosterior()
-//    {
-//        VariableArray<Discrete>::updatePosterior();
+    void updatePosterior()
+    {
+        VariableArray<Discrete>::updatePosterior();
 //        for (size_t i = 0; i < size(); ++i)
+//        {
+//            cout << m_parameters[i].logProb << endl;
 //            m_parameters[i].logProb -= lognorm(m_parameters[i].logProb);
+//        }
+        for (size_t i = 0; i < 2; ++i)
+            cout << exp(m_parameters[i].logProb).t() << endl;
 //        updateMoments();
-//    }
+    }
 
     double logNorm() const { return 0; }
     double logNormParents() const { return 0; }
@@ -77,9 +82,13 @@ public:
     //! override HasParent<Dirichlet>
     void messageToParent(Parameters<Dirichlet> *params) const
     {
+        // probabilities?
         params->U = zeros(dims(), 1);
         for (size_t i = 0; i < size(); ++i)
             params->U += moments(i).probs;
+
+        for (size_t i = 0; i < 2; ++i)
+            cout << moments(i).probs.t() << endl;
     }
 
 

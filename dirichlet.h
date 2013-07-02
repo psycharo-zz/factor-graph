@@ -47,21 +47,10 @@ public:
 
 inline ostream &operator<<(ostream &out, const Parameters<Dirichlet> &params)
 {
-    out << "Dirichlet(" << params.U << ")";
+    out << "Dirichlet(" << params.U.t() << ")";
     return out;
 }
 
-//inline Parameters<Dirichlet> operator+(const Parameters<Dirichlet> &a,
-//                                       const Parameters<Dirichlet> &b)
-//{
-//    return Parameters<Dirichlet>(a.U + b.U);
-//}
-
-//inline Parameters<Dirichlet> operator-(const Parameters<Dirichlet> &a,
-//                                       const Parameters<Dirichlet> &b)
-//{
-//    return Parameters<Dirichlet>(a.U - b.U);
-//}
 
 
 template<>
@@ -97,6 +86,13 @@ public:
     //! log-probabilities TODO: substitute this with vector?
     vec logProb;
 };
+
+inline ostream &operator<<(ostream &out, const Moments<Dirichlet> &ms)
+{
+    out << "Dirichlet(" << ms.logProb.t() << ")";
+    return out;
+}
+
 
 
 // dot product
@@ -134,6 +130,22 @@ public:
     }
 
     virtual ~Dirichlet() {}
+
+    void updatePosterior()
+    {
+        assert(!isObserved());
+        m_params = parametersFromParents();
+
+        for (MessageIt it = m_messages.begin(); it != m_messages.end(); ++it)
+            m_params += it->second;
+        updateMoments();
+
+        cout << m_params << endl;
+        cout << m_moments << endl;
+        cout << exp(m_moments.logProb).t() << endl;
+        cout << endl;
+
+    }
 
     //! get the number of dimensions
     inline size_t dims() const { return m_priorU.size(); }

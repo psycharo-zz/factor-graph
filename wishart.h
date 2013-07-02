@@ -170,6 +170,25 @@ public:
         m_prior(_prior)
     {}
 
+
+    void updatePosterior()
+    {
+        for (size_t i = 0; i < size(); ++i)
+            m_parameters[i] = parametersFromParents(i);
+
+        // going through all the messages
+        for (MessageIt it = m_messages.begin(); it != m_messages.end(); ++it)
+        {
+            const TParameters &params = it->second;
+            for (size_t i = 0; i < size(); ++i)
+                m_parameters[i] += params[i];
+        }
+        // updating the moments
+        updateMoments();
+
+    }
+
+
     //! override VariableArray
     inline TBaseParameters parametersFromParents(size_t idx) const { return m_prior[idx]; }
 

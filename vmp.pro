@@ -11,7 +11,6 @@ SOURCES += main.cpp \
     mathutil.cpp \
     matlab/persistentobject.cpp \
     gaussianarray.cpp \
-    discretearray.cpp \
     mvalgonquin.cpp
 #    matlab/mexfactorgraph.cpp
 
