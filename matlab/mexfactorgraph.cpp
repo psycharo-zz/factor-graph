@@ -85,11 +85,13 @@ void processMVGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     mat POINTS = mxArrayTo<mat>(prhs[POINTER_IDX]);
     size_t numMixtures = mxArrayTo<int>(prhs[POINTER_IDX+1]);
     size_t numIters = mxArrayTo<int>(prhs[POINTER_IDX+2]);
+    vec assignments = mxArrayTo<vec>(prhs[POINTER_IDX+3]);
 
     mat means;
     mat sigmas;
     vec weights;
-    trainMVMixture(POINTS, numMixtures, numIters, means, sigmas, weights);
+    trainMVMixtureVB(POINTS, numMixtures, numIters, assignments,
+                     means, sigmas, weights);
     plhs[0] = toMxArray(means);
     plhs[1] = toMxArray(sigmas);
     plhs[2] = toMxArray(weights);

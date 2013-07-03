@@ -36,7 +36,7 @@ HEADERS += \
     mvgaussian.h \
     mvalgonquin.h
 
-INCLUDEPATH += ./matlab
+INCLUDEPATH += ./matlab ./libs/include
 
 OTHER_FILES += \
     TODO.md \
@@ -49,7 +49,10 @@ OBJECTS_DIR = ./.obj
 
 # TODO: matlab support
 # LIBS += -lgsl -lblas
-LIBS += -lprofiler -larmadillo
+
+
+
+LIBS += -L./libs/lib -lprofiler -larmadillo -lmlpack
 
 
 

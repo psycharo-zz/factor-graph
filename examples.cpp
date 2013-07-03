@@ -15,6 +15,9 @@
 #include <ctime>
 #include <limits>
 
+
+//#include <mlpack/methods/kmeans/kmeans.hpp>
+
 using namespace vmp;
 #include <cfloat>
 
@@ -109,11 +112,11 @@ vmp::MixtureNetwork *vmp::trainMixture(const double *points, size_t numPoints, s
 
 
 void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
+                           const vec &assignments,
                            mat &_means, mat &_sigmas, vec &_weights)
 {
     const size_t numPoints = POINTS.n_rows;
     const size_t dims = POINTS.n_cols;
-
     // u0
     const double DIRICHLET_PRIOR = 1;
     // a0
@@ -141,13 +144,17 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
     vec Mbeta(numMixtures);
     Mbeta.fill(M_BETA_PRIOR);
 
-
     // indicators gamma
     mat selector(numMixtures, numPoints);
+    selector.fill(0);
+    for (size_t i = 0; i < numPoints; ++i)
+        selector(assignments(i), i) = 1.0;
+
     mat logSelector(numMixtures, numPoints);
 
     // weights pi
     vec weights(numMixtures);
+    weights.fill(1.0 / numMixtures);
     // counts Ns
     vec counts(numMixtures);
     // means mu_s
@@ -155,41 +162,8 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
     // sigmas S_s
     vector<mat> sigmas(numMixtures, eye(dims, dims));
 
-
-
-    for (size_t iter = 0; iter < 1; ++iter)
+    for (size_t iter = 0; iter < maxNumIters; ++iter)
     {
-        // E step - updating indicators
-        vec logPi = digammav(dirU) - digamma(sum(dirU));
-
-        for (size_t m = 0; m < numMixtures; ++m)
-        {
-            // G
-            mat prec = Wdegrees(m) * inv(Wvar[m]);
-            // logG~
-            double logPrec = digamma_d(0.5 * Wdegrees[m], dims) - logdet(Wvar[m]) + dims * log(2);
-            vec ms = Mmean[m];
-
-            for (size_t i = 0; i < numPoints; ++i)
-            {
-                vec y = POINTS.row(i).t();
-                // logPi_s + 0.5 * logG~ - 0.5(y -ms)T * G * (y - ms) - 0.5 * dims / b_s
-                logSelector(m, i) = as_scalar(-0.5 * (y - ms).t() * prec * (y - ms))
-                                    -0.5 * dims / Mbeta[m]
-                                    + logPi(m) + 0.5 * logPrec;
-            }
-            // TODO: normalize
-        }
-
-        for (size_t i = 0; i < numPoints; ++i)
-        {
-            double _max = max(logSelector.col(i));
-            vec _p = exp(logSelector.col(i) - _max);
-            selector.col(i) = _p / sum(_p);
-        }
-
-        cout << selector.col(0) << endl;
-
         // M step
         for (size_t m = 0; m < numMixtures; ++m)
         {
@@ -207,20 +181,18 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
             }
             means[m] /= counts(m);
 
-
             // S_s = 1/Ns \sum \prob (y_p - mu_s)(y_p - mu_s)^T
             sigmas[m] = zeros(dims, dims);
             for (size_t i = 0; i < numPoints; ++i)
             {
                 vec y = POINTS.row(i).t();
-                sigmas[m] = selector(m, i) * (y - means[m]) * (y - means[m]).t();
+                sigmas[m] += selector(m, i) * (y - means[m]) * (y - means[m]).t();
             }
             sigmas[m] /= counts(m);
 
             // updating hyperparameters
             // dirichlet
             dirU[m] = DIRICHLET_PRIOR + counts(m);
-
             // beta
             Mbeta[m] = M_BETA_PRIOR + counts(m);
             // mean
@@ -235,9 +207,47 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
             Wdegrees[m] = W_DEGREES_PRIOR + counts(m);
         }
 
-        cout << counts.t() << endl;
+
+        // E step - updating indicators
+        vec logPi = digammav(dirU) - digamma(sum(dirU));
+
+        for (size_t m = 0; m < numMixtures; ++m)
+        {
+            // G
+            mat prec = Wdegrees(m) * inv(Wvar[m]);
+            // logG~
+            double logPrec = digamma_d(0.5 * Wdegrees[m], dims)
+                             - logdet(Wvar[m])
+                             + dims * log(2);
+            const vec &ms = Mmean[m];
+            for (size_t i = 0; i < numPoints; ++i)
+            {
+                vec y = POINTS.row(i).t();
+                // logPi_s + 0.5 * logG~ - 0.5(y -ms)T * G * (y - ms) - 0.5 * dims / b_s
+                logSelector(m, i) = as_scalar(-0.5 * (y - ms).t() * prec * (y - ms))
+                                    -0.5 * dims / Mbeta[m]
+                                    + logPi(m) + 0.5 * logPrec;
+            }
+        }
+
+        // normalizing
+        for (size_t i = 0; i < numPoints; ++i)
+        {
+            double _max = max(logSelector.col(i));
+            vec _p = exp(logSelector.col(i) - _max);
+            selector.col(i) = _p / sum(_p);
+        }
     }
 
+    _weights = weights;
+    _means.resize(dims, numMixtures);
+    _sigmas.resize(dims, numMixtures);
+
+    for (size_t m = 0; m < numMixtures; ++m)
+    {
+        _means.col(m) = means[m];
+        _sigmas.col(m) = diagvec(sigmas[m]);
+    }
 
 }
 
@@ -377,6 +387,9 @@ void vmp::testLogPDF()
 }
 
 
+
+
+
 void vmp::testMVMoG()
 {
     clock_t startTime = clock();
@@ -386,24 +399,25 @@ void vmp::testMVMoG()
                        {4,9,4,9,4,9, 4, 9, 4, 9, 9} };
 
     const size_t DIMS = MU[0].n_rows;
-    vector<vec> SIGMA = {{1*ones(DIMS,1)},
-                         {1*ones(DIMS,1)},
-                         {1*ones(DIMS,1)}};
+    vector<vec> SIGMA = {{10*ones(DIMS,1)},
+                         {2*ones(DIMS,1)},
+                         {4*ones(DIMS,1)}};
 
     vec WEIGHTS = {0.25, 0.25, 0.5};
-    size_t numPoints = 300;
-    size_t numMixtures = 4;
-    size_t maxIters = 100;
+    size_t numPoints = 400;
+    size_t numMixtures = 10;
+    size_t maxIters = 200;
     auto POINTS = gmmrand(numPoints, MU, SIGMA, WEIGHTS);
 
-    mat means, precs;
+    mat means, sigmas;
     vec weights;
 
-    trainMVMixtureVB(POINTS, numMixtures, maxIters, means, precs, weights);
+    trainMVMixture(POINTS, numMixtures, maxIters,
+                   means, sigmas, weights);
 
-//    cout << weights.t() << endl;
-//    cout << means << endl;
-//    cout << precs << endl;
+    cout << means << endl;
+    cout << sigmas << endl;
+    cout << weights.t() << endl;
 }
 
 void vmp::testSpeechGMM(const vector<double> &bin)

@@ -8,5 +8,6 @@ function params = defaultParams
     params.NUM_BINS = params.FFT_SIZE/2+1;
     params.NUM_SPEECH = 32;
     params.NUM_NOISE = 2;
+    params.CAXIS = [-80, 30];
 end
 
