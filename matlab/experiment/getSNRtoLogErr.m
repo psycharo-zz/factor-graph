@@ -9,12 +9,12 @@ function getSNRtoLogErr
     noise = repeatSignal(noise, length(speech));
 
     % applying algorithm to various snrs (in dB)
-    inSNR = -5:5:15;
+    inSNR = -5:5:5;
 
     RESULTS = struct('wiener',[], ...
                      'gerkmann',[], ...
-                     'algonquinML',[], ...
-                     'algonquinVMP',[], ...
+                     'algonquin8',[], ...
+                     'algonquin16',[], ...
                      'algonquinHVMP',[], ...
                      'nofiltering', []);
 
@@ -32,9 +32,12 @@ function getSNRtoLogErr
 
         % TODO: enable the real algonquin
     %     estimatedSpeech = denoiseAlgonquin(noisySpeech, arr);
-        estPow = denoiseAlgonquinEM(corrupted, speech, noise);
-        RESULTS.algonquin(i) = logError(powSpeech, estPow);
-
+        estPow = denoiseAlgonquinEM(corrupted, speech, noise, 8);
+        RESULTS.algonquin8(i) = logError(powSpeech, estPow);
+        
+        estPow = denoiseAlgonquinEM(corrupted, speech, noise, 16);
+        RESULTS.algonquin16(i) = logError(powSpeech, estPow);
+        
         RESULTS.nofiltering(i) = logError(powSpeech, powCorrupted);
     end
 
@@ -43,12 +46,12 @@ function getSNRtoLogErr
     hold on;
  %     ylim([-15, 15]);
     plot(inSNR, RESULTS.wiener, '-r+')
-     % plot(inSNR, RESULTS.gerkmann, '--bs')
-    plot(inSNR, RESULTS.algonquin, '--g*')
+    plot(inSNR, RESULTS.algonquin8, '--bs')
+    plot(inSNR, RESULTS.algonquin16, '--g*')
     plot(inSNR, RESULTS.nofiltering, '-m^')
     legend('wiener', ...
-           'algonquin',...
-           'no filtering', ...
+           'algonquin 8',...
+           'algonquin 16', ...
            'Location', 'NorthEast');
 % 
      xlabel('input SNR');
