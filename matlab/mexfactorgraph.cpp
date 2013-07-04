@@ -88,7 +88,7 @@ void processMVGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     vec assignments = mxArrayTo<vec>(prhs[POINTER_IDX+3]);
 
     mat means;
-    mat sigmas;
+    cube sigmas;
     vec weights;
     trainMVMixtureVB(POINTS, numMixtures, numIters, assignments,
                      means, sigmas, weights);

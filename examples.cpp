@@ -113,7 +113,7 @@ vmp::MixtureNetwork *vmp::trainMixture(const double *points, size_t numPoints, s
 
 void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
                            const vec &assignments,
-                           mat &_means, mat &_sigmas, vec &_weights)
+                           mat &_means, cube &_sigmas, vec &_weights)
 {
     cout << "VB training" << endl;
     const size_t numPoints = POINTS.n_rows;
@@ -137,10 +137,15 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
     vec Wdegrees(dims);
     Wdegrees.fill(W_DEGREES_PRIOR);
     // B_s
-    vector<mat> Wvar(numMixtures, W_VAR_PRIOR);
+    cube Wvar(dims, dims, numMixtures);
+    for (size_t i = 0; i < numMixtures; ++i)
+        Wvar.slice(i) = W_VAR_PRIOR;
 
     // m_s
-    vector<vec> Mmean(numMixtures, M_MEAN_PRIOR);
+    mat Mmean(dims, numMixtures);
+    for (size_t i = 0; i < numMixtures; ++i)
+        Mmean.col(i) = M_MEAN_PRIOR;
+
     // b_s
     vec Mbeta(numMixtures);
     Mbeta.fill(M_BETA_PRIOR);
@@ -159,9 +164,14 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
     // counts Ns
     vec counts(numMixtures);
     // means mu_s
-    vector<vec> means(numMixtures, zeros(dims, 1));
+    mat means(dims, numMixtures);
+    means.zeros();
+
     // sigmas S_s
-    vector<mat> sigmas(numMixtures, eye(dims, dims));
+    cube sigmas(dims, dims, numMixtures);
+    for (size_t i = 0; i < numMixtures; ++i)
+        sigmas.slice(i).eye();
+
 
     for (size_t iter = 0; iter < maxNumIters; ++iter)
     {
@@ -174,22 +184,22 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
             weights(m) = counts(m) / numPoints;
 
             // mu_s = 1/Ns * \sum prob_s,n * y_p
-            means[m] = zeros(dims, 1);
+            means.col(m).zeros();
             for (size_t i = 0; i < numPoints; ++i)
             {
                 vec y = POINTS.row(i).t();
-                means[m] += selector(m, i) * y;
+                means.col(m) += selector(m, i) * y;
             }
-            means[m] /= counts(m);
+            means.col(m) /= counts(m);
 
             // S_s = 1/Ns \sum \prob (y_p - mu_s)(y_p - mu_s)^T
-            sigmas[m] = zeros(dims, dims);
+            sigmas.slice(m).zeros();
             for (size_t i = 0; i < numPoints; ++i)
             {
                 vec y = POINTS.row(i).t();
-                sigmas[m] += selector(m, i) * (y - means[m]) * (y - means[m]).t();
+                sigmas.slice(m) += selector(m, i) * (y - means.col(m)) * (y - means.col(m)).t();
             }
-            sigmas[m] /= counts(m);
+            sigmas.slice(m) /= counts(m);
 
             // updating hyperparameters
             // dirichlet
@@ -197,13 +207,13 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
             // beta
             Mbeta[m] = M_BETA_PRIOR + counts(m);
             // mean
-            Mmean[m] = (M_BETA_PRIOR * M_MEAN_PRIOR + counts(m) * means[m]) / Mbeta[m];
+            Mmean.col(m) = (M_BETA_PRIOR * M_MEAN_PRIOR + counts(m) * means.col(m)) / Mbeta[m];
 
             // wishart
-            vec deltaM = (means[m] - M_MEAN_PRIOR);
+            vec deltaM = (means.col(m) - M_MEAN_PRIOR);
 
-            Wvar[m] = W_VAR_PRIOR +
-                      counts(m) * sigmas[m] +
+            Wvar.slice(m) = W_VAR_PRIOR +
+                      counts(m) * sigmas.slice(m) +
                       counts(m) * M_BETA_PRIOR * deltaM * deltaM.t() / (counts(m) + M_BETA_PRIOR);
             Wdegrees[m] = W_DEGREES_PRIOR + counts(m);
         }
@@ -215,12 +225,12 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
         for (size_t m = 0; m < numMixtures; ++m)
         {
             // G
-            mat prec = Wdegrees(m) * inv(Wvar[m]);
+            mat prec = Wdegrees(m) * inv(Wvar.slice(m));
             // logG~
             double logPrec = digamma_d(0.5 * Wdegrees[m], dims)
-                             - logdet(Wvar[m])
+                             - logdet(Wvar.slice(m))
                              + dims * log(2);
-            const vec &ms = Mmean[m];
+            const vec &ms = Mmean.col(m);
             for (size_t i = 0; i < numPoints; ++i)
             {
                 vec y = POINTS.row(i).t();
@@ -241,15 +251,8 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
     }
 
     _weights = weights;
-    _means.resize(dims, numMixtures);
-    _sigmas.resize(dims, numMixtures);
-
-    for (size_t m = 0; m < numMixtures; ++m)
-    {
-        _means.col(m) = means[m];
-        _sigmas.col(m) = diagvec(sigmas[m]);
-    }
-
+    _means = means;
+    _sigmas = sigmas;
 }
 
 

@@ -123,7 +123,7 @@ MVMixtureNetwork *trainMVMixture(const mat &POINTS, size_t numMixtures, size_t m
 
 void trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
                       const vec &assignments,
-                      mat &means, mat &cube, vec &weights);
+                      mat &means, cube &sigmas, vec &weights);
 
 
 
