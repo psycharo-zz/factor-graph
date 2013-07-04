@@ -1,9 +1,6 @@
-function plotGMM(X, means, precs, weights)
+function plotGMM(X, means, covs, weights)
 %PLOTGMM plot a mixture of gaussians 
-
-covs = zeros();
-covs(1,1,1:length(weights)) = 1 ./ precs;
-distr = gmdistribution(means', covs, weights);
-plot(X, pdf(distr, X'), '-r', 'LineWidth', 3);
+rcovs(1,1,1:length(weights)) = covs;
+plot(X, pdf(gmdistribution(means', rcovs, weights), X'), '-r', 'LineWidth', 3);
 end
 

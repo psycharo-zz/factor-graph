@@ -92,6 +92,16 @@ inline mxArray *toMxArray(const mat &mx)
     return result;
 }
 
+template<>
+inline mxArray *toMxArray(const cube &cb)
+{
+    mwSize DIMS[3];
+    DIMS[0] = cb.n_rows; DIMS[1] = cb.n_cols; DIMS[2] = cb.n_slices;
+    mxArray *result = mxCreateNumericArray(3, DIMS, mxDOUBLE_CLASS, mxREAL);
+    memcpy(mxGetPr(result), cb.mem, sizeof(double) * cb.n_elem);
+    return result;
+}
+
 
 
 
@@ -126,22 +136,26 @@ inline double mxArrayTo(const mxArray *array)
 template<>
 inline mat mxArrayTo(const mxArray *array)
 {
-    double *data = static_cast<double*>(mxGetData(array));
-    size_t rows = mxGetM(array);
-    size_t cols = mxGetN(array);
     // TODO: test whether it is possible to avoid copying
-    return mat(data, rows, cols);
+    return mat(mxGetPr(array), mxGetM(array), mxGetN(array));
 }
 
 template<>
 inline vec mxArrayTo(const mxArray *array)
 {
-    double *data = static_cast<double*>(mxGetData(array));
     size_t rows = mxGetM(array);
     size_t cols = mxGetN(array);
     assert(cols == 1 || rows == 1);
-    return vec(data, max(rows, cols));
+    return vec(mxGetPr(array), max(rows, cols));
 }
+
+template<>
+inline cube mxArrayTo(const mxArray *array)
+{
+    const mwSize *DIMS = mxGetDimensions(array);
+    return cube(mxGetPr(array), DIMS[0], DIMS[1], DIMS[2]);
+}
+
 
 
 //template<>

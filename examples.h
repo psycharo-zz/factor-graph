@@ -116,9 +116,16 @@ void trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
 MVMixtureNetwork *trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters);
 
 // pure VB implementation
+//void trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
+//                      const vec &assignments,
+//                      mat &means, mat &sigmas, vec &weights);
+
+
 void trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
                       const vec &assignments,
-                      mat &means, mat &sigmas, vec &weights);
+                      mat &means, mat &cube, vec &weights);
+
+
 
 
 // various tests

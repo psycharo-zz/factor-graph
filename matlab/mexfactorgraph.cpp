@@ -120,6 +120,33 @@ void processAlgonquin(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]
 }
 
 
+
+void processExample(const string &name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    cout << name << endl;
+
+    if (name == "univariate")
+    {
+
+    }
+    else if (name == "multivariate")
+    {
+
+    }
+    else if (name == "univariateHierarchical")
+    {
+
+    }
+}
+
+
+void processTest(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+}
+
+
+
+
 // the entry point into the function
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
@@ -143,6 +170,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             processMVGMM(nlhs, plhs, nrhs, prhs);
         else if (typeName == "algonquin")
             processAlgonquin(nlhs, plhs, nrhs, prhs);
+        else if (typeName == "examples")
+            processExample(functionName, nlhs, plhs, nrhs, prhs);
+        else if (typeName == "test")
+            processTest(nlhs, plhs, nrhs, prhs);
         else
             mexErrMsgTxt("Unsupported operation\n");
     }
