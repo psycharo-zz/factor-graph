@@ -4,9 +4,9 @@
 #include <iostream>
 using namespace std;
 
-#include "../algonquin.h"
-#include "../algonquinnetwork.h"
-#include "convert.h"
+#include <algonquin/algonquin.h>
+#include <algonquin/algonquinnetwork.h>
+#include <matlab/convert.h>
 
 
 
@@ -99,6 +99,26 @@ void processMVGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 
 
+void processAlgonquin(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    mat frames = mxArrayTo<mat>(prhs[POINTER_IDX]);
+    mat sMeans = mxArrayTo<mat>(prhs[POINTER_IDX+1]);
+    mat sVars = mxArrayTo<mat>(prhs[POINTER_IDX+2]);
+    vec sWeights = mxArrayTo<vec>(prhs[POINTER_IDX+3]);
+
+    mat nMeans = mxArrayTo<mat>(prhs[POINTER_IDX+4]);
+    mat nVars = mxArrayTo<mat>(prhs[POINTER_IDX+5]);
+    vec nWeights = mxArrayTo<vec>(prhs[POINTER_IDX+6]);
+
+    size_t numIters = mxArrayTo<int>(prhs[POINTER_IDX+7]);
+
+    pair<mat,mat> result = vmp::runAlgonquin(sMeans, sVars, sWeights,
+                                             nMeans, nVars, nWeights,
+                                             frames, numIters);
+    plhs[0] = toMxArray(result.first);
+    plhs[1] = toMxArray(result.second);
+}
+
 
 // the entry point into the function
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -121,6 +141,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             processGMM(nlhs, plhs, nrhs, prhs);
         else if (typeName == "MVGMM")
             processMVGMM(nlhs, plhs, nrhs, prhs);
+        else if (typeName == "algonquin")
+            processAlgonquin(nlhs, plhs, nrhs, prhs);
         else
             mexErrMsgTxt("Unsupported operation\n");
     }

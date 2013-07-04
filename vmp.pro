@@ -4,14 +4,12 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += main.cpp \
-    network.cpp \
     variable.cpp \
     examples.cpp \
-    algonquin.cpp \
     mathutil.cpp \
     matlab/persistentobject.cpp \
-    gaussianarray.cpp \
-    mvalgonquin.cpp
+    algonquin/mvalgonquin.cpp \
+    algonquin/algonquin.cpp
 #    matlab/mexfactorgraph.cpp
 
 HEADERS += \
@@ -25,18 +23,18 @@ HEADERS += \
     mixture.h \
     util.h \
     examples.h \
-    algonquin.h \
     matlab/persistentobject.h \
     matlab/convert.h \
     gaussianarray.h \
     discretearray.h \
     gammaarray.h \
-    algonquinnetwork.h \
     wishart.h \
     mvgaussian.h \
-    mvalgonquin.h
+    algonquin/algonquin.h \
+    algonquin/algonquinnetwork.h \
+    algonquin/mvalgonquin.h
 
-INCLUDEPATH += ./matlab ./libs/include
+INCLUDEPATH += alqonquin matlab ./libs/include
 
 OTHER_FILES += \
     TODO.md \
@@ -52,7 +50,7 @@ OBJECTS_DIR = ./.obj
 
 
 
-LIBS += -L./libs/lib -lprofiler -larmadillo -lmlpack
+LIBS += -L./libs/lib -lprofiler -larmadillo -L/opt/intel/lib/intel64/ /opt/intel/mkl/tools/builder/mkl_custom.so -liomp5
 
 
 

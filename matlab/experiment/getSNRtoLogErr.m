@@ -15,7 +15,7 @@ function getSNRtoLogErr
                      'gerkmann',[], ...
                      'algonquin8',[], ...
                      'algonquin16',[], ...
-                     'algonquinHVMP',[], ...
+                     'algonquin32',[], ...
                      'nofiltering', []);
 
     for i = 1:length(inSNR)
@@ -38,6 +38,9 @@ function getSNRtoLogErr
         estPow = denoiseAlgonquinEM(corrupted, speech, noise, 16);
         RESULTS.algonquin16(i) = logError(powSpeech, estPow);
         
+        estPow = denoiseAlgonquinEM(corrupted, speech, noise, 32);
+        RESULTS.algonquin32(i) = logError(powSpeech, estPow);
+        
         RESULTS.nofiltering(i) = logError(powSpeech, powCorrupted);
     end
 
@@ -45,13 +48,15 @@ function getSNRtoLogErr
 
     hold on;
  %     ylim([-15, 15]);
-    plot(inSNR, RESULTS.wiener, '-r+')
-    plot(inSNR, RESULTS.algonquin8, '--bs')
-    plot(inSNR, RESULTS.algonquin16, '--g*')
-    plot(inSNR, RESULTS.nofiltering, '-m^')
+    plot(inSNR, RESULTS.wiener, '-r+');
+    plot(inSNR, RESULTS.algonquin8, '--bs');
+    plot(inSNR, RESULTS.algonquin16, '-g*');
+    plot(inSNR, RESULTS.algonquin32, '-co');
+    plot(inSNR, RESULTS.nofiltering, '-m^');
     legend('wiener', ...
            'algonquin 8',...
            'algonquin 16', ...
+           'algonquin 32', ...
            'Location', 'NorthEast');
 % 
      xlabel('input SNR');

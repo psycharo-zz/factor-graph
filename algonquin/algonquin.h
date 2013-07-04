@@ -61,9 +61,9 @@ public:
  * scalar deterministic (?) node implementing algonquin inference
  */
 class Algonquin : public BaseVariable,
-                          public HasParent<VariableArray<Gaussian> >,
-                          public HasParent<VariableArray<Gamma> >,
-                          public HasParent<Discrete>
+                  public HasParent<VariableArray<Gaussian> >,
+                  public HasParent<VariableArray<Gamma> >,
+                  public HasParent<Discrete>
 {
 public:
     const size_t DEFAULT_NUM_ITERATIONS = 20;
@@ -235,9 +235,8 @@ private:
 
     //! observed values
     Gaussian::TMoments m_moments;
-
-
 };
+
 
 
 

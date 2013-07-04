@@ -115,6 +115,7 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
                            const vec &assignments,
                            mat &_means, mat &_sigmas, vec &_weights)
 {
+    cout << "VB training" << endl;
     const size_t numPoints = POINTS.n_rows;
     const size_t dims = POINTS.n_cols;
     // u0
@@ -282,12 +283,8 @@ void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIte
 
     for (size_t iter = 0; iter < maxNumIters; ++iter)
     {
-        cout << "iteration:" << iter << endl;
         data.messageToParent(msgMean);
         mean.updatePosterior();
-
-        for (size_t m = 0; m < numMixtures; ++m)
-            cout << mean.moments(m).mean.t() << endl;
 
         data.messageToParent(msgPrec);
         prec.updatePosterior();
@@ -297,7 +294,6 @@ void vmp::trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIte
 
         selector.messageToParent(msgDir);
         dirichlet.updatePosterior();
-
     }
 
     _weights = exp(dirichlet.moments().logProb);
@@ -459,5 +455,15 @@ void vmp::testLogSum()
     assert(fabs(sum(EXP_JACOB.first - result.first)) < 1e-3);
     assert(fabs(sum(EXP_JACOB.second - result.second)) < 1e-3);
 }
+
+
+
+
+
+
+
+
+
+
 
 

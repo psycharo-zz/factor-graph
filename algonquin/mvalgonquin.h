@@ -16,10 +16,10 @@ template<>
 class Parameters<MVAlgonquin>
 {
 public:
-    Parameters(size_t num):
+    Parameters(size_t num, size_t dims):
         meansSpeech(num), meansNoise(num),
         varsSpeech(num), varsNoise(num),
-        weights(num), precision(num)
+        weights(num), precision(dims)
     {}
     // TODO: the number of components
     vector<vec> meansSpeech;
@@ -52,12 +52,11 @@ public:
         m_speechParent(_speechParent),
         m_noiseParent(_noiseParent),
         m_numIters(DEFAULT_NUM_ITERATIONS),
-        m_params(numSpeech() * numNoise())
+        m_params(numSpeech() * numNoise(), m_speechParent->meanMoment(0).mean.n_rows)
     {
 
         for (size_t s = 0; s < numSpeech(); ++s)
         {
-            cout << diagvec(m_speechParent->precMoment(s).prec).t() << endl;
             for (size_t n = 0; n < numNoise(); ++n)
             {
                 size_t i = index(s,n);
@@ -98,17 +97,14 @@ public:
     inline double priorWeightSpeech(size_t s) const { return m_speechParent->weight(s); }
     inline double priorWeightNoise(size_t n) const { return m_noiseParent->weight(n); }
 
-
     //! override TODO: Variable/BaseVariable
     virtual void updatePosterior();
     //! override
     virtual void updateMoments();
 
-
     // TODO: moments?
     vec m_speech;
     vec m_noise;
-
 
 private:
     MultivariateMixture *m_speechParent;
@@ -121,7 +117,19 @@ private:
     vec m_value;
 };
 
-
+/**
+ * \returns variational parameters initialised with given priors
+ */
+Parameters<MVAlgonquin> initialize(const mat &speechMeans, const mat &speechVars, const vec &speechWeights,
+                                   const mat &noiseMeans,  const mat &noiseVars, const vec &noiseWeights,
+                                   double initPrec);
+/**
+ * @brief harcoded algonquin implementation
+ * \returns a pair <speech estimation, noise estimation>
+ */
+pair<mat,mat> runAlgonquin(const mat &speechMeans, const mat &speechVars, const vec &speechWeights,
+                           const mat &noiseMeans,  const mat &noiseVars, const vec &noiseWeights,
+                           const mat &frames, size_t numIters);
 
 } // namespace vmp
 

@@ -1,4 +1,4 @@
-#include <algonquin.h>
+#include <algonquin/algonquin.h>
 
 #include <algorithm>
 

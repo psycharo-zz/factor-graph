@@ -8,7 +8,7 @@ using namespace std;
 #include <vector>
 
 #include <examples.h>
-#include <mvalgonquin.h>
+#include <algonquin/mvalgonquin.h>
 
 
 
@@ -38,7 +38,8 @@ vector<vector<double> > read_bins(const string &fileName)
 int main()
 {
     using namespace vmp;
-    vmp::testMVMoG();
+//    vmp::testMVMoG();
+
 
     return 0;
 }
