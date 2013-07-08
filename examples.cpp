@@ -291,48 +291,75 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
         lbDir += dot((dirU - DIRICHLET_PRIOR), logPi);
         lbDir += logNormDirichlet(DIRICHLET_PRIOR * ones(numMixtures,1)) - logNormDirichlet(dirU);
 
-//        /// prior precs (wishart)
-//        double lbWis = 0;
-//        for (size_t m = 0; m < numMixtures; ++m)
-//        {
-//            double v = Wdegrees(m);
-//            double logDet = logDetPrec(m);
-//            const mat &W = Wscale.slice(m);
-//            const mat &prec = precs.slice(m);
+        /// prior precs (wishart)
+        double lbWis = 0;
+        for (size_t m = 0; m < numMixtures; ++m)
+        {
+            double v = Wdegrees(m);
+            double logDet = logDetPrec(m);
+            const mat &W = Wscale.slice(m);
+            const mat &prec = precs.slice(m);
 
-//            lbWis -= (0.5 * (v - D - 1) * logDet - 0.5 * trace(W * prec)); // Q(prec|v,W)
+            lbWis -= (0.5 * (v - D - 1) * logDet - 0.5 * trace(W * prec)); // Q(prec|v,W)
 
-//            double v0 = W_DEGREES_PRIOR;
-//            const mat &W0 = W_SCALE_PRIOR;
-//            lbWis += (0.5 * (v0 - D - 1) * logDet - 0.5 * trace(W0 * prec)); // P(prec)
-//        }
-//        // normalization
-//        for (size_t m = 0; m < numMixtures; ++m)
-//            lbWis -= logNormWishart(Wscale.slice(m), Wdegrees(m));
-//        lbWis += D * logNormWishart(W_SCALE_PRIOR, W_DEGREES_PRIOR);
+            double v0 = W_DEGREES_PRIOR;
+            const mat &W0 = W_SCALE_PRIOR;
+            lbWis += (0.5 * (v0 - D - 1) * logDet - 0.5 * trace(W0 * prec)); // P(prec)
+        }
+        // normalization
+        for (size_t m = 0; m < numMixtures; ++m)
+            lbWis -= logNormWishart(Wscale.slice(m), Wdegrees(m));
+        lbWis += D * logNormWishart(W_SCALE_PRIOR, W_DEGREES_PRIOR);
 
-//        cout << lbRes + lbDir + lbWis << endl;
+        // prior means (gaussians)
 
-//        // prior means (gaussians)
-//        double lbData = 0;
-//        // P(mu)
-//        for (size_t m = 0; m < numMixtures; ++m)
-//        {
-//            double logDet = logDetPrec(m);
-//            const mat &prec = precs.slice(m);
+        double lbMeans = 0;
+        for (size_t m = 0; m < numMixtures; ++m)
+        {
+            lbMeans += 0;
 
-//            for (size_t p = 0; p < numPoints; ++p)
-//            {
-//                vec y = POINTS.row(p).t();
-//                const vec &mu = means.col(m);
-//                const vec &mu2 = mu * mu.t();
-//                double norm = logDetPrec(m) - D * LN_2PI;
-//                double pdf =  -trace(prec * (y * y.t() - y * mu.t() - mu * y.t() + mu2));
-//                lbData += resp(m, p) * 0.5 * (norm + pdf);
-//            }
-//        }
+            lbMeans -= 0.5 * (logDetPrec(m) + D * (1 + LN_2PI));
+        }
+
+
+/*
+for k=1:K
+    temp = temp + D*(beta_0/beta(k)-log(beta_0/beta(k))-v(k)-1) + ...
+                  beta_0*v(k)*(mean(:,k)-mean_0)'*W(:,:,k)*(mean(:,k)-mean_0) + ...
+                  v(k)*trace(invW_0*W(:,:,k)) + ...
+                  (v(k)-v_0)*log(lambda_eff(k));
+end
++ 1/2 * temp;
+
+temp = 0;
+for k=1:K
+    temp = temp + N_eff(k)*(log(lambda_eff(k)) + 2*log(pi_eff(k)) - D/beta(k) - D*log(2*pi) - ...
+                            v(k)*trace(S(:,:,k)*W(:,:,k)) - ...
+                            v(k)*(x_avg(:,k)-mean(:,k))'*W(:,:,k)*(x_avg(:,k)-mean(:,k)) )
+- 1/2 * temp
+ */
 
         // observations
+        double lbData = 0;
+        for (size_t m = 0; m < numMixtures; ++m)
+        {
+            double logDet = logDetPrec(m);
+            const mat &prec = precs.slice(m);
+
+            for (size_t p = 0; p < numPoints; ++p)
+            {
+                vec y = POINTS.row(p).t();
+                const vec &mu = means.col(m);
+                const mat &mu2 = mu * mu.t();
+                double norm = logDetPrec(m) - D * LN_2PI;
+                double pdf =  -trace(prec * (y * y.t() - y * mu.t() - mu * y.t() + mu2));
+                lbData += resp(m, p) * 0.5 * (norm + pdf);
+            }
+        }
+
+        cout << lbRes + lbDir + lbWis + lbData << endl;
+
+
 
 
 
@@ -485,7 +512,7 @@ void vmp::testMVMoG()
     vector<vec> SIGMA = { {2, 0.2}, {2, 0.2}, {2, 0.2} };
     vec WEIGHTS = ones(3,1) / 3;
 
-    size_t dims = MU[0].n_cols;
+    size_t dims = MU[0].n_rows;
 
     size_t numPoints = 400;
     size_t numMixtures = 3;
@@ -503,35 +530,13 @@ void vmp::testMVMoG()
     for (size_t i = 0; i < numPoints; ++i)
         assignments[i] = i % numMixtures;
 
-    mat initMeans(numMixtures, dims);
+    mat initMeans(dims, numMixtures);
 
     trainMVMixtureVB(POINTS, numMixtures, maxIters, assignments, initMeans, means, sigmas, weights, lb, iter);
 
     cout << means << endl;
     cout << sigmas << endl;
     cout << weights.t() << endl;
-}
-
-void vmp::testSpeechGMM(const vector<double> &bin)
-{
-    const size_t numPoints = 999;
-    const size_t maxNumIters = 456;
-    const size_t numMixtures = 4;
-
-    clock_t startTime;
-    double runTime;
-
-    startTime = clock();
-
-    auto mixture = vmp::trainMixture(bin.data(), numPoints, numMixtures, maxNumIters);
-
-    cout << "points: " << numPoints << endl
-         << "iters:  " << mixture->iters << endl
-         << "mixtures:" << numMixtures << endl
-         << "evidence:" << mixture->evidence << endl
-         << mixture->parameters() << endl;
-
-    cout << double(clock() - startTime) / (double) CLOCKS_PER_SEC << " seconds." << endl;
 }
 
 
