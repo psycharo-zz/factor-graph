@@ -319,7 +319,8 @@ inline vector<T> operator-(const vector<T> &a, T b)
 
 
 // ln(2*PI)
-const double LN_2PI = 1.837877066409345;
+#define LN_2PI 1.837877066409345
+#define LN_PI 1.14472988584940
 
 
 // EPSILON

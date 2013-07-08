@@ -122,8 +122,9 @@ MVMixtureNetwork *trainMVMixture(const mat &POINTS, size_t numMixtures, size_t m
 
 
 void trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
-                      const vec &assignments,
-                      mat &means, cube &sigmas, vec &weights);
+                      const vec &initAssignments, const mat &initMeans,
+                      mat &means, cube &sigmas, vec &weights,
+                      double &lb, size_t &numIterations);
 
 
 

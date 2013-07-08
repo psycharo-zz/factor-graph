@@ -39,6 +39,7 @@ int main()
 {
     using namespace vmp;
 //    vmp::testMVMoG();
+    vmp::testMVMoG();
 
 
 

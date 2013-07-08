@@ -84,17 +84,22 @@ void processMVGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     mat POINTS = mxArrayTo<mat>(prhs[POINTER_IDX]);
     size_t numMixtures = mxArrayTo<int>(prhs[POINTER_IDX+1]);
-    size_t numIters = mxArrayTo<int>(prhs[POINTER_IDX+2]);
+    size_t maxNumIters = mxArrayTo<int>(prhs[POINTER_IDX+2]);
     vec assignments = mxArrayTo<vec>(prhs[POINTER_IDX+3]);
+    mat centers = mxArrayTo<mat>(prhs[POINTER_IDX+4]);
 
     mat means;
     cube sigmas;
     vec weights;
-    trainMVMixtureVB(POINTS, numMixtures, numIters, assignments,
-                     means, sigmas, weights);
+    double evidence;
+    size_t iters;
+    trainMVMixtureVB(POINTS, numMixtures, maxNumIters, assignments, centers,
+                     means, sigmas, weights, evidence, iters);
     plhs[0] = toMxArray(means);
     plhs[1] = toMxArray(sigmas);
     plhs[2] = toMxArray(weights);
+    plhs[3] = toMxArray(evidence);
+    plhs[4] = toMxArray((double)iters);
 }
 
 
