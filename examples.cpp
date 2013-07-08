@@ -150,14 +150,12 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
     // hyperparameters
     // u
     vec dirU = DIRICHLET_PRIOR * ones(numMixtures,1);
-
     // # of degrees of freedom (a_s | v_i)
     vec Wdegrees = W_DEGREES_PRIOR * ones(numMixtures,1);
     // scale matrix (B_s | W_i | V_i)
     cube Wscale(D, D, numMixtures);
     for (size_t i = 0; i < numMixtures; ++i)
         Wscale.slice(i) = W_SCALE_PRIOR;
-
     // m_s
     mat Mmean(D, numMixtures);
     Mmean = initMeans;
@@ -178,68 +176,72 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
     mat logResp(numMixtures, numPoints);
 
     // weights pi
-    vec weights(numMixtures);
-    weights.fill(1.0 / numMixtures);
+    vec Eweights(numMixtures);
+    Eweights.fill(1.0 / numMixtures);
     // counts Ns
     vec counts(numMixtures);
     // means mu_s
-    mat means(D, numMixtures);
-    mat means2(D, numMixtures);
-    means.zeros();
-    means2.zeros();
+    mat Emeans(D, numMixtures);
+    mat Emeans2(D, numMixtures);
+    Emeans.zeros();
+    Emeans2.zeros();
 
     // sigmas S_s
-    cube sigmas(D, D, numMixtures);
+    cube Esigmas(D, D, numMixtures);
     for (size_t i = 0; i < numMixtures; ++i)
-        sigmas.slice(i).eye();
+        Esigmas.slice(i).eye();
 
     // precisions
-    cube precs = zeros(D, D, numMixtures);
+    cube Eprecs = zeros(D, D, numMixtures);
 
 
     double lbPrev = -DBL_MAX;
 
     for (size_t iter = 0; iter < maxNumIters; ++iter)
     {
+
         // M step
         for (size_t m = 0; m < numMixtures; ++m)
         {
             // Ns = N * pi_s
             counts(m) = sum(resp.row(m));
             // pi_s = 1/N * \sum prob_s,n
-            weights(m) = counts(m) / numPoints;
+            Eweights(m) = counts(m) / numPoints;
 
             // mu_s = 1/Ns * \sum prob_s,n * y_p
-            means.col(m).zeros();
+            Emeans.col(m).zeros();
             for (size_t i = 0; i < numPoints; ++i)
             {
                 vec y = POINTS.row(i).t();
-                means.col(m) += resp(m, i) * y;
+                Emeans.col(m) += resp(m, i) * y;
             }
-            means.col(m) /= counts(m);
+            Emeans.col(m) /= counts(m);
 
             // S_s = 1/Ns \sum \prob (y_p - mu_s)(y_p - mu_s)^T
-            sigmas.slice(m).zeros();
+            Esigmas.slice(m).zeros();
             for (size_t i = 0; i < numPoints; ++i)
             {
                 vec y = POINTS.row(i).t();
-                sigmas.slice(m) += resp(m, i) * (y - means.col(m)) * (y - means.col(m)).t();
+                Esigmas.slice(m) += resp(m, i) * (y - Emeans.col(m)) * (y - Emeans.col(m)).t();
             }
-            sigmas.slice(m) /= counts(m);
+            Esigmas.slice(m) /= counts(m);
+        }
 
-            // updating hyperparameters
+        // updating hyperparameters
+        for (size_t m = 0; m < numMixtures; ++m)
+        {
             // dirichlet
-            dirU[m] = DIRICHLET_PRIOR + counts(m);
+            dirU(m) = DIRICHLET_PRIOR + counts(m);
             // beta
-            Mbeta[m] = M_BETA_PRIOR + counts(m);
+            Mbeta(m) = M_BETA_PRIOR + counts(m);
             // mean
-            Mmean.col(m) = (M_BETA_PRIOR * M_MEAN_PRIOR + counts(m) * means.col(m)) / Mbeta[m];
+            Mmean.col(m) = (M_BETA_PRIOR * M_MEAN_PRIOR + counts(m) * Emeans.col(m)) / Mbeta(m);
 
             // wishart
-            vec deltaM = (means.col(m) - M_MEAN_PRIOR);
+            vec deltaM = (Emeans.col(m) - M_MEAN_PRIOR);
 
             Wscale.slice(m) = W_SCALE_PRIOR +
-                      counts(m) * sigmas.slice(m) +
+                      counts(m) * Esigmas.slice(m) +
                       counts(m) * M_BETA_PRIOR * deltaM * deltaM.t() / (counts(m) + M_BETA_PRIOR);
             Wdegrees[m] = W_DEGREES_PRIOR + counts(m);
         }
@@ -247,23 +249,25 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
 
         // E step - updating indicators
         vec logPi = digammav(dirU) - digamma(sum(dirU));
-
-
-        precs.zeros();
+        Eprecs.zeros();
         vec logDetPrec = zeros(numMixtures);
+        vec logDetScale = zeros(numMixtures);
         for (size_t m = 0; m < numMixtures; ++m)
         {
             // G
-            precs.slice(m) = Wdegrees(m) * inv(Wscale.slice(m));
+            Eprecs.slice(m) = Wdegrees(m) * inv(Wscale.slice(m));
+            // log|W|
+            logDetScale(m) = logdet(Wscale.slice(m));
+
             // logG~
-            logDetPrec(m) = digamma_d(0.5 * Wdegrees[m], D) - logdet(Wscale.slice(m)) + D * log(2);
+            logDetPrec(m) = digamma_d(0.5 * Wdegrees[m], D) - logDetScale(m) + D * log(2);
 
             const vec &ms = Mmean.col(m);
             for (size_t i = 0; i < numPoints; ++i)
             {
                 vec y = POINTS.row(i).t();
                 // logPi_s + 0.5 * logG~ - 0.5(y -ms)T * G * (y - ms) - 0.5 * dims / b_s
-                logResp(m, i) = as_scalar(-0.5 * (y - ms).t() * precs.slice(m) * (y - ms))
+                logResp(m, i) = as_scalar(-0.5 * (y - ms).t() * Eprecs.slice(m) * (y - ms))
                                     -0.5 * D / Mbeta[m]
                                     + logPi(m) + 0.5 * logDetPrec(m);
             }
@@ -277,8 +281,6 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
             resp.col(i) = _p / sum(_p);
         }
 
-        // computing the lower bound
-        double lbCurr = 0;
 
         // responsibilities
         double lbRes = 0;
@@ -291,6 +293,46 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
         lbDir += dot((dirU - DIRICHLET_PRIOR), logPi);
         lbDir += logNormDirichlet(DIRICHLET_PRIOR * ones(numMixtures,1)) - logNormDirichlet(dirU);
 
+
+        double lbData = 0;
+        for (size_t m = 0; m < numMixtures; ++m)
+        {
+            double logDet = logDetPrec(m);
+            double v = dirU(m);
+            double N = counts(m);
+            double beta = Mbeta(m);
+            mat W = inv(Wscale.slice(m));
+            const mat &S = Esigmas.slice(m);
+            vec dMean = Emeans.col(m) - Mmean.col(m);
+
+            lbData += 0.5 * N *
+                    (logDet
+                     -D / beta
+                     -v * trace(S * W)
+                     -v * as_scalar(dMean.t() * W * dMean)
+                     -D * LN_2PI);
+        }
+
+        /*
+        // observations
+        double lbData = 0;
+        for (size_t m = 0; m < numMixtures; ++m)
+        {
+            double logDet = logDetPrec(m);
+            const mat &prec = Eprecs.slice(m);
+
+            for (size_t p = 0; p < numPoints; ++p)
+            {
+                vec y = POINTS.row(p).t();
+                const vec &mu = Emeans.col(m);
+                const mat &mu2 = mu * mu.t();
+                double norm = logDetPrec(m) - D * LN_2PI;
+                double pdf =  -trace(prec * (y * y.t() - y * mu.t() - mu * y.t() + mu2));
+                lbData += resp(m, p) * 0.5 * (norm + pdf);
+            }
+        }
+        // computing the lower bound
+        double lbCurr = 0;
         /// prior precs (wishart)
         double lbWis = 0;
         for (size_t m = 0; m < numMixtures; ++m)
@@ -313,61 +355,54 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
 
         // prior means (gaussians)
 
-        double lbMeans = 0;
-        for (size_t m = 0; m < numMixtures; ++m)
-        {
-            lbMeans += 0;
-
-            lbMeans -= 0.5 * (logDetPrec(m) + D * (1 + LN_2PI));
-        }
 
 
-/*
-for k=1:K
-    temp = temp + D*(beta_0/beta(k)-log(beta_0/beta(k))-v(k)-1) + ...
-                  beta_0*v(k)*(mean(:,k)-mean_0)'*W(:,:,k)*(mean(:,k)-mean_0) + ...
-                  v(k)*trace(invW_0*W(:,:,k)) + ...
-                  (v(k)-v_0)*log(lambda_eff(k));
-end
-+ 1/2 * temp;
-
-temp = 0;
-for k=1:K
-    temp = temp + N_eff(k)*(log(lambda_eff(k)) + 2*log(pi_eff(k)) - D/beta(k) - D*log(2*pi) - ...
-                            v(k)*trace(S(:,:,k)*W(:,:,k)) - ...
-                            v(k)*(x_avg(:,k)-mean(:,k))'*W(:,:,k)*(x_avg(:,k)-mean(:,k)) )
-- 1/2 * temp
- */
-
-        // observations
-        double lbData = 0;
-        for (size_t m = 0; m < numMixtures; ++m)
-        {
-            double logDet = logDetPrec(m);
-            const mat &prec = precs.slice(m);
-
-            for (size_t p = 0; p < numPoints; ++p)
-            {
-                vec y = POINTS.row(p).t();
-                const vec &mu = means.col(m);
-                const mat &mu2 = mu * mu.t();
-                double norm = logDetPrec(m) - D * LN_2PI;
-                double pdf =  -trace(prec * (y * y.t() - y * mu.t() - mu * y.t() + mu2));
-                lbData += resp(m, p) * 0.5 * (norm + pdf);
-            }
-        }
 
         cout << lbRes + lbDir + lbWis + lbData << endl;
 
+        */
 
+
+
+
+
+
+        /*
+ D*(beta_0/beta(k)-log(beta_0/beta(k))-v(k)-1) + ...
+                  beta_0*v(k)*(mean(:,k)-mean_0)'*W(:,:,k)*(mean(:,k)-mean_0) + ...
+                  v(k)*trace(invW_0*W(:,:,k)) + ...
+                  (v(k)-v_0)*log(lambda_eff(k));
+         */
+
+//        double lbMean = 0;
+//        for (size_t m = 0; m < numMixtures; ++m)
+//        {
+//            double beta0 = M_BETA_PRIOR;
+//            double beta = Mbeta(m);
+//            double logDet = logDetPrec(m);
+//            double v = Wdegrees(m);
+
+//            const vec &mean0 = M_MEAN_PRIOR;
+//            const vec &mean = Mmean.col(m);
+//            const mat &W = precs.slice(m);
+
+
+
+//            lbMean = lbMean + 0.5 * D * (log(beta0) - beta0 / beta -
+//                               beta0 * v * as_scalar((mean - mean0).t() * W * (mean - mean0)));
+//            lbMean = lbMean - 0.5 * D * (log(beta) - 1);
+//        }
+
+
+//        cout << lbData << "\t" << lbMean << endl;
 
 
 
     }
 
-    _weights = weights;
-    _means = means;
-    _sigmas = sigmas;
+    _weights = Eweights;
+    _means = Emeans;
+    _sigmas = Esigmas;
 }
 
 
