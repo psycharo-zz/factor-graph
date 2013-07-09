@@ -127,16 +127,15 @@ double computeLB(const double v0, const mat &W0, const vec &m0, const double bet
     // data
     double lbData = 0.0;
 
+
     // EpX = 0.5*dot(nk,ElogLambda-d./kappa-v.*trSW-v.*xbarmWxbarm-d*log(2*pi));
     for (size_t m = 0; m < M; ++m)
     {
-        const double v = Wdegrees(m);
-        const mat &W = inv(Wscale.slice(m));
-        vec dMean = Emean.col(m) - Mmean.col(m);
+        const vec &dMean = Emean.col(m) - Mmean.col(m);
         lbData += 0.5 * counts(m) * (ElogPrecDet(m)
                                      - D / Mbeta(m) - D * LN_2PI
-                                     - v * trace(Esigma.slice(m) * W)
-                                     - v * as_scalar(dMean.t() * W * dMean));
+                                     - trace(Esigma.slice(m) * Eprec.slice(m))
+                                     - as_scalar(dMean.t() * Eprec.slice(m) * dMean));
     }
 
 
@@ -145,9 +144,8 @@ double computeLB(const double v0, const mat &W0, const vec &m0, const double bet
     double lq = 0;
 
     // Dirichlet: responsibilities prior
-    double lbDirichlet = dot(u0 - Du, logPi)
-                         + logNormDirichlet(u0 * ones(M,1))
-                         - logNormDirichlet(Du);
+    double lbDirichlet = (sum(u0 * logPi) + gammaln(M * u0) - M * (gammaln(u0)))
+                        -(dot(Du, logPi) + gammaln(sum(Du)) - sum(gammalnv(Du)));
     // Discrete: responsibilities
     double lbResp = dot(counts, logPi) - dot(resp, logResp);
 
@@ -157,11 +155,10 @@ double computeLB(const double v0, const mat &W0, const vec &m0, const double bet
     for (size_t m = 0; m < M; ++m)
     {
         const vec &dMean = Mmean.col(m) - m0;
-        const mat &W = inv(Wscale.slice(m));
+        const mat &prec = Eprec.slice(m);
         const double beta = Mbeta(m);
-        const double v = Wdegrees(m);
         // Epmu = 0.5 * sum(D*log(beta0/(2*pi))- D * beta0 ./ beta + ElogLambda - beta0 * (v.*mm0Wmm0));
-        lp += D * (log(beta0) - beta0 / beta - LN_2PI) + ElogPrecDet(m) - beta0 * v * as_scalar(dMean.t() * W * dMean);
+        lp += D * (log(beta0) - beta0 / Mbeta(m) - LN_2PI) + ElogPrecDet(m) - beta0 * as_scalar(dMean.t() * prec * dMean);
         // Eqmu = 0.5 * sum(ElogLambda+D*log(beta/(2*pi)))-0.5*D*M;
         lq += D * (log(beta) - LN_2PI - 1) + ElogPrecDet(m);
     }
@@ -180,15 +177,10 @@ double computeLB(const double v0, const mat &W0, const vec &m0, const double bet
     }
     // logB0 = v0*sum(log(diag(U0)))-0.5*v0*d*log(2)-logmvgamma(0.5*v0,d);
     // return 0.5*v0*logdet(W) - 0.5*v*D*M_LN2 - gammaln2(0.5*v,D);
-    lp += M * logNormWishart(W0, v0);
+    lp += M * (v0 * logdet(W0) - 0.5 * v0 * D * M_LN2 - gammaln2(0.5 * v0, D));
     for (size_t m = 0; m < M; ++m)
-        // logB =  -0.5 * v.*(logW+d*log(2)) - logmvgamma(0.5*v,d);
-        lq += logNormWishart(Wscale.slice(m), Wdegrees(m));
+        lq += (0.5 * Wdegrees(m) * logdet(Wscale.slice(m)) - gammaln2(0.5 * Wdegrees(m), D));
     double lbPrec = lp - lq;
-
-
-    cout << "OUT:" << lbResp << " " << lbDirichlet << " " << lbPrec << " " << lbMean << " " << lbData << endl;
-
 
     return lbDirichlet + lbResp + lbMean + lbPrec + lbData;
 
@@ -286,7 +278,7 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
             Emeans.col(m).zeros();
             for (size_t i = 0; i < numPoints; ++i)
             {
-                vec y = POINTS.row(i).t();
+                const vec &y = POINTS.row(i).t();
                 Emeans.col(m) += resp(m, i) * y;
             }
             Emeans.col(m) /= counts(m);
@@ -295,8 +287,7 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
             Esigmas.slice(m).zeros();
             for (size_t i = 0; i < numPoints; ++i)
             {
-                vec y = POINTS.row(i).t();
-                const vec &dMean = (y - Emeans.col(m));
+                const vec &dMean = (POINTS.row(i).t() - Emeans.col(m));
                 Esigmas.slice(m) += resp(m, i) * dMean * dMean.t();
             }
             Esigmas.slice(m) /= counts(m);
@@ -315,10 +306,10 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
             // wishart
             vec deltaM = (Emeans.col(m) - M_MEAN_PRIOR);
 
-            Wscale.slice(m) = W_SCALE_PRIOR +
+            Wscale.slice(m) = sympd(W_SCALE_PRIOR +
                       counts(m) * Esigmas.slice(m) +
-                      counts(m) * M_BETA_PRIOR * deltaM * deltaM.t() / (counts(m) + M_BETA_PRIOR);
-            Wdegrees[m] = W_DEGREES_PRIOR + counts(m);
+                      counts(m) * M_BETA_PRIOR * deltaM * deltaM.t() / (counts(m) + M_BETA_PRIOR));
+            Wdegrees(m) = W_DEGREES_PRIOR + counts(m);
         }
 
 
@@ -340,11 +331,11 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
             const vec &ms = Mmean.col(m);
             for (size_t i = 0; i < numPoints; ++i)
             {
-                vec y = POINTS.row(i).t();
+                const vec &dMean = POINTS.row(i).t() - ms;
                 // logPi_s + 0.5 * logG~ - 0.5(y -ms)T * G * (y - ms) - 0.5 * dims / b_s
-                logResp(m, i) = as_scalar(-0.5 * (y - ms).t() * Eprecs.slice(m) * (y - ms))
-                                    -0.5 * D / Mbeta[m]
-                                    + logPi(m) + 0.5 * logDetPrec(m);
+                logResp(m, i) = -0.5 * as_scalar(dMean.t() * Eprecs.slice(m) * dMean)
+                                -0.5 * D / Mbeta(m)
+                                +logPi(m) + 0.5 * logDetPrec(m);
             }
         }
 
@@ -357,71 +348,10 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
             logResp.col(i) -= _max + log(sum(_p));
         }
 
+        double lbCurr = computeLB(W_DEGREES_PRIOR, W_SCALE_PRIOR, M_MEAN_PRIOR, M_BETA_PRIOR, DIRICHLET_PRIOR,
+                                  dirU, Wscale, Wdegrees, Mmean, Mbeta, Emeans, Esigmas, logDetPrec, Eprecs, resp, logResp, logPi, counts);
 
-        // responsibilities
-        double lbResp = dot(counts, logPi) - dot(resp, logResp);
-
-        // dirichlet
-        double lbDirichlet = dot(DIRICHLET_PRIOR - dirU, logPi)
-                             + logNormDirichlet(DIRICHLET_PRIOR * ones(numMixtures,1))
-                             - logNormDirichlet(dirU);
-
-
-        double lbData = 0;
-        for (size_t m = 0; m < numMixtures; ++m)
-        {
-            double logDet = logDetPrec(m);
-            double N = counts(m);
-            double beta = Mbeta(m);
-            const mat &prec = Eprecs.slice(m);
-            const mat &S = Esigmas.slice(m);
-            const vec &dMean = Emeans.col(m) - Mmean.col(m);
-            lbData += 0.5 * N * (logDet - D / beta - D * LN_2PI - trace(S * prec) - as_scalar(dMean.t() * prec * dMean));
-        }
-
-        // prior precs (wishart)
-        double lbPrec = 0;
-        for (size_t m = 0; m < numMixtures; ++m)
-        {
-            double v = Wdegrees(m);
-            const mat &prec = Eprecs.slice(m);
-
-            lbPrec += (0.5 * (v0 - D - 1) * logDetPrec(m) - 0.5 * trace(W0 * prec)); // P(prec)
-            lbPrec -= (0.5 * (v - D - 1) *  logDetPrec(m) - 0.5 * v * D);
-        }
-        // normalization
-        lbPrec += numMixtures * logNormWishart(W_SCALE_PRIOR, W_DEGREES_PRIOR);
-
-        // Q(prec)
-        double lq = 0;
-        for (size_t m = 0; m < numMixtures; ++m)
-            lq += logNormWishart(Wscale.slice(m), Wdegrees(m));
-
-        lbPrec -= lq;
-
-        // prior means (gaussians)
-        double lbMean = 0;
-        for (size_t m = 0; m < numMixtures; ++m)
-        {
-            double logDet = logDetPrec(m);
-            double beta = Mbeta(m);
-            const mat &prec = Eprecs.slice(m);
-            const vec dMean = Mmean.col(m) - M_MEAN_PRIOR;
-            lbMean += 0.5 * (logDet + D * (log(beta0) - LN_2PI - beta0 / beta) - beta0 * as_scalar(dMean.t() * prec * dMean));
-            lbMean -= 0.5 * (logDet + D * (log(beta) - LN_2PI - 1));
-        }
-//        cout << lbRes << "\t" << lbData << "\t" << lbWis << "\t" << lbMean << endl;
-
-        double test = computeLB(W_DEGREES_PRIOR, W_SCALE_PRIOR, M_MEAN_PRIOR, M_BETA_PRIOR, DIRICHLET_PRIOR,
-                                dirU, Wscale, Wdegrees, Mmean, Mbeta, Emeans, Esigmas, logDetPrec, Eprecs, resp, logResp, logPi, counts);
-
-
-        cout << "OUT:" << lbResp << " " << lbDirichlet << " " << lbPrec << " " << lbMean << " " << lbData << endl;
-
-        cout << endl;
-        double lbCurr = lbResp + lbDirichlet + lbPrec + lbData + lbMean;
-
-
+        cout << lbCurr - lbPrev << endl;
 
         if (fabs(lbCurr - lbPrev) < EPSILON)
         {
