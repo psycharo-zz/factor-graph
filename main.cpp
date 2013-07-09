@@ -41,8 +41,6 @@ int main()
 //    vmp::testMVMoG();
     vmp::testMVMoG();
 
-
-
     return 0;
 }
 

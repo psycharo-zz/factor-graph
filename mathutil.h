@@ -57,6 +57,8 @@ double digamma(double x);
 double trigamma(double x);
 double tetragamma(double x);
 
+
+
 #endif
 
 
@@ -156,6 +158,14 @@ inline vector<double> digammav(const vector<double> &v)
 }
 
 
+inline double logdet(const mat &mx)
+{
+    double result;
+    double sign;
+    log_det(result, sign, mx);
+    return result;
+}
+
 
 inline vector<double> gammalnv(const vector<double> &v)
 {
@@ -164,12 +174,27 @@ inline vector<double> gammalnv(const vector<double> &v)
     return result;
 }
 
+
 inline vec gammalnv(const vec &v)
 {
     vec result = v;
     transform(v.begin(), v.end(), result.begin(), gammaln);
     return result;
 }
+
+inline double logNormDirichlet(const vec &U)
+{
+    return gammaln(sum(U)) - sum(gammalnv(U));
+}
+
+
+
+inline double logNormWishart(const mat &W, double v)
+{
+    const size_t D = W.n_rows;
+    return 0.5*v*logdet(W) - gammaln2(0.5*v,D) - 0.5*v*D*M_LN2;
+}
+
 
 
 inline double sumv(const vector<double> &v)
@@ -210,16 +235,6 @@ inline double lognorm(const vec &a)
     double _max = max(a);
     return as_scalar(log(sum(exp(a - _max)))) + _max;
 }
-
-inline double logdet(const mat &mx)
-{
-    double result;
-    double sign;
-    log_det(result, sign, mx);
-    return result;
-}
-
-
 
 
 inline double lognorm(const vector<double> &v)
@@ -324,7 +339,8 @@ inline vector<T> operator-(const vector<T> &a, T b)
 
 
 // EPSILON
-const double EPSILON = 1e-3;
+const double EPSILON = 1e-5;
+
 
 
 // initial value for the lower bound

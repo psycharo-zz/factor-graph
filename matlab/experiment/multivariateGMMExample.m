@@ -1,31 +1,27 @@
-function multivariateGaussianMixture
+function RESULT = multivariateGaussianMixture
 %MULTIVARIATEGAUSSIANMIXTURE test framework on an artificial 2D dataset
 
-    %     
-    file = load('synthetic.mat');
-    SYNTHETIC = file.SYNTHETIC;
-    
+    file = load('synthetic2d.mat');
+    SYNTHETIC = file.DATA;
     % datasets to run    
     DATASETS = {SYNTHETIC.DATA, dlmread('faithful.txt')};
     NUM_MIXTURES = [5,3,3,3];
-    
-    % the number of repetitions to make using each method
-    NUM_REPS = 1;
-    
+        
     % methods to evaluate         
 %     METHODS = {@trainGMM_EM_nondiag};
     METHODS = {@trainGMM_VB};
     NAMES = {'VMP'};
     
-    
-    RESULT = struct('means',{});
-    for ds = 1:length(DATASETS)
+    RESULT = struct('means',{}, 'covs',{},'weights',{});
+    for ds = 3:3
         DATA = DATASETS{ds};
         DIMS = size(DATA,2);
         
         for md = 1:length(METHODS)
             METHOD = METHODS{md};
-            [means, covs, weights] = METHOD(DATA, NUM_MIXTURES(ds));
+            numMixtures = 1;
+            [means, covs, weights, lb, iters] = METHOD(DATA, numMixtures);
+            lb, iters
 %             distr = gmdistribution(means, covs, weights);
             
             RESULT(ds,md).means = means;
@@ -33,13 +29,13 @@ function multivariateGaussianMixture
             RESULT(ds,md).weights = weights;
 %             RESULT(ds,md).logL = sum(log(pdf(distr, DATA)));
             
-            subplot(length(DATASETS),1,ds)
+%             subplot(length(DATASETS),1,ds)
             
             plotGMM(DATA, means, covs, weights);
         end
     end
     
-    
+%     
 %     for md = 1:length(METHODS)
 %         fprintf('%s\t&', NAMES{md});
 %     end
@@ -51,5 +47,14 @@ function multivariateGaussianMixture
 %         fprintf('\n');
 %     end        
 
-end
+return
+
+
+
+
+
+
+
+
+
 
