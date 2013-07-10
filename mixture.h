@@ -229,7 +229,6 @@ public:
         this->m_observed = true;
     }
 
-
     void observe(const mat &values)
     {
         for (size_t i = 0; i < this->size(); ++i)
@@ -237,15 +236,15 @@ public:
         this->m_observed = true;
     }
 
-
     // message to discrete variables TODO: VariableArray<Discrete>
     void messageToParent(Parameters<TDiscrArray> *v) const
     {
         assert(v->size() == this->size());
         vector<Parameters<Discrete> > &params = v->params;
-        // TODO: checkme, implement logProbabilityDensity
+        // TODO: checkme, implement logPDF
         for (size_t i = 0; i < this->size(); ++i)
             params[i].logProb = logPDF(this->m_moments[i]);
+
     }
 
     // message to mean mixtures
@@ -321,13 +320,16 @@ public:
     }
 
     // TODO: link instead of copying
-    vector<double> logPDF(const Moments<TDistr> &value) const
+    vec logPDF(const Moments<TDistr> &value) const
     {
-        vector<double> result(dims());
+        vec result(dims());
         for (size_t m = 0; m < dims(); ++m)
             result[m] = TDistr::logPDF(value, m_meanComps->moments(m), m_precComps->moments(m));
-        return result;
+        double _max = max(result);
+        double _p = sum(exp(result - _max));
+        return result - (_max + log(_p));
     }
+
 
 private:
     //! components

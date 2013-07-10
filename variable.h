@@ -210,6 +210,10 @@ public:
         params(_params)
     {}
 
+    Parameters(const vector<TParameters> &_params):
+        params(_params)
+    {}
+
     inline TParameters &operator[](size_t idx) { return params[idx]; }
     inline const TParameters &operator[](size_t idx) const { return params[idx]; }
 

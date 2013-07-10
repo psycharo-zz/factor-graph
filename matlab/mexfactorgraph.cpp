@@ -14,6 +14,7 @@ using namespace std;
 const size_t FUNCTION_IDX = 0;
 const size_t TYPE_IDX = 1;
 const size_t POINTER_IDX = 2;
+const size_t PARAM_IDX = 2;
 
 
 
@@ -54,31 +55,6 @@ void processNetwork(const std::string &functionName,
 }
 
 
-
-
-void processGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
-{
-    double *data = NULL;
-    size_t rows;
-    size_t cols;
-    mxArrayToDoubleArray(prhs[POINTER_IDX], data, rows, cols);
-
-    const size_t numPoints = cols;
-    const size_t maxNumIters = 150;
-    const size_t numMixtures = 6;
-
-    auto mixture = trainMixture(data, numPoints, numMixtures, maxNumIters);
-
-    double means[numMixtures], precs[numMixtures];
-    for (size_t m = 0; m < mixture->means->size(); ++m)
-    {
-        means[m] = mixture->means->moments(m).mean;
-        precs[m] = mixture->precs->moments(m).precision;
-    }
-    plhs[0] = toMxArray(means, 1, numMixtures);
-    plhs[1] = toMxArray(precs, 1, numMixtures);
-    plhs[2] = toMxArray(mixture->weights->moments().probs);
-}
 
 void processMVGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
@@ -126,27 +102,52 @@ void processAlgonquin(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]
 
 
 
+
 void processExample(const string &name, int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-    cout << name << endl;
-
     if (name == "univariate")
     {
+        if (nrhs-1 != POINTER_IDX+1)
+            throw std::runtime_error("processExample(): univariate");
 
+        vec points = mxArrayTo<vec>(prhs[POINTER_IDX]);
+        size_t maxNumIters = mxArrayTo<int>(prhs[POINTER_IDX+1]);
+
+        size_t iters;
+        double lbEvidence;
+
+        Parameters<Gaussian> res = trainUnivariateGaussian(points, maxNumIters, iters, lbEvidence);
+
+        plhs[0] = toMxArray(res.mean());
+        plhs[1] = toMxArray(res.precision);
+        plhs[2] = toMxArray(iters);
+        plhs[3] = toMxArray(lbEvidence);
     }
-    else if (name == "multivariate")
+    else if (name == "univariateMixture")
     {
+        vec data = mxArrayTo<vec>(prhs[PARAM_IDX]);
+        const size_t numMixtures = mxArrayTo<int>(prhs[PARAM_IDX+1]);
+        const size_t maxNumIters = mxArrayTo<int>(prhs[PARAM_IDX+2]);
 
+        auto mixture = trainUnivariateMixture(data.memptr(), data.n_elem, numMixtures, maxNumIters);
+
+        vec means(numMixtures);
+        vec precs(numMixtures);
+        for (size_t m = 0; m < mixture->means->size(); ++m)
+        {
+            means[m] = mixture->means->moments(m).mean;
+            precs[m] = mixture->precs->moments(m).precision;
+        }
+        plhs[0] = toMxArray(means);
+        plhs[1] = toMxArray(precs);
+        plhs[2] = toMxArray(mixture->weights->moments().probs);
+        plhs[3] = toMxArray(mixture->iters);
+        plhs[4] = toMxArray(mixture->evidence);
+
+        delete mixture;
     }
-    else if (name == "univariateHierarchical")
-    {
-
-    }
-}
-
-
-void processTest(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
-{
+    else
+        throw std::runtime_error("processExample(): unknown");
 }
 
 
@@ -166,21 +167,24 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         string functionName(mxArrayToString(prhs[FUNCTION_IDX]));
         string typeName(mxArrayToString(prhs[TYPE_IDX]));
 
-        // here the only possible typeName is Network
-        if (typeName == "Network")
-            processNetwork(functionName, nlhs, plhs, nrhs, prhs);
-        else if (typeName == "GMM")
-            processGMM(nlhs, plhs, nrhs, prhs);
-        else if (typeName == "MVGMM")
-            processMVGMM(nlhs, plhs, nrhs, prhs);
-        else if (typeName == "algonquin")
-            processAlgonquin(nlhs, plhs, nrhs, prhs);
-        else if (typeName == "examples")
-            processExample(functionName, nlhs, plhs, nrhs, prhs);
-        else if (typeName == "test")
-            processTest(nlhs, plhs, nrhs, prhs);
+        if (functionName == "examples")
+            processExample(typeName, nlhs, plhs, nrhs, prhs);
         else
-            mexErrMsgTxt("Unsupported operation\n");
+        {
+            // here the only possible typeName is Network
+            if (typeName == "Network")
+                processNetwork(functionName, nlhs, plhs, nrhs, prhs);
+            else if (typeName == "MVGMM")
+                processMVGMM(nlhs, plhs, nrhs, prhs);
+            else if (typeName == "algonquin")
+                processAlgonquin(nlhs, plhs, nrhs, prhs);
+            else
+                mexErrMsgTxt("Unsupported operation\n");
+        }
+    }
+    catch (const std::runtime_error &err)
+    {
+        mexErrMsgTxt(err.what());
     }
     catch (...)
     {

@@ -1,66 +1,69 @@
-function getSNRtoLogErr
+function RESULTS = getSNRtoLogErr
 % get plots with input SNR against log error
     
     P = defaultParams;
 
     % TODO: for different speech sentences and noise types
-    [speech, freqS] = wavread('bbcnews');
-    [noise, freqN] = wavread('white');
+    [speech, freq] = audioread('scholars_16.wav');
+    [noise, freq] = audioread('white.wav');
+    
     noise = repeatSignal(noise, length(speech));
 
     % applying algorithm to various snrs (in dB)
-    inSNR = -5:5:5;
+    
 
     RESULTS = struct('wiener',[], ...
                      'gerkmann',[], ...
-                     'algonquin8',[], ...
-                     'algonquin16',[], ...
-                     'algonquin32',[], ...
+                     'VB',[], ...
+                     'EM',[], ...
                      'nofiltering', []);
-
-    for i = 1:length(inSNR)
-        corrupted = addNoise(speech, noise, inSNR(i));
-        powCorrupted = powerDomain(corrupted, P);
-        powSpeech = powerDomain(speech, P);
-                        
-        estSpeech = denoiseWienerFilter(corrupted, speech, noise);
-        RESULTS.wiener(i) = logError(powerDomain(estSpeech, P),...
-                                     powerDomain(speech, P));
-
-    %     estimatedSpeech = denoiseGerkmann(noisySpeech);
-    %     RESULTS.gerkmann(i) = outputSNR(speech, estimatedSpeech);
-
-        % TODO: enable the real algonquin
-    %     estimatedSpeech = denoiseAlgonquin(noisySpeech, arr);
-        estPow = denoiseAlgonquinEM(corrupted, speech, noise, 8);
-        RESULTS.algonquin8(i) = logError(powSpeech, estPow);
+    
+    speechTraining = prepareSpeechData('data/speech-training')';
         
-        estPow = denoiseAlgonquinEM(corrupted, speech, noise, 16);
-        RESULTS.algonquin16(i) = logError(powSpeech, estPow);
-        
-        estPow = denoiseAlgonquinEM(corrupted, speech, noise, 32);
-        RESULTS.algonquin32(i) = logError(powSpeech, estPow);
-        
-        RESULTS.nofiltering(i) = logError(powSpeech, powCorrupted);
+    NUM_SPEECH = [1,8,16,24,32,40,48,56];
+    inSNR = [5];
+    for m = 1:length(NUM_SPEECH)
+        PARAMS_VB = trainAlgonquinVB(speechTraining, NUM_SPEECH(m), 10);
+        PARAMS_EM = trainAlgonquinEM(speechTraining', NUM_SPEECH(m));
+
+        for i = 1:(length(inSNR))
+            fprintf('Running for SNR:%f\n', inSNR(i));
+            corrupted = addNoise(speech, noise, inSNR(i));
+            powCorrupted = powerDomain(corrupted, P);
+            powSpeech = powerDomain(speech, P);
+
+            estSpeech = denoiseWienerFilter(corrupted, speech, noise);
+            RESULTS.wiener(m,i) = logError(powerDomain(estSpeech, P),...
+                                         powerDomain(speech, P));
+
+        %     estimatedSpeech = denoiseGerkmann(noisySpeech);
+        %     RESULTS.gerkmann(i) = outputSNR(speech, estimatedSpeech);
+
+            estPowS = denoiseAlgonquinEM(corrupted, PARAMS_VB, noise, 2, 10);
+            RESULTS.VB(i,m) = logError(powSpeech, estPowS);
+
+            estPowS = denoiseAlgonquinEM(corrupted, PARAMS_EM, noise, 2, 10);
+            RESULTS.EM(i,m) = logError(powSpeech, estPowS);
+
+            RESULTS.nofiltering(i, m) = logError(powSpeech, powCorrupted);
+        end
     end
 
-
+    RESULTS.NUM_SPEECH = NUM_SPEECH;
+    RESULTS.inSNR = inSNR;
 
     hold on;
- %     ylim([-15, 15]);
     plot(inSNR, RESULTS.wiener, '-r+');
-    plot(inSNR, RESULTS.algonquin8, '--bs');
-    plot(inSNR, RESULTS.algonquin16, '-g*');
-    plot(inSNR, RESULTS.algonquin32, '-co');
+    plot(inSNR, RESULTS.VB(:,1), '--bs');
+    plot(inSNR, RESULTS.EM(:,1), '-g*');
     plot(inSNR, RESULTS.nofiltering, '-m^');
     legend('wiener', ...
-           'algonquin 8',...
-           'algonquin 16', ...
-           'algonquin 32', ...
+           'algonquin VB 64',...
+           'algonquin EM 64',...
+           'no filtering', ...
            'Location', 'NorthEast');
-% 
-     xlabel('input SNR');
-     ylabel('logErr');
+    xlabel('input SNR');
+    ylabel('logErr');
 
 return
 

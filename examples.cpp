@@ -22,8 +22,43 @@ using namespace vmp;
 #include <cfloat>
 
 
+Parameters<Gaussian> vmp::trainUnivariateGaussian(const vec &points, size_t maxNumIters, size_t &iters, double &lbEvidence)
+{
+    auto PRIOR_MEAN = ConstGaussian(0.0);
+    auto PRIOR_PREC = ConstGamma(1e-3);
 
-vmp::MixtureNetwork *vmp::trainMixture(const double *points, size_t numPoints, size_t numMixtures, size_t maxNumIters)
+    auto mean = Gaussian(&PRIOR_MEAN, &PRIOR_PREC);
+    auto prec = Gamma(1e-3, 1e-3);
+    auto x = GaussianArray<Gaussian, Gamma>(points.size(), &mean, &prec);
+    x.observe(points);
+
+    auto sequence = make_tuple(make_pair(&x, &mean), make_pair(&x, &prec));
+
+    double lbPrev = LB_INIT;
+    iters = maxNumIters;
+    for (size_t i = 0; i < maxNumIters; ++i)
+    {
+        for_each(sequence, SendToParent());
+
+        double lbCurr = mean.logEvidence() + prec.logEvidence() + x.logEvidence();
+
+        if (abs(lbCurr - lbPrev) < EPSILON)
+        {
+            iters = i;
+            lbPrev = lbCurr;
+            break;
+        }
+        lbPrev = lbCurr;
+    }
+    lbEvidence = lbPrev;
+
+    return Parameters<Gaussian>(mean.moments().mean * prec.moments().precision,
+                                prec.moments().precision);
+}
+
+
+
+vmp::MixtureNetwork *vmp::trainUnivariateMixture(const double *points, size_t numPoints, size_t numMixtures, size_t maxNumIters)
 {
     /*
     points: 200
@@ -34,7 +69,6 @@ vmp::MixtureNetwork *vmp::trainMixture(const double *points, size_t numPoints, s
     precs = [0.520569 0.909226 0.0220358 1.01377 ]
     weights = [0.509738	0.278057	0.010094	0.202111	]
     1.01 seconds.
-
 
     points: 999
     iters:  611
@@ -56,8 +90,6 @@ vmp::MixtureNetwork *vmp::trainMixture(const double *points, size_t numPoints, s
     0.3 seconds.
      *
      */
-
-
     // initialising the resulting network
     MixtureNetwork *nwk = new MixtureNetwork;
 
@@ -70,7 +102,7 @@ vmp::MixtureNetwork *vmp::trainMixture(const double *points, size_t numPoints, s
     // distributions over parameters
     auto mean = GaussianArray<Gaussian, Gamma>(numMixtures, &meanPrior, &precPrior);
     auto prec = GammaArray(numMixtures, Parameters<Gamma>(GAMMA_PRIOR_SHAPE, GAMMA_PRIOR_RATE));
-    auto data = MoGArray<>(numPoints, &mean, &prec, &selector);
+    auto data = MoGArray<Gaussian, Gaussian, Gamma>(numPoints, &mean, &prec, &selector);
 
     // messages
     data.observe(points);
@@ -79,26 +111,44 @@ vmp::MixtureNetwork *vmp::trainMixture(const double *points, size_t numPoints, s
                                make_pair(&data, &prec),
                                make_pair(&data, &selector),
                                make_pair(&selector, &dirichlet));
+//    auto meanMsg = mean.addChild(&data);
+//    auto precMsg = prec.addChild(&data);
+//    auto selectorMsg = selector.addChild(&data);
+    auto dirMsg = dirichlet.addChild(&selector);
+
+    selector.messageToParent(dirMsg);
+    dirichlet.updatePosterior();
 
     auto network = make_tuple(&data, &mean, &prec, &selector, &dirichlet);
 
     // running inference
-    for (size_t i = 0; i < maxNumIters; i++)
+    for (size_t i = 0; i < 100; i++)
     {
         for_each(sequence, SendToParent());
-
         AddEvidence lbCurr;
         for_each(network, lbCurr);
 
-        if (lbCurr.value - nwk->evidence <= EPSILON)
-        {
-            nwk->iters = i;
-            nwk->evidence = lbCurr.value;
-            break;
-        }
+        double lb = mean.logEvidence() +
+                    prec.logEvidence() +
+                    dirichlet.logEvidence() +
+                    selector.logEvidence() +
+                    data.logEvidence();
+
+        cout << lb - nwk->evidence << endl;
+//        cout << mean.logEvidence() + prec.logEvidence() + dirichlet.logEvidence() << endl;
+
+//        if (lbCurr.value - nwk->evidence <= EPSILON)
+//        {
+//            nwk->iters = i;
+//            nwk->evidence = lbCurr.value;
+//            break;
+//        }
         nwk->evidence = lbCurr.value;
         nwk->iters = i;
     }
+
+    for (size_t m = 0; m < numMixtures; ++m)
+        cout << mean.moments(m).mean << endl;
 
     nwk->meanPrior = new ConstGaussian(GAUSS_PRIOR_MEAN);
     nwk->precPrior = new ConstGamma(GAUSS_PRIOR_PREC);
@@ -127,7 +177,6 @@ double computeLB(const double v0, const mat &W0, const vec &m0, const double bet
     // data
     double lbData = 0.0;
 
-
     // EpX = 0.5*dot(nk,ElogLambda-d./kappa-v.*trSW-v.*xbarmWxbarm-d*log(2*pi));
     for (size_t m = 0; m < M; ++m)
     {
@@ -148,6 +197,13 @@ double computeLB(const double v0, const mat &W0, const vec &m0, const double bet
                         -(dot(Du, logPi) + gammaln(sum(Du)) - sum(gammalnv(Du)));
     // Discrete: responsibilities
     double lbResp = dot(counts, logPi) - dot(resp, logResp);
+
+
+    //    temp = temp + D*(beta_0/beta(k)-log(beta_0/beta(k))-v(k)-1) + ...
+    //                  beta_0*v(k)*(mean(:,k)-mean_0)'*W(:,:,k)*(mean(:,k)-mean_0) + ...
+    //                  v(k)*trace(invW_0*W(:,:,k)) + ...
+    //                  (v(k)-v_0)*log(lambda_eff(k));
+
 
     // Gaussian: mean prior
     lp = 0;
@@ -351,9 +407,7 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
         double lbCurr = computeLB(W_DEGREES_PRIOR, W_SCALE_PRIOR, M_MEAN_PRIOR, M_BETA_PRIOR, DIRICHLET_PRIOR,
                                   dirU, Wscale, Wdegrees, Mmean, Mbeta, Emeans, Esigmas, logDetPrec, Eprecs, resp, logResp, logPi, counts);
 
-        cout << lbCurr - lbPrev << endl;
-
-        if (fabs(lbCurr - lbPrev) < EPSILON)
+        if (fabs(lbCurr - lbPrev) < EPSILON && iter > MIN_NUM_ITERS)
         {
             lbEvidence = lbCurr;
             numIters = iter;
@@ -370,13 +424,6 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
     _means = Emeans;
     _sigmas = Esigmas;
 }
-
-
-
-
-
-
-
 
 
 
@@ -567,6 +614,42 @@ void vmp::testLogSum()
 
 
 
+
+
+void vmp::testDirichlet()
+{
+    const size_t numPoints = 100;
+    const size_t numDims = 5;
+
+    const size_t maxNumIters = 10;
+
+    auto dirichlet = Dirichlet(numDims, DIRICHLET_PRIOR);
+
+    auto points = randomv(numPoints, 5);
+    for (size_t i = 0; i < numPoints; ++i)
+        points[i] = i % 3;
+
+    auto discrete = DiscreteArray(numPoints, &dirichlet);
+    discrete.observe(points);
+
+    auto msg = dirichlet.addChild(&discrete);
+
+    for (size_t i = 0; i < maxNumIters; ++i)
+    {
+        discrete.messageToParent(msg);
+        dirichlet.updatePosterior();
+
+        cout << discrete.logEvidence() + dirichlet.logEvidence() << endl;
+
+        cout << exp(dirichlet.moments().logProb) << endl;
+    }
+
+
+
+
+
+
+}
 
 
 

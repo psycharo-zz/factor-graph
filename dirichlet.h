@@ -135,16 +135,9 @@ public:
     {
         assert(!isObserved());
         m_params = parametersFromParents();
-
         for (MessageIt it = m_messages.begin(); it != m_messages.end(); ++it)
             m_params += it->second;
         updateMoments();
-
-        cout << m_params << endl;
-        cout << m_moments << endl;
-        cout << exp(m_moments.logProb).t() << endl;
-        cout << endl;
-
     }
 
     //! get the number of dimensions

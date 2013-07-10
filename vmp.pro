@@ -50,7 +50,7 @@ OBJECTS_DIR = ./.obj
 
 
 
-LIBS += -L./libs/lib -lprofiler -larmadillo -L/opt/intel/lib/intel64/ /opt/intel/mkl/tools/builder/mkl_custom.so -liomp5
+LIBS += -L./libs/lib -lprofiler -larmadillo -L/opt/intel/lib/intel64/ /opt/intel/mkl/tools/builder/mkl_custom.so -liomp5 -lgsl -lgslcblas
 
 
 

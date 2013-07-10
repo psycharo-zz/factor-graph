@@ -154,21 +154,18 @@ public:
     //! override Variable
     double logNorm() const
     {
-        return parameters().shape * log(parameters().rate) - gammaln(parameters().shape);
+        return Gamma::logNorm(parameters());
     }
 
     //! override Variable
     double logNormParents() const
     {
 //        Parameters<Gamma> params = parametersFromParents();
-        return m_shapeMsg * log(m_rateMsg) - gammaln(m_shapeMsg);
+        return Gamma::logNormParents(m_shapeMsg, m_rateMsg);
     }
 
     //! override ContinuousVariable
-    double logPDF(const TMoments &/*ms*/) const
-    {
-        throw NotImplementedException;
-    }
+    double logPDF(const TMoments &/*ms*/) const { throw NotImplementedException; }
 
     //! override Variable. simply a constant for gamma distribution
     inline TParameters parametersFromParents() const

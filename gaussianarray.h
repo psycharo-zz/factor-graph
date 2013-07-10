@@ -41,6 +41,13 @@ public:
         m_observed = true;
     }
 
+    inline void observe(const vec &values)
+    {
+        for (size_t i = 0; i < size(); ++i)
+            m_moments[i] = TBaseMoments::fromValue(values[i]);
+        m_observed = true;
+    }
+
     //! override VariableArray. implementations below
     virtual double logNormParents() const;
 
@@ -131,7 +138,7 @@ inline void GaussianArray<Gaussian, Gamma>::messageToParent(Parameters<Gamma> *p
     params->shape = 0.5 * size();
     params->rate = 0;
     for (size_t i = 0; i < size(); ++i)
-        params->rate += (sqr(moments(i).mean) - 2 * moments(i).mean2 * msg.mean + msg.mean2);
+        params->rate += (moments(i).mean2 - 2 * moments(i).mean * msg.mean + msg.mean2);
     params->rate *= 0.5;
 }
 
@@ -157,7 +164,7 @@ inline void GaussianArray<Gaussian, VariableArray<Gamma> >::messageToParent(Vari
     for (size_t i = 0; i < size(); ++i)
     {
         v->params[i].shape = 0.5;
-        v->params[i].rate = 0.5 * (sqr(moments(i).mean) - 2 * moments(i).mean2 * msg.mean + msg.mean2);
+        v->params[i].rate = 0.5 * (moments(i).mean2 - 2 * moments(i).mean * msg.mean + msg.mean2);
     }
 }
 
@@ -184,7 +191,7 @@ inline void GaussianArray<VariableArray<Gaussian>, VariableArray<Gamma> >::messa
     for (size_t i = 0; i < size(); ++i)
     {
         v->params[i].shape = 0.5;
-        v->params[i].rate = 0.5 * (sqr(moments(i).mean) - 2 * moments(i).mean2 * msgs[i].mean + msgs[i].mean2);
+        v->params[i].rate = 0.5 * (moments(i).mean2 - 2 * moments(i).mean * msgs[i].mean + msgs[i].mean2);
     }
 }
 

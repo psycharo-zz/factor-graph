@@ -20,6 +20,9 @@ const double GAUSS_PRIOR_MEAN = 0;
 const double GAUSS_PRIOR_PREC = 1e-3;
 
 
+const size_t MIN_NUM_ITERS = 50;
+
+
 // TODO: use tuple/real network instead
 // TODO: at least parameterize using templates
 struct MixtureNetwork
@@ -69,8 +72,12 @@ struct MixtureNetwork
     size_t iters;
 };
 
+
+//! fitting a guassian from data
+Parameters<Gaussian> trainUnivariateGaussian(const vec &points, size_t maxNumIters, size_t &iters, double &lbEvidence);
+
 //! univariate mixture training
-MixtureNetwork *trainMixture(const double *points, size_t numPoints, size_t numMixtures, size_t maxNumIters);
+MixtureNetwork *trainUnivariateMixture(const double *points, size_t numPoints, size_t numMixtures, size_t maxNumIters);
 
 
 
@@ -132,8 +139,15 @@ void trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
 // various tests
 void testLogPDF();
 void testMVMoG();
-void testSpeechGMM(const vector<double> &bin);
 void testLogSum();
+
+
+
+void testDirichlet();
+
+
+
+
 
 
 

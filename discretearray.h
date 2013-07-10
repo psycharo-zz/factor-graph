@@ -6,7 +6,8 @@
 #include <dirichlet.h>
 
 
-namespace vmp {
+namespace vmp
+{
 
 /**
  * the vector version. TParent can be Dirichlet or Vector<Dirichlet> ??
@@ -20,6 +21,11 @@ public:
         m_parent(_parent)
     {}
 
+    DiscreteArray(const TParameters &_params, Dirichlet *_parent):
+        VariableArray(_params),
+        m_parent(_parent)
+    {}
+
     //! get the number of dimensions
     inline size_t dims() const { return m_parent->dims(); }
 
@@ -30,7 +36,7 @@ public:
         m_observed = true;
         for (size_t i = 0; i < values.size(); ++i)
         {
-            m_moments[i].probs = zeros(dims(), 0);
+            m_moments[i].probs = zeros(dims(), 1);
             m_moments[i].probs[values[i]] = 1.0;
         }
     }
@@ -54,21 +60,18 @@ public:
         }
     }
 
-    //! override VariableArray
-    void updatePosterior()
+    // NOT zero, since when
+    double logNorm() const
     {
-        VariableArray<Discrete>::updatePosterior();
-//        for (size_t i = 0; i < size(); ++i)
-//        {
-//            cout << m_parameters[i].logProb << endl;
-//            m_parameters[i].logProb -= lognorm(m_parameters[i].logProb);
-//        }
-        for (size_t i = 0; i < 2; ++i)
-            cout << exp(m_parameters[i].logProb).t() << endl;
-//        updateMoments();
+        double res = 0;
+        for (size_t i = 0; i < size(); ++i)
+        {
+            double _max = max(m_parameters[i].logProb);
+            double _p = sum(exp(m_parameters[i].logProb - _max));
+            res += log(_p) + _max;
+        }
+        return -res;
     }
-
-    double logNorm() const { return 0; }
     double logNormParents() const { return 0; }
 
 
@@ -86,9 +89,6 @@ public:
         params->U = zeros(dims(), 1);
         for (size_t i = 0; i < size(); ++i)
             params->U += moments(i).probs;
-
-        for (size_t i = 0; i < 2; ++i)
-            cout << moments(i).probs.t() << endl;
     }
 
 
@@ -96,6 +96,8 @@ private:
     // dirichlet
     Dirichlet *m_parent;
 };
+
+
 
 } // namespace vmp
 

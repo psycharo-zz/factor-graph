@@ -40,6 +40,11 @@ inline mxArray *toMxArray(double value)
     return mxCreateDoubleScalar(value);
 }
 
+inline mxArray *toMxArray(size_t value)
+{
+    return mxCreateDoubleScalar(value);
+}
+
 inline mxArray *toMxArray(void *ptr)
 {
     mxArray *result = mxCreateNumericMatrix(1, 1, mxUINT64_CLASS, mxREAL);
