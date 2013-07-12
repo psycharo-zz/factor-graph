@@ -22,7 +22,7 @@ using namespace vmp;
 #include <cfloat>
 
 
-Parameters<Gaussian> vmp::trainUnivariateGaussian(const vec &points, size_t maxNumIters, size_t &iters, double &lbEvidence)
+Parameters<Gaussian> vmp::trainUnivariateGaussian(const vec &points, size_t maxNumIters, size_t &iters, vec &lbEvidence)
 {
     auto PRIOR_MEAN = ConstGaussian(0.0);
     auto PRIOR_PREC = ConstGamma(1e-3);
@@ -36,6 +36,7 @@ Parameters<Gaussian> vmp::trainUnivariateGaussian(const vec &points, size_t maxN
 
     double lbPrev = LB_INIT;
     iters = maxNumIters;
+    vector<double> lbs;
     for (size_t i = 0; i < maxNumIters; ++i)
     {
         for_each(sequence, SendToParent());
@@ -49,8 +50,10 @@ Parameters<Gaussian> vmp::trainUnivariateGaussian(const vec &points, size_t maxN
             break;
         }
         lbPrev = lbCurr;
+        lbs.push_back(lbCurr);
     }
-    lbEvidence = lbPrev;
+
+    lbEvidence = lbs;
 
     return Parameters<Gaussian>(mean.moments().mean * prec.moments().precision,
                                 prec.moments().precision);
@@ -60,37 +63,6 @@ Parameters<Gaussian> vmp::trainUnivariateGaussian(const vec &points, size_t maxN
 
 vmp::MixtureNetwork *vmp::trainUnivariateMixture(const double *points, size_t numPoints, size_t numMixtures, size_t maxNumIters)
 {
-    /*
-    points: 200
-    iters:  466
-    mixtures:4
-    evidence:-552.123
-    means = [4.22319 -3.46179 -6.42874 0.00133329 ]
-    precs = [0.520569 0.909226 0.0220358 1.01377 ]
-    weights = [0.509738	0.278057	0.010094	0.202111	]
-    1.01 seconds.
-
-    points: 999
-    iters:  611
-    mixtures:4
-    evidence:-2546.75
-    means = [-3.98751 0.638693 3.99423 0 ]
-    precs = [0.265769 0.197848 1.0533 1 ]
-    weights = [0.255284	0.319829	0.424326	0.000560864	]
-    7.06 seconds.
-
-
-    points: 999
-    iters:  455
-    mixtures:4
-    evidence:-2557.95
-    means = [0.442826 -3.69693 3.92595 0 ]
-    precs = [0.421325 0.246173 0.92228 1 ]
-    weights = [0.209986	0.303197	0.486256	0.000560864	]
-    0.3 seconds.
-     *
-     */
-    // initialising the resulting network
     MixtureNetwork *nwk = new MixtureNetwork;
 
     auto dirichlet = Dirichlet(numMixtures, DIRICHLET_PRIOR);
@@ -111,9 +83,6 @@ vmp::MixtureNetwork *vmp::trainUnivariateMixture(const double *points, size_t nu
                                make_pair(&data, &prec),
                                make_pair(&data, &selector),
                                make_pair(&selector, &dirichlet));
-//    auto meanMsg = mean.addChild(&data);
-//    auto precMsg = prec.addChild(&data);
-//    auto selectorMsg = selector.addChild(&data);
     auto dirMsg = dirichlet.addChild(&selector);
 
     selector.messageToParent(dirMsg);
@@ -122,33 +91,24 @@ vmp::MixtureNetwork *vmp::trainUnivariateMixture(const double *points, size_t nu
     auto network = make_tuple(&data, &mean, &prec, &selector, &dirichlet);
 
     // running inference
-    for (size_t i = 0; i < 100; i++)
+    vector<double> lbs;
+    lbs.push_back(LB_INIT);
+    for (size_t i = 0; i < maxNumIters; i++)
     {
         for_each(sequence, SendToParent());
         AddEvidence lbCurr;
         for_each(network, lbCurr);
 
-        double lb = mean.logEvidence() +
-                    prec.logEvidence() +
-                    dirichlet.logEvidence() +
-                    selector.logEvidence() +
-                    data.logEvidence();
-
-        cout << lb - nwk->evidence << endl;
-//        cout << mean.logEvidence() + prec.logEvidence() + dirichlet.logEvidence() << endl;
-
-//        if (lbCurr.value - nwk->evidence <= EPSILON)
-//        {
-//            nwk->iters = i;
-//            nwk->evidence = lbCurr.value;
-//            break;
-//        }
-        nwk->evidence = lbCurr.value;
+        if (lbCurr.value - lbs[i] <= EPSILON)
+        {
+            nwk->iters = i;
+            lbs.push_back(lbCurr.value);
+            break;
+        }
         nwk->iters = i;
+        lbs.push_back(lbCurr.value);
     }
-
-    for (size_t m = 0; m < numMixtures; ++m)
-        cout << mean.moments(m).mean << endl;
+    nwk->evidence = vec(lbs.data()+1, lbs.size()-1);
 
     nwk->meanPrior = new ConstGaussian(GAUSS_PRIOR_MEAN);
     nwk->precPrior = new ConstGamma(GAUSS_PRIOR_PREC);

@@ -114,7 +114,7 @@ void processExample(const string &name, int nlhs, mxArray *plhs[], int nrhs, con
         size_t maxNumIters = mxArrayTo<int>(prhs[POINTER_IDX+1]);
 
         size_t iters;
-        double lbEvidence;
+        vec lbEvidence;
 
         Parameters<Gaussian> res = trainUnivariateGaussian(points, maxNumIters, iters, lbEvidence);
 

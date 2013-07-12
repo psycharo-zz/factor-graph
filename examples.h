@@ -32,7 +32,6 @@ struct MixtureNetwork
         weights(NULL),
         meanPrior(NULL), precPrior(NULL),
         means(NULL), precs(NULL),
-        evidence(LB_INIT),
         iters(0)
     {}
 
@@ -68,13 +67,14 @@ struct MixtureNetwork
     ConstGamma *precPrior;
     VariableArray<Gaussian> *means;
     VariableArray<Gamma> *precs;
-    double evidence;
+    vec evidence;
+
     size_t iters;
 };
 
 
 //! fitting a guassian from data
-Parameters<Gaussian> trainUnivariateGaussian(const vec &points, size_t maxNumIters, size_t &iters, double &lbEvidence);
+Parameters<Gaussian> trainUnivariateGaussian(const vec &points, size_t maxNumIters, size_t &iters, vec &lbEvidence);
 
 //! univariate mixture training
 MixtureNetwork *trainUnivariateMixture(const double *points, size_t numPoints, size_t numMixtures, size_t maxNumIters);
