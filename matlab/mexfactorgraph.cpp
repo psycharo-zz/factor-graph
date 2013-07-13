@@ -69,13 +69,15 @@ void processMVGMM(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     vec weights;
     double evidence;
     size_t iters;
+    mat resps;
     trainMVMixtureVB(POINTS, numMixtures, maxNumIters, assignments, centers,
-                     means, sigmas, weights, evidence, iters);
+                     means, sigmas, weights, evidence, iters, resps);
     plhs[0] = toMxArray(means);
     plhs[1] = toMxArray(sigmas);
     plhs[2] = toMxArray(weights);
     plhs[3] = toMxArray(evidence);
-    plhs[4] = toMxArray((double)iters);
+    plhs[4] = toMxArray(iters);
+    plhs[5] = toMxArray(resps);
 }
 
 

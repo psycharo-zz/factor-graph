@@ -122,6 +122,11 @@ vmp::MixtureNetwork *vmp::trainUnivariateMixture(const double *points, size_t nu
 
 
 
+
+
+
+
+
 double computeLB(const double v0, const mat &W0, const vec &m0, const double beta0, const double u0,
                  const vec &Du, const cube &Wscale, const vec &Wdegrees, const mat &Mmean, const vec &Mbeta,
                  const mat &Emean, const cube &Esigma,
@@ -208,7 +213,8 @@ double computeLB(const double v0, const mat &W0, const vec &m0, const double bet
 void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
                            const vec &initAssignments, const mat &initMeans,
                            mat &_means, cube &_sigmas, vec &_weights,
-                           double &lbEvidence, size_t &numIters)
+                           double &lbEvidence, size_t &numIters,
+                           mat &_resps)
 {
     const size_t numPoints = POINTS.n_rows;
 
@@ -322,7 +328,7 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
             // wishart
             vec deltaM = (Emeans.col(m) - M_MEAN_PRIOR);
 
-            Wscale.slice(m) = sympd(W_SCALE_PRIOR +
+            Wscale.slice(m) = symmatu(W_SCALE_PRIOR +
                       counts(m) * Esigmas.slice(m) +
                       counts(m) * M_BETA_PRIOR * deltaM * deltaM.t() / (counts(m) + M_BETA_PRIOR));
             Wdegrees(m) = W_DEGREES_PRIOR + counts(m);
@@ -364,17 +370,17 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
             logResp.col(i) -= _max + log(sum(_p));
         }
 
-        double lbCurr = computeLB(W_DEGREES_PRIOR, W_SCALE_PRIOR, M_MEAN_PRIOR, M_BETA_PRIOR, DIRICHLET_PRIOR,
-                                  dirU, Wscale, Wdegrees, Mmean, Mbeta, Emeans, Esigmas, logDetPrec, Eprecs, resp, logResp, logPi, counts);
+//        double lbCurr = computeLB(W_DEGREES_PRIOR, W_SCALE_PRIOR, M_MEAN_PRIOR, M_BETA_PRIOR, DIRICHLET_PRIOR,
+//                                  dirU, Wscale, Wdegrees, Mmean, Mbeta, Emeans, Esigmas, logDetPrec, Eprecs, resp, logResp, logPi, counts);
 
-        if (fabs(lbCurr - lbPrev) < EPSILON && iter > MIN_NUM_ITERS)
-        {
-            lbEvidence = lbCurr;
-            numIters = iter;
-            break;
-        }
+//        if (fabs(lbCurr - lbPrev) < EPSILON && iter > MIN_NUM_ITERS)
+//        {
+//            lbEvidence = lbCurr;
+//            numIters = iter;
+//            break;
+//        }
 
-        lbPrev = lbCurr;
+//        lbPrev = lbCurr;
     }
     lbEvidence = lbPrev;
 
@@ -383,6 +389,7 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
     _weights = Eweights;
     _means = Emeans;
     _sigmas = Esigmas;
+    _resps = resp;
 }
 
 
@@ -536,7 +543,7 @@ void vmp::testMVMoG()
     mat means;
     cube sigmas;
     vec weights;
-
+    mat resps;
     size_t iter;
     double lb;
 
@@ -546,7 +553,9 @@ void vmp::testMVMoG()
 
     mat initMeans(dims, numMixtures);
 
-    trainMVMixtureVB(POINTS, numMixtures, maxIters, assignments, initMeans, means, sigmas, weights, lb, iter);
+    trainMVMixtureVB(POINTS, numMixtures, maxIters, assignments, initMeans,
+                     means, sigmas, weights, lb, iter,
+                     resps);
 
     cout << means << endl;
     cout << sigmas << endl;
