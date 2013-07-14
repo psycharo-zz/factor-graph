@@ -101,10 +101,9 @@ public:
 
 
 
-inline double operator*(const Parameters<Wishart> &params, const Moments<Wishart> &moments)
+inline double operator*(const Parameters<Wishart> &ps, const Moments<Wishart> &ms)
 {
-    throw NotImplementedException;
-    return 0;
+    return -0.5 * trace(ms.prec * ps.scale) + 0.5 * ps.degrees * ms.logDet;
 }
 
 
@@ -122,16 +121,25 @@ public:
     inline virtual TParameters parametersFromParents() const { return m_prior; }
 
     //! compute the log-normalization based from parents
-    virtual double logNormParents() const { throw NotImplementedException; }
+    virtual double logNormParents() const { return logNormParents(m_prior.degrees, m_prior.scale); }
 
     //! compute the log-probability function
     virtual double logPDF(const TMoments &moments) const { throw NotImplementedException; }
 
-    static inline double logNorm(const TParameters &params) { throw NotImplementedException; }
+    static inline double logNorm(const TParameters &ps)
+    {
+        const double n = ps.degrees;
+        const double D = ps.scale.n_rows;
+        const mat &W = ps.scale;
+        return 0.5*n*logdet(W) - gammaln2(0.5*n, D);
+    }
 
     static inline double logNormParents(double degrees, const mat &scale)
     {
-        throw NotImplementedException;
+        const double D = scale.n_rows;
+        const double n = degrees;
+        const mat &W = scale;
+        return 0.5*n*logdet(W) - 0.5*n*D*M_LN2 - gammaln2(0.5*n, D);
     }
 
 protected:

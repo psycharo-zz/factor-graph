@@ -370,17 +370,17 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
             logResp.col(i) -= _max + log(sum(_p));
         }
 
-//        double lbCurr = computeLB(W_DEGREES_PRIOR, W_SCALE_PRIOR, M_MEAN_PRIOR, M_BETA_PRIOR, DIRICHLET_PRIOR,
-//                                  dirU, Wscale, Wdegrees, Mmean, Mbeta, Emeans, Esigmas, logDetPrec, Eprecs, resp, logResp, logPi, counts);
+        double lbCurr = computeLB(W_DEGREES_PRIOR, W_SCALE_PRIOR, M_MEAN_PRIOR, M_BETA_PRIOR, DIRICHLET_PRIOR,
+                                  dirU, Wscale, Wdegrees, Mmean, Mbeta, Emeans, Esigmas, logDetPrec, Eprecs, resp, logResp, logPi, counts);
 
-//        if (fabs(lbCurr - lbPrev) < EPSILON && iter > MIN_NUM_ITERS)
-//        {
-//            lbEvidence = lbCurr;
-//            numIters = iter;
-//            break;
-//        }
+        if (fabs(lbCurr - lbPrev) < EPSILON && iter > MIN_NUM_ITERS)
+        {
+            lbEvidence = lbCurr;
+            numIters = iter;
+            break;
+        }
 
-//        lbPrev = lbCurr;
+        lbPrev = lbCurr;
     }
     lbEvidence = lbPrev;
 
@@ -415,7 +415,7 @@ void vmp::trainMultivariateGaussian(const mat &POINTS, size_t maxNumiters, vec &
     auto msgMean = mean.addChild(&data);
     auto msgPrec = prec.addChild(&data);
 
-    for (size_t i = 0; i < 2; ++i)
+    for (size_t i = 0; i < 4; ++i)
     {
         data.messageToParent(msgMean);
         mean.updatePosterior();
@@ -423,9 +423,11 @@ void vmp::trainMultivariateGaussian(const mat &POINTS, size_t maxNumiters, vec &
         data.messageToParent(msgPrec);
         prec.updatePosterior();
 
-        double a = mean.logEvidence();
 
-        cout << a << endl;
+        cout << prec.logEvidence() << endl;
+
+//        cout << data.logEvidence() + mean.logEvidence() << endl;
+
     }
 
     _mean = mean.moments().mean;

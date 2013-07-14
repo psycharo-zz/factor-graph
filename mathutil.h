@@ -82,6 +82,7 @@ inline double digamma_d(double x, double dims)
 }
 
 
+
 namespace vmp
 {
 

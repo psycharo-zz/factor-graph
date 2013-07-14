@@ -343,17 +343,25 @@ inline void MVGaussianArray<MVGaussian, Wishart>::messageToParent(Parameters<Wis
 
 
 // lb-related implementations
-template<>
+template <>
 inline double MVGaussianArray<MVGaussian, Wishart>::logNormParents() const
 {
-    throw NotImplementedException;
+    double result = 0.0;
+    for (size_t i = 0; i < size(); ++i)
+        result += MVGaussian::logNormParents(m_meanParent->moments(), m_precParent->moments());
+    return result;
 }
 
-template<>
+
+template <>
 inline double MVGaussianArray<VariableArray<MVGaussian>, VariableArray<Wishart> >::logNormParents() const
 {
-    throw NotImplementedException;
+    double result = 0.0;
+    for (size_t i = 0; i < size(); ++i)
+        result += MVGaussian::logNormParents(m_meanParent->moments(i), m_precParent->moments(i));
+    return result;
 }
+
 
 
 
