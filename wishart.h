@@ -103,7 +103,7 @@ public:
 
 inline double operator*(const Parameters<Wishart> &ps, const Moments<Wishart> &ms)
 {
-    return -0.5 * trace(ms.prec * ps.scale) + 0.5 * ps.degrees * ms.logDet;
+    return -0.5 * trace(ps.scale * ms.prec) + 0.5 * ps.degrees * ms.logDet;
 }
 
 
@@ -131,7 +131,7 @@ public:
         const double n = ps.degrees;
         const double D = ps.scale.n_rows;
         const mat &W = ps.scale;
-        return 0.5*n*logdet(W) - gammaln2(0.5*n, D);
+        return 0.5*n*logdet(W) - gammaln2(0.5*n,D);
     }
 
     static inline double logNormParents(double degrees, const mat &scale)

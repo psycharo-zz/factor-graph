@@ -474,6 +474,8 @@ void vmp::trainMultivariateMixture(const mat &POINTS, size_t numMixtures, size_t
     auto msgDiscr = selector.addChild(&data);
     auto msgDir = dirichlet.addChild(&selector);
 
+    double lbPrev = LB_INIT;
+
     for (size_t iter = 0; iter < maxNumIters; ++iter)
     {
         data.messageToParent(msgPrec);
@@ -487,6 +489,22 @@ void vmp::trainMultivariateMixture(const mat &POINTS, size_t numMixtures, size_t
 
         selector.messageToParent(msgDir);
         dirichlet.updatePosterior();
+
+        double lbCurr = mean.logEvidence() +
+                        prec.logEvidence() +
+                        selector.logEvidence() +
+                        dirichlet.logEvidence() +
+                        data.logEvidence();
+
+        cout << lbCurr - lbPrev << "\t" << lbCurr << endl;
+//        cout << lbCurr << endl;
+
+        lbPrev = lbCurr;
+
+//        cout <<  << endl;
+//        cout << prec.logEvidence() << endl;
+//        cout << selector.logEvidence() << endl;
+//        cout << data.logEvidence() << endl;
     }
 
     _weights = exp(dirichlet.moments().logProb);
@@ -637,14 +655,16 @@ void vmp::testMVMoG()
 
 void vmp::testMVGaussian()
 {
-    size_t numPoints = 500;
+    size_t numPoints = 1000;
     size_t maxIters = 700;
-    auto POINTS = mvrandn(numPoints, {4,4}, {2,2});
+    auto POINTS = mvrandn(numPoints, {4,4,1,4,3}, {2,2,1,2,3});
 
     vec mean;
     mat sigma;
 
     trainMultivariateGaussian(POINTS, numPoints, mean, sigma);
+
+    cout << mean << endl;
 
 }
 

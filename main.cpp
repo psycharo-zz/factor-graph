@@ -38,8 +38,8 @@ int main()
 {
     using namespace vmp;
 
-//    testMVMoG();
-    testMVGaussian();
+    testMVMoG();
+//    testMVGaussian();
 
 //    Parameters<Wishart> p(3, 1e-2 * eye(2,2));
 //    Moments<Wishart> m(p);
