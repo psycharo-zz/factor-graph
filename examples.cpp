@@ -415,28 +415,21 @@ void vmp::trainMultivariateGaussian(const mat &POINTS, size_t maxNumiters, vec &
     auto msgMean = mean.addChild(&data);
     auto msgPrec = prec.addChild(&data);
 
-    cout << prec.parameters().scale << endl;
+    for (size_t i = 0; i < 2; ++i)
+    {
+        data.messageToParent(msgMean);
+        mean.updatePosterior();
 
-    data.messageToParent(msgPrec);
-    prec.updatePosterior();
+        data.messageToParent(msgPrec);
+        prec.updatePosterior();
 
-    cout << prec.parameters().scale << endl;
+        double a = mean.logEvidence();
 
-
-
-//    for (size_t i = 0; i < 2; ++i)
-//    {
-//        data.messageToParent(msgMean);
-//        mean.updatePosterior();
-
-//        data.messageToParent(msgPrec);
-//        prec.updatePosterior();
-//    }
+        cout << a << endl;
+    }
 
     _mean = mean.moments().mean;
     _sigma = prec.moments().prec;
-
-    cout << _sigma << endl;
 
 }
 
@@ -651,8 +644,6 @@ void vmp::testMVGaussian()
 
     trainMultivariateGaussian(POINTS, numPoints, mean, sigma);
 
-//    cout << mean << endl;
-//    cout << inv(sigma) << endl;
 }
 
 

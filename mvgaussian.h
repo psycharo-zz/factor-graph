@@ -100,9 +100,12 @@ public:
 
 inline double operator*(const Parameters<MVGaussian> &ps, const Moments<MVGaussian> &ms)
 {
-    throw NotImplementedException;
-    return 0;
+//    return as_scalar(-0.5 * ms.mean.t() * ps.prec * ms.mean + ps.precMean.t() * ms.mean);
+    return -0.5 * trace(ms.mean2 * ps.prec) + as_scalar(ps.precMean.t() * ms.mean);
 }
+
+
+
 
 
 class MVGaussian : public Variable<MVGaussian>,
@@ -135,7 +138,7 @@ public:
 
 
     //! override Variable
-    virtual double logNormParents() const { throw NotImplementedException; }
+    virtual double logNormParents() const { return logNormParents(m_meanParent->moments(), m_precParent->moments()); }
     //! override Variable
     virtual double logPDF(const TMoments &moments) const { throw NotImplementedException; }
 
@@ -169,11 +172,19 @@ public:
         return TParameters(precMsg.prec * meanMsg.mean, precMsg.prec);
     }
 
-    inline static double logNorm(const TParameters &ps) { throw NotImplementedException; }
+    inline static double logNorm(const TParameters &ps)
+    {
+        vec mu = inv(ps.prec) * ps.precMean;
+        double logDet = logdet(ps.prec);
+        return as_scalar(-0.5 * mu.t() * ps.prec * mu) + 0.5 * logDet;
+    }
 
     inline static double logNormParents(const Moments<MVGaussian> &meanMsg, const Moments<Wishart> &precMsg)
     {
-        throw NotImplementedException;
+        auto &mu2 = meanMsg.mean2;
+        auto &prec = precMsg.prec;
+        auto &logDet = precMsg.logDet;
+        return -0.5 * trace(mu2 * prec) + 0.5 * logDet;
     }
 
     inline static double logPDF(const TMoments &value, const Moments<MVGaussian> &meanMsg, const Moments<Wishart> &precMsg)
