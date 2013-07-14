@@ -42,8 +42,6 @@ xlabel('Variational likelihood')
 ylabel('Number of iterations')
 ylim([min(lb)-1, max(lb)+1])
 
-
-
 return
 
 
@@ -53,9 +51,6 @@ function [means, covs, weights, iters, lbEvidence] = trainMixture_VMP(data, numM
     covs = reshape(1./precs, [1,1,numMixtures]);
 return
 
-function [means, covs, weights] = trainMixture_EM(data, numMixtures)
-    error('not implemented');
-return
 
 
 

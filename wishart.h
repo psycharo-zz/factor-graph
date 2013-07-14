@@ -73,7 +73,7 @@ public:
     }
 
     Moments(const mat &_prec, double _logDet):
-        prec(symmatu(_prec)),
+        prec(sympd(_prec)),
         logDet(_logDet)
     {}
 
@@ -86,8 +86,8 @@ public:
 
     inline static void fromParameters(Moments &moments, const Parameters<Wishart> &params)
     {
-        const size_t K = moments.dims();
-        const mat phi0 = symmatu(-0.5 * params.scale);
+        const size_t K = params.dims();
+        const mat phi0 = sympd(-0.5 * params.scale);
         const double phi1 = 0.5 * params.degrees;
 
         moments.prec = -phi1 * inv(phi0);
@@ -115,7 +115,7 @@ public:
     // TODO: implement fake parents for wishart distribution?
     Wishart(double _degrees, const mat &_scale):
         Variable(TParameters(_degrees, _scale)),
-        m_prior(_degrees, symmatu(_scale))
+        m_prior(_degrees, sympd(_scale))
     {}
 
     //! override Variable
@@ -169,25 +169,6 @@ public:
         VariableArray<Wishart>(_prior),
         m_prior(_prior)
     {}
-
-
-    void updatePosterior()
-    {
-        for (size_t i = 0; i < size(); ++i)
-            m_parameters[i] = parametersFromParents(i);
-
-        // going through all the messages
-        for (MessageIt it = m_messages.begin(); it != m_messages.end(); ++it)
-        {
-            const TParameters &params = it->second;
-            for (size_t i = 0; i < size(); ++i)
-                m_parameters[i] += params[i];
-        }
-        // updating the moments
-        updateMoments();
-
-    }
-
 
     //! override VariableArray
     inline TBaseParameters parametersFromParents(size_t idx) const { return m_prior[idx]; }

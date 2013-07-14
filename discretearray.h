@@ -41,6 +41,16 @@ public:
         }
     }
 
+    void observe(const vec &values)
+    {
+        m_observed = true;
+        for (size_t i = 0; i < values.size(); ++i)
+        {
+            m_moments[i].probs = zeros(dims(), 1);
+            m_moments[i].probs[values[i]] = 1.0;
+        }
+    }
+
     //! get moment
     double weight(size_t i, size_t m) const
     {
@@ -59,6 +69,20 @@ public:
             m_parameters[i].logProb = log(m_moments[i].probs);
         }
     }
+
+    //! set initial values
+    void initialize(const vec &values)
+    {
+        assert(values.size() == size());
+        for (size_t i = 0; i < size(); ++i)
+        {
+            m_moments[i].probs = zeros(dims(), 1);
+            m_moments[i].probs[values[i]] = 1.0;
+            m_parameters[i].logProb = log(m_moments[i].probs);
+        }
+    }
+
+
 
     // NOT zero, since when
     double logNorm() const
