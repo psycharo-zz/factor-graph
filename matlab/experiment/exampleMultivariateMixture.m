@@ -4,18 +4,14 @@ function exampleMultivariateMixture
     SYNTHETIC = file.DATA;
     % datasets to run    
     DATASETS = {SYNTHETIC.DATA, dlmread('faithful.txt')};
-    NUM_MIXTURES = [5,3,3,3];
+    NUM_MIXTURES = [5,3,3,2];
     
     ds = 4;
-    [means, covs, weights] = trainMVMixture_VMP(DATASETS{ds}, NUM_MIXTURES(ds), 300);
+    [means, covs, weights, iters, evidence, resps] = trainGMM_VMP(DATASETS{ds}, NUM_MIXTURES(ds), 300);
     
-    plotGMM(DATASETS{ds}, means', covs, weights);
+    plotGMM(DATASETS{ds}, means, covs, weights);
 
 return
 
 
-function [means, covs, weights] = trainMVMixture_VMP(data, numMixtures, maxNumIters)
-    [assigns, centers] = kmeans(data, numMixtures, 'EmptyAction', 'singleton');
-    [means, covs, weights, iters, evidence] = mexfactorgraph('examples', 'multivariateMixture', data, numMixtures, maxNumIters, assigns, centers);
-return
 

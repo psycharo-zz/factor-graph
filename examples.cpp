@@ -393,54 +393,11 @@ void vmp::trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumI
 }
 
 
-void vmp::trainMultivariateGaussian(const mat &POINTS, size_t maxNumiters, vec &_mean, mat &_sigma)
-{
-    const size_t numPoints = POINTS.n_rows;
-    const size_t dims = POINTS.n_cols;
-
-    const double W_DEGREES = dims+1;
-    const mat W_SCALE = 1e-3 * eye(dims,dims);
-
-    const vec MEAN_MEAN_PRIOR = zeros(dims,1);
-    const mat MEAN_PREC_PRIOR = 1e-2 * eye(dims,dims);
-
-    auto meanPrecPrior = ConstWishart(MEAN_PREC_PRIOR);
-    auto meanMeanPrior = ConstMVGaussian(MEAN_MEAN_PRIOR);
-
-    auto prec = Wishart(W_DEGREES, W_SCALE);
-    auto mean = MVGaussian(&meanMeanPrior, &meanPrecPrior);
-    auto data = MVGaussianArray<MVGaussian, Wishart>(numPoints, &mean, &prec);
-    data.observe(POINTS);
-
-    auto msgMean = mean.addChild(&data);
-    auto msgPrec = prec.addChild(&data);
-
-    for (size_t i = 0; i < 4; ++i)
-    {
-        data.messageToParent(msgMean);
-        mean.updatePosterior();
-
-        data.messageToParent(msgPrec);
-        prec.updatePosterior();
-
-
-        cout << prec.logEvidence() << endl;
-
-//        cout << data.logEvidence() + mean.logEvidence() << endl;
-
-    }
-
-    _mean = mean.moments().mean;
-    _sigma = prec.moments().prec;
-
-}
-
-
 void vmp::trainMultivariateMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
                                    const vec &initAssigns, const mat &initMeans,
                                    const double W_DEGREES, const mat &W_SCALE,
-                                   mat &_means, cube &_sigmas, vec &_weights,
-                                   size_t &_iters, double &_lbEvidence)
+                                   mat &_means, cube &_sigmas, vec &_weights, mat &_resps,
+                                   size_t &_iters, vec &_lbEvidence)
 {
     const size_t numPoints = POINTS.n_rows;
     const size_t dims = POINTS.n_cols;
@@ -474,8 +431,8 @@ void vmp::trainMultivariateMixture(const mat &POINTS, size_t numMixtures, size_t
     auto msgDiscr = selector.addChild(&data);
     auto msgDir = dirichlet.addChild(&selector);
 
-    double lbPrev = LB_INIT;
-
+    vector<double> lb = {LB_INIT};
+    _iters = maxNumIters;
     for (size_t iter = 0; iter < maxNumIters; ++iter)
     {
         data.messageToParent(msgPrec);
@@ -496,28 +453,27 @@ void vmp::trainMultivariateMixture(const mat &POINTS, size_t numMixtures, size_t
                         dirichlet.logEvidence() +
                         data.logEvidence();
 
-        cout << lbCurr - lbPrev << "\t" << lbCurr << endl;
-//        cout << lbCurr << endl;
-
-        lbPrev = lbCurr;
-
-//        cout <<  << endl;
-//        cout << prec.logEvidence() << endl;
-//        cout << selector.logEvidence() << endl;
-//        cout << data.logEvidence() << endl;
+        if (abs(lbCurr - lb[iter]) < EPSILON)
+        {
+            lb.push_back(lbCurr);
+            _iters = iter;
+            break;
+        }
+        lb.push_back(lbCurr);
     }
 
     _weights = exp(dirichlet.moments().logProb);
-    _means.resize(dims, numMixtures);
+    _means.resize(numMixtures, dims);
     _sigmas.resize(dims, dims, numMixtures);
+    _resps.resize(numPoints, numMixtures);
     for (size_t m = 0; m < numMixtures; ++m)
     {
-        _means.col(m) = mean.moments(m).mean;
+        _means.row(m) = mean.moments(m).mean.t();
         _sigmas.slice(m) = inv(prec.moments(m).prec);
     }
-
-    _iters = maxNumIters;
-    _lbEvidence = 0;
+    for (size_t p = 0; p < numPoints; ++p)
+        _resps.row(p) = selector.moments(p).probs.t();
+    _lbEvidence = vec(lb.data()+1, lb.size()-1);
 }
 
 
@@ -621,7 +577,7 @@ void vmp::testMVMoG()
     vec weights;
     mat resps;
     size_t iter;
-    double lb;
+    vec lb;
 
     vec initAssigns(numPoints, 1);
     for (size_t i = 0; i < numPoints; ++i)
@@ -630,117 +586,20 @@ void vmp::testMVMoG()
     mat initMeans(dims, numMixtures);
     initMeans.zeros();
 
-//    trainMVMixtureVB(POINTS, numMixtures, maxIters,
-//                     initAssigns, initMeans,
-//                     means, sigmas, weights, lb, iter,
-//                     resps);
     const double initDegrees = dims+1;
     const mat initScale = 1e-2 * eye(dims,dims);
 
     trainMultivariateMixture(POINTS, numMixtures, maxIters,
                              initAssigns, initMeans,
                              initDegrees, initScale,
-                             means, sigmas, weights,
+                             means, sigmas, weights, resps,
                              iter, lb);
 
     cout << means << endl;
     cout << sigmas << endl;
     cout << weights.t() << endl;
+//    cout << resps << endl;
 }
-
-
-
-
-
-
-void vmp::testMVGaussian()
-{
-    size_t numPoints = 1000;
-    size_t maxIters = 700;
-    auto POINTS = mvrandn(numPoints, {4,4,1,4,3}, {2,2,1,2,3});
-
-    vec mean;
-    mat sigma;
-
-    trainMultivariateGaussian(POINTS, numPoints, mean, sigma);
-
-    cout << mean << endl;
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void vmp::testLogSum()
-{
-
-    vec a = {-0.5911,1.9281,-1.5054,2.9966,-2.7622,-0.2766,-0.3826, 0.2686, 0.4302,-0.8913};
-    vec b = {0.4159, -1.7199, -0.8560, 1.5157, 0.9344, -1.0388, 1.5259, -0.1821, 0.0425, 0.4759};
-
-    vec EXP_LOGSUM = {0.7273,1.9539,-0.4357,3.2015,0.9589,0.1064,1.6642,0.7616,0.9482,0.7029};
-    assert(fabs(sum(EXP_LOGSUM - vmp::logSumV(a, b))) < 1e-3);
-
-
-    pair<vec,vec> EXP_JACOB = {{0.2676,0.9746,0.3431,0.8147,0.0242,0.6818,0.1291,0.6108,0.5957,0.2031},
-                               {0.7324,0.0254,0.6569,0.1853,0.9758,0.3182,0.8709,0.3892,0.4043,0.7969}};
-    auto result = vmp::logSumVJacobian(a, b);
-
-    assert(fabs(sum(EXP_JACOB.first - result.first)) < 1e-3);
-    assert(fabs(sum(EXP_JACOB.second - result.second)) < 1e-3);
-}
-
-
-
-
-
-void vmp::testDirichlet()
-{
-    const size_t numPoints = 100;
-    const size_t numDims = 5;
-
-    const size_t maxNumIters = 10;
-
-    auto dirichlet = Dirichlet(numDims, DIRICHLET_PRIOR);
-
-    auto points = randomv(numPoints, 5);
-    for (size_t i = 0; i < numPoints; ++i)
-        points[i] = i % 3;
-
-    auto discrete = DiscreteArray(numPoints, &dirichlet);
-    discrete.observe(points);
-
-    auto msg = dirichlet.addChild(&discrete);
-
-    for (size_t i = 0; i < maxNumIters; ++i)
-    {
-        discrete.messageToParent(msg);
-        dirichlet.updatePosterior();
-
-        cout << discrete.logEvidence() + dirichlet.logEvidence() << endl;
-
-        cout << exp(dirichlet.moments().logProb) << endl;
-    }
-
-
-
-
-
-
-}
-
-
-
-
 
 
 

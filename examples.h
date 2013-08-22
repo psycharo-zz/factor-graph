@@ -117,14 +117,12 @@ struct MVMixtureNetwork
 
 
 
-void trainMultivariateGaussian(const mat &POINTS, size_t maxNumiters, vec &_mean, mat &_sigma);
-
 // TODO: add some return type
 void trainMultivariateMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
                               const vec &initAssigns, const mat &initMeans,
                               const double WinitDegrees, const mat &WinitScale,
-                              mat &means, cube &sigmas, vec &weights,
-                              size_t &iters, double &lbEvidence);
+                              mat &means, cube &sigmas, vec &weights, mat &reps,
+                              size_t &iters, vec &lbEvidence);
 
 MVMixtureNetwork *trainMVMixture(const mat &POINTS, size_t numMixtures, size_t maxNumIters);
 
@@ -140,14 +138,7 @@ void trainMVMixtureVB(const mat &POINTS, size_t numMixtures, size_t maxNumIters,
 
 // various tests
 void testLogPDF();
-void testMVGaussian();
 void testMVMoG();
-void testLogSum();
-
-
-
-void testDirichlet();
-
 
 
 

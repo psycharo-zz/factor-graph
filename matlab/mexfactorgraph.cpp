@@ -159,22 +159,17 @@ void processExample(const string &name, int nlhs, mxArray *plhs[], int nrhs, con
         const size_t dims = data.n_cols;
         const size_t numPoints = data.n_rows;
 
-        if (dims > 100)
-            throw std::runtime_error("too many dimensions");
-
-    //        const mat M_MEAN_PRIOR = mxArrayTo<mat>(prhs[PARAM_IDX+3]);
+//        const mat M_MEAN_PRIOR = mxArrayTo<mat>(prhs[PARAM_IDX+3]);
 //        const mat M_PREC_PRIOR = mxArrayTo<mat>(prhs[PARAM_IDX+4]);
 //        const double W_DEGREES_PRIOR = mxArrayTo<double>(prhs[PARAM_IDX+5]);
 //        const mat W_SCALE_PRIOR = mxArrayTo<mat>(prhs[PARAM_IDX+5]);
-
-        cout << numPoints << "x" << dims << endl;
 
         mat means;
         cube sigmas;
         vec weights;
         mat resps;
         size_t iters;
-        double evidence;
+        vec evidence;
 
         const double initDegrees = dims+1;
         const mat initScale = 1e-2 * eye(dims,dims);
@@ -182,20 +177,15 @@ void processExample(const string &name, int nlhs, mxArray *plhs[], int nrhs, con
         trainMultivariateMixture(data, numMixtures, maxNumIters,
                                  initAssigns, initMeans,
                                  initDegrees, initScale,
-                                 means, sigmas, weights,
+                                 means, sigmas, weights, resps,
                                  iters, evidence);
-
-
 
         plhs[0] = toMxArray(means);
         plhs[1] = toMxArray(sigmas);
         plhs[2] = toMxArray(weights);
-        plhs[3] = toMxArray(evidence);
-        plhs[4] = toMxArray(iters);
+        plhs[3] = toMxArray(iters);
+        plhs[4] = toMxArray(evidence);
         plhs[5] = toMxArray(resps);
-
-
-
     }
     else
         throw std::runtime_error("processExample(): unknown");

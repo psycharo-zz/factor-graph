@@ -140,8 +140,7 @@ public:
     //! override Variable
     virtual double logNormParents() const { return logNormParents(m_meanParent->moments(), m_precParent->moments()); }
     //! override Variable
-    virtual double logPDF(const TMoments &moments) const { throw NotImplementedException; }
-
+    virtual double logPDF(const TMoments &moments) const { return logPDF(moments, m_meanParent->moments(), m_precParent->moments()); }
 
     //! override HasParent<MultivariateGaussian>
     void messageToParent(Parameters<MVGaussian> *params) const { messageToParent(params, moments(), m_precParent->moments()); }
