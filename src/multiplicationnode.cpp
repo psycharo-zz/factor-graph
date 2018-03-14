@@ -67,8 +67,8 @@ GaussianMessage MultiplicationNode::backwardFunction(int to, const MessageBox &m
         const Matrix &A = m_matrix;
 
         GaussianMessage result(A.cols(), GaussianMessage::GAUSSIAN_PRECISION);
-        result.precision() = pinv(A) * precY * A;
-        result.mean() = pinv(result.precision()) * pinv(A) * precY * meanY;
+        result.precision() = A.T() * precY * A;
+        result.mean() = pinv(result.precision()) * A.T() * precY * meanY;
         return result;
     }
     else // if (msgY.type() == GaussianMessage::GAUSSIAN_VARIANCE)
